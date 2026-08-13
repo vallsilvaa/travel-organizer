@@ -1,10 +1,39 @@
 # Travel Organizer
 
-A responsive web application for travelers and travel organizers to plan trips together.
+A responsive web application for travelers and travel organizers to plan itineraries, coordinate tasks, collaborate, and track expenses in one place.
+
+## MVP scope
+
+- Trip itinerary and essential information
+- Tasks with owners and deadlines
+- Reminders and notifications
+- Collaboration and comments
+- Expense tracking
+
+## Technology
+
+- Next.js with the App Router
+- TypeScript
+- Tailwind CSS
+- Vitest and Testing Library
+- GitHub Actions
+
+Supabase will provide PostgreSQL, authentication, authorization, and realtime capabilities as those features are introduced.
 
 ## Local development
 
-Requirements: Node.js 20 or newer, npm, Docker, and the Supabase CLI installed through this repository.
+Requirements: Node.js 20 or newer and npm.
+
+```bash
+npm install
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000).
+
+## Supabase development
+
+The repository includes the Supabase CLI, local configuration, and versioned migrations.
 
 ```bash
 npm install
@@ -13,16 +42,16 @@ cp .env.example .env.local
 npm run dev
 ```
 
-After Supabase starts, copy its API URL and publishable key into `.env.local`. Never commit real credentials; `.env.local` and other `.env.*` files are ignored.
+After Supabase starts, copy its API URL and publishable key into `.env.local`. Local, hosted development, and production are separate environments; do not link production for routine development.
 
-The local Supabase stack is separate from hosted development and production projects. Link a hosted development project only when needed with `npx supabase link`, then apply versioned migrations with `npm run db:push`. Do not link production for routine development.
+Database commands:
 
-## Database workflow
+- `npm run db:diff -- change_name` captures local schema changes.
+- `npm run db:reset` rebuilds the local database from migrations.
+- `npm run db:push` applies committed migrations to a deliberately linked hosted project.
+- `npm run supabase:status` shows local services and credentials.
 
-- Create schema changes locally, then capture them with `npm run db:diff -- change_name`.
-- Rebuild the local database from migrations with `npm run db:reset`.
-- Check local services and credentials with `npm run supabase:status`.
-- Commit every file under `supabase/migrations/`; never edit an already-applied migration.
+Never commit real credentials or edit a migration that has already been applied. CI intentionally builds without Supabase credentials.
 
 ## Quality checks
 
@@ -32,4 +61,22 @@ npm test
 npm run build
 ```
 
-CI intentionally runs without Supabase credentials. The shared client reads environment variables only when instantiated, so lint, tests, and production builds do not need hosted secrets.
+The same checks run in GitHub Actions for every pull request and push to `main`.
+
+## Contribution workflow
+
+1. Choose or create a GitHub Issue.
+2. Create a branch from `main`.
+3. Implement the smallest useful change and add relevant tests.
+4. Open a pull request and complete the checklist.
+5. Merge only after CI passes and the change is reviewed.
+
+## Planned project structure
+
+```text
+src/
+  app/          # Routes, layouts, and pages
+  components/   # Shared UI components
+  features/     # Domain modules: trips, itinerary, tasks, expenses, comments
+  lib/          # Integrations, validation, and shared utilities
+```
