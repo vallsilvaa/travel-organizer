@@ -1,0 +1,55 @@
+import { describe, expect, it } from "vitest";
+
+import { validateTaskInput } from "./validation";
+
+const ownerId = "8f3f147b-8684-4ff1-b5c7-6814e4f57f73";
+
+function validForm() {
+  const formData = new FormData();
+  formData.set("title", "Book airport transfer");
+  formData.set("ownerId", ownerId);
+  formData.set("dueDate", "2026-10-10");
+  return formData;
+}
+
+describe("validateTaskInput", () => {
+  it("normalizes a task with an owner and deadline", () => {
+    expect(validateTaskInput(validForm())).toEqual({
+      success: true,
+      data: {
+        title: "Book airport transfer",
+        ownerId,
+        dueDate: "2026-10-10",
+      },
+    });
+  });
+
+  it("allows owner and deadline to be empty", () => {
+    const formData = validForm();
+    formData.set("ownerId", "");
+    formData.set("dueDate", "");
+
+    expect(validateTaskInput(formData)).toEqual({
+      success: true,
+      data: {
+        title: "Book airport transfer",
+        ownerId: null,
+        dueDate: null,
+      },
+    });
+  });
+
+  it("rejects an invalid owner and deadline", () => {
+    const formData = validForm();
+    formData.set("ownerId", "not-a-user");
+    formData.set("dueDate", "tomorrow");
+
+    const result = validateTaskInput(formData);
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.errors.owner).toBe("Choose a valid task owner.");
+      expect(result.errors.dueDate).toBe("Enter a valid due date.");
+    }
+  });
+});
