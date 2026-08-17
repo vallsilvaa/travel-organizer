@@ -2,8 +2,13 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { signOut } from "@/features/auth/actions";
+import { respondToInvitation } from "@/features/invitations/actions";
 import { TripForm } from "@/features/trips/trip-form";
 import { createClient } from "@/lib/supabase/server";
+
+type DashboardPageProps = {
+  searchParams: Promise<{ invitationError?: string }>;
+};
 
 function formatDate(value: string) {
   return new Intl.DateTimeFormat("en", {
@@ -12,7 +17,8 @@ function formatDate(value: string) {
   }).format(new Date(`${value}T00:00:00Z`));
 }
 
-export default async function DashboardPage() {
+export default async function DashboardPage({ searchParams }: DashboardPageProps) {
+  const params = await searchParams;
   const supabase = await createClient();
   const {
     data: { user },
@@ -36,6 +42,16 @@ export default async function DashboardPage() {
     ]);
 
   const displayName = profile?.display_name ?? user.email ?? "Traveler";
+  const { data: pendingInvitations, error: invitationsError } = user.email
+    ? await supabase
+        .from("trip_invitations")
+        .select("id, trip_id, trip_destination, status, created_at")
+        .eq("status", "pending")
+        .order("created_at", { ascending: false })
+    : { data: [], error: null };
+  const invitationError = params.invitationError
+    ? "The invitation is no longer available or could not be updated."
+    : null;
 
   return (
     <main className="min-h-screen bg-slate-50 px-6 py-12">
@@ -60,6 +76,57 @@ export default async function DashboardPage() {
           </form>
         </div>
       </section>
+
+      {pendingInvitations?.length || invitationError || invitationsError ? (
+        <section className="rounded-3xl border border-sky-200 bg-sky-50 p-8 shadow-sm">
+          <h2 className="text-2xl font-semibold tracking-tight text-slate-950">
+            Trip invitations
+          </h2>
+          {invitationError || invitationsError ? (
+            <p role="alert" className="mt-4 rounded-xl bg-red-50 p-3 text-sm text-red-800">
+              {invitationError ?? "We could not load your invitations."}
+            </p>
+          ) : null}
+          {pendingInvitations?.length ? (
+            <ul className="mt-5 space-y-3">
+              {pendingInvitations.map((invitation) => (
+                <li
+                  key={invitation.id}
+                  className="rounded-2xl border border-sky-200 bg-white p-5"
+                >
+                  <p className="font-semibold text-slate-950">
+                    {invitation.trip_destination}
+                  </p>
+                  <p className="mt-1 text-sm text-slate-600">
+                    You were invited to collaborate as the travel organizer.
+                  </p>
+                  <form action={respondToInvitation} className="mt-4 flex gap-3">
+                    <input
+                      type="hidden"
+                      name="invitationId"
+                      value={invitation.id}
+                    />
+                    <button
+                      name="response"
+                      value="accepted"
+                      className="rounded-xl bg-sky-700 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-800"
+                    >
+                      Accept
+                    </button>
+                    <button
+                      name="response"
+                      value="declined"
+                      className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                    >
+                      Decline
+                    </button>
+                  </form>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </section>
+      ) : null}
 
       <section className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
         <h2 className="text-2xl font-semibold tracking-tight text-slate-950">
