@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
+import { InviteForm } from "@/features/invitations/invite-form";
 import { createClient } from "@/lib/supabase/server";
 
 type TripPageProps = {
@@ -27,13 +28,22 @@ export default async function TripPage({ params }: TripPageProps) {
 
   const { data: trip, error } = await supabase
     .from("trips")
-    .select("id, destination, start_date, end_date, created_at")
+    .select("id, destination, start_date, end_date, created_at, created_by")
     .eq("id", tripId)
     .single();
 
   if (error || !trip) {
     notFound();
   }
+
+  const isCreator = trip.created_by === user.id;
+  const { data: invitations } = isCreator
+    ? await supabase
+        .from("trip_invitations")
+        .select("id, email, status, created_at")
+        .eq("trip_id", trip.id)
+        .order("created_at", { ascending: false })
+    : { data: [] };
 
   return (
     <main className="min-h-screen bg-slate-50 px-6 py-12">
@@ -66,6 +76,36 @@ export default async function TripPage({ params }: TripPageProps) {
             </dd>
           </div>
         </dl>
+
+        {isCreator ? (
+          <section className="mt-8 rounded-2xl border border-slate-200 p-6">
+            <h2 className="text-xl font-semibold text-slate-950">
+              Travel organizer
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-slate-600">
+              Invite an organizer by email. They can accept after signing in with the same address.
+            </p>
+            <InviteForm tripId={trip.id} />
+
+            {invitations?.length ? (
+              <ul className="mt-6 divide-y divide-slate-200 border-t border-slate-200">
+                {invitations.map((invitation) => (
+                  <li
+                    key={invitation.id}
+                    className="flex flex-col gap-1 py-4 sm:flex-row sm:items-center sm:justify-between"
+                  >
+                    <span className="text-sm font-medium text-slate-800">
+                      {invitation.email}
+                    </span>
+                    <span className="text-sm capitalize text-slate-500">
+                      {invitation.status}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+          </section>
+        ) : null}
 
         <div className="mt-8 rounded-2xl border border-dashed border-slate-300 p-6 text-sm leading-6 text-slate-600">
           Itinerary, tasks, comments, and expenses will appear here as the next MVP capabilities are delivered.
