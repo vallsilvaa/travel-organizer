@@ -9,6 +9,7 @@ import {
   validateTaskInput,
   type TaskFieldErrors,
 } from "./validation";
+import { buildEnglandPreparationTasks } from "./templates";
 
 export type TaskActionState = {
   errors?: TaskFieldErrors;
@@ -47,6 +48,11 @@ export async function createTask(
     title: validation.data.title,
     owner_id: validation.data.ownerId,
     due_date: validation.data.dueDate,
+    due_offset_days: null,
+    category: validation.data.category,
+    is_critical: validation.data.isCritical,
+    reference_label: validation.data.referenceLabel,
+    reference_url: validation.data.referenceUrl,
     created_by: user.id,
   });
 
@@ -80,6 +86,11 @@ export async function updateTask(
       title: validation.data.title,
       owner_id: validation.data.ownerId,
       due_date: validation.data.dueDate,
+      due_offset_days: null,
+      category: validation.data.category,
+      is_critical: validation.data.isCritical,
+      reference_label: validation.data.referenceLabel,
+      reference_url: validation.data.referenceUrl,
       updated_at: new Date().toISOString(),
     })
     .eq("id", taskId)
@@ -91,6 +102,46 @@ export async function updateTask(
 
   revalidatePath(`/trips/${tripId}`);
   return { success: true };
+}
+
+export async function deleteTask(formData: FormData) {
+  const tripId = String(formData.get("tripId") ?? "");
+  const taskId = String(formData.get("taskId") ?? "");
+
+  if (!isValidTaskId(tripId) || !isValidTaskId(taskId)) {
+    return;
+  }
+
+  const { supabase } = await authenticatedClient();
+  await supabase.from("trip_tasks").delete().eq("id", taskId).eq("trip_id", tripId);
+  revalidatePath(`/trips/${tripId}`);
+}
+
+export async function addEnglandPreparationChecklist(formData: FormData) {
+  const tripId = String(formData.get("tripId") ?? "");
+
+  if (!isValidTaskId(tripId)) {
+    return;
+  }
+
+  const { supabase, user } = await authenticatedClient();
+  const { data: trip } = await supabase
+    .from("trips")
+    .select("id, start_date")
+    .eq("id", tripId)
+    .single();
+
+  if (!trip) {
+    return;
+  }
+
+  await supabase
+    .from("trip_tasks")
+    .upsert(buildEnglandPreparationTasks(trip.id, trip.start_date, user.id), {
+      ignoreDuplicates: true,
+      onConflict: "trip_id,template_key",
+    });
+  revalidatePath(`/trips/${tripId}`);
 }
 
 export async function setTaskCompletion(formData: FormData) {
