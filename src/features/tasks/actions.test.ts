@@ -30,6 +30,10 @@ function validForm() {
   formData.set("title", "Book airport transfer");
   formData.set("ownerId", ownerId);
   formData.set("dueDate", "2026-10-10");
+  formData.set("category", "transport");
+  formData.set("isCritical", "on");
+  formData.set("referenceLabel", "Transfer voucher");
+  formData.set("referenceUrl", "https://example.com/transfer");
   return formData;
 }
 
@@ -56,6 +60,11 @@ describe("task actions", () => {
       title: "Book airport transfer",
       owner_id: ownerId,
       due_date: "2026-10-10",
+      due_offset_days: null,
+      category: "transport",
+      is_critical: true,
+      reference_label: "Transfer voucher",
+      reference_url: "https://example.com/transfer",
       created_by: "user-123",
     });
     expect(result.success).toBe(true);

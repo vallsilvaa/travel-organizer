@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 
 import { createTask, updateTask, type TaskActionState } from "./actions";
+import { taskCategories, taskCategoryLabels, type TaskCategory } from "./templates";
 
 type Participant = { user_id: string; display_name: string; role: string };
 
@@ -13,6 +14,10 @@ type TaskFormProps = {
     title: string;
     owner_id: string | null;
     due_date: string | null;
+    category: TaskCategory;
+    is_critical: boolean;
+    reference_label: string | null;
+    reference_url: string | null;
   };
   tripId: string;
 };
@@ -56,6 +61,47 @@ export function TaskForm({ participants, task, tripId }: TaskFormProps) {
           ))}
         </select>
         {state.errors?.owner ? <span className="mt-1 block text-red-700">{state.errors.owner}</span> : null}
+      </label>
+      <label className="text-sm font-medium text-slate-800">
+        Category
+        <select
+          name="category"
+          defaultValue={task?.category ?? "other"}
+          className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 outline-none focus:border-sky-600 focus:ring-2 focus:ring-sky-100"
+        >
+          {taskCategories.map((category) => (
+            <option key={category} value={category}>{taskCategoryLabels[category]}</option>
+          ))}
+        </select>
+        {state.errors?.category ? <span className="mt-1 block text-red-700">{state.errors.category}</span> : null}
+      </label>
+      <label className="flex items-center gap-3 rounded-xl border border-slate-200 px-4 py-3 text-sm font-medium text-slate-800">
+        <input name="isCritical" type="checkbox" defaultChecked={task?.is_critical} className="size-4 accent-sky-700" />
+        Critical before departure
+      </label>
+      <label className="text-sm font-medium text-slate-800">
+        Reference label <span className="font-normal text-slate-500">(optional)</span>
+        <input
+          maxLength={100}
+          name="referenceLabel"
+          defaultValue={task?.reference_label ?? ""}
+          placeholder="Insurance policy"
+          className="mt-2 w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-sky-600 focus:ring-2 focus:ring-sky-100"
+        />
+        {state.errors?.referenceLabel ? <span className="mt-1 block text-red-700">{state.errors.referenceLabel}</span> : null}
+      </label>
+      <label className="text-sm font-medium text-slate-800">
+        Secure reference URL <span className="font-normal text-slate-500">(optional)</span>
+        <input
+          maxLength={500}
+          name="referenceUrl"
+          type="url"
+          pattern="https://.*"
+          defaultValue={task?.reference_url ?? ""}
+          placeholder="https://..."
+          className="mt-2 w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-sky-600 focus:ring-2 focus:ring-sky-100"
+        />
+        {state.errors?.referenceUrl ? <span className="mt-1 block text-red-700">{state.errors.referenceUrl}</span> : null}
       </label>
       <label className="text-sm font-medium text-slate-800">
         Due date <span className="font-normal text-slate-500">(optional)</span>

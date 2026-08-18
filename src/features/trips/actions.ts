@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
 import { validateTripInput, type TripFieldErrors } from "./validation";
+import { buildEnglandPreparationTasks, isEnglandDestination } from "@/features/tasks/templates";
 
 export type CreateTripState = {
   errors?: TripFieldErrors;
@@ -42,6 +43,12 @@ export async function createTrip(
 
   if (error) {
     return { message: "We could not create the trip. Try again." };
+  }
+
+  if (isEnglandDestination(validation.data.destination)) {
+    await supabase.from("trip_tasks").insert(
+      buildEnglandPreparationTasks(tripId, validation.data.startDate, user.id),
+    );
   }
 
   revalidatePath("/dashboard");

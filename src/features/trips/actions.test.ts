@@ -51,6 +51,7 @@ describe("createTrip", () => {
     );
 
     expect(mocks.from).toHaveBeenCalledWith("trips");
+    expect(mocks.from).toHaveBeenCalledWith("trip_tasks");
     expect(mocks.insert).toHaveBeenCalledWith(
       expect.objectContaining({
         destination: "London",
