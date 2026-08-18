@@ -9,6 +9,10 @@ function validForm() {
   formData.set("title", "Book airport transfer");
   formData.set("ownerId", ownerId);
   formData.set("dueDate", "2026-10-10");
+  formData.set("category", "transport");
+  formData.set("isCritical", "on");
+  formData.set("referenceLabel", "Train voucher");
+  formData.set("referenceUrl", "https://example.com/train");
   return formData;
 }
 
@@ -20,6 +24,10 @@ describe("validateTaskInput", () => {
         title: "Book airport transfer",
         ownerId,
         dueDate: "2026-10-10",
+        category: "transport",
+        isCritical: true,
+        referenceLabel: "Train voucher",
+        referenceUrl: "https://example.com/train",
       },
     });
   });
@@ -28,6 +36,9 @@ describe("validateTaskInput", () => {
     const formData = validForm();
     formData.set("ownerId", "");
     formData.set("dueDate", "");
+    formData.set("isCritical", "");
+    formData.set("referenceLabel", "");
+    formData.set("referenceUrl", "");
 
     expect(validateTaskInput(formData)).toEqual({
       success: true,
@@ -35,6 +46,10 @@ describe("validateTaskInput", () => {
         title: "Book airport transfer",
         ownerId: null,
         dueDate: null,
+        category: "transport",
+        isCritical: false,
+        referenceLabel: null,
+        referenceUrl: null,
       },
     });
   });
@@ -50,6 +65,20 @@ describe("validateTaskInput", () => {
     if (!result.success) {
       expect(result.errors.owner).toBe("Choose a valid task owner.");
       expect(result.errors.dueDate).toBe("Enter a valid due date.");
+    }
+  });
+
+  it("rejects unsafe reference URLs and unknown categories", () => {
+    const formData = validForm();
+    formData.set("category", "visa");
+    formData.set("referenceUrl", "javascript:alert(1)");
+
+    const result = validateTaskInput(formData);
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.errors.category).toBe("Choose a valid preparation category.");
+      expect(result.errors.referenceUrl).toContain("HTTPS");
     }
   });
 });
