@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
+import { CommentThread, type ItemComment } from "@/features/comments/comment-thread";
 import { InviteForm } from "@/features/invitations/invite-form";
 import { deleteItineraryItem } from "@/features/itinerary/actions";
 import { ItineraryForm } from "@/features/itinerary/itinerary-form";
@@ -17,6 +18,12 @@ type TripParticipant = {
   user_id: string;
   display_name: string;
   role: string;
+};
+
+type TripComment = ItemComment & {
+  item_type: "itinerary" | "task";
+  itinerary_item_id: string | null;
+  task_id: string | null;
 };
 
 function formatDate(value: string) {
@@ -76,6 +83,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
     { data: itineraryItems, error: itineraryError },
     { data: tasks, error: tasksError },
     { data: participants },
+    { data: comments, error: commentsError },
     invitationResult,
   ] =
     await Promise.all([
@@ -89,6 +97,11 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
         .order("due_date", { ascending: true, nullsFirst: false })
         .order("created_at", { ascending: true }),
       supabase.rpc("get_trip_participants", { requested_trip_id: trip.id }),
+      supabase
+        .from("item_comments")
+        .select("id, item_type, itinerary_item_id, task_id, body, author_id, created_at, updated_at")
+        .eq("trip_id", trip.id)
+        .order("created_at", { ascending: true }),
       isCreator
         ? supabase
             .from("trip_invitations")
@@ -106,6 +119,13 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
     ]),
   );
   const today = new Date().toISOString().slice(0, 10);
+  const tripComments = (comments ?? []) as TripComment[];
+  const commentsFor = (itemType: "itinerary" | "task", itemId: string) =>
+    tripComments.filter((comment) =>
+      itemType === "itinerary"
+        ? comment.itinerary_item_id === itemId
+        : comment.task_id === itemId,
+    );
 
   return (
     <main className="min-h-screen bg-slate-50 px-6 py-12">
@@ -138,6 +158,12 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
             </dd>
           </div>
         </dl>
+
+        {commentsError ? (
+          <p role="alert" className="mt-8 rounded-xl bg-red-50 p-4 text-sm text-red-800">
+            Comments could not be loaded. Other trip content is still available.
+          </p>
+        ) : null}
 
         <section className="mt-8 rounded-2xl border border-slate-200 p-6">
           <h2 className="text-2xl font-semibold text-slate-950">Itinerary</h2>
@@ -187,6 +213,14 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                       <ItineraryForm item={item} tripId={trip.id} />
                     </div>
                   </details>
+                  <CommentThread
+                    comments={commentsFor("itinerary", item.id)}
+                    currentUserId={user.id}
+                    itemId={item.id}
+                    itemType="itinerary"
+                    participantNames={participantNames}
+                    tripId={trip.id}
+                  />
                 </li>
               ))}
             </ol>
@@ -298,6 +332,14 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                         <TaskForm participants={tripParticipants} task={task} tripId={trip.id} />
                       </div>
                     </details>
+                    <CommentThread
+                      comments={commentsFor("task", task.id)}
+                      currentUserId={user.id}
+                      itemId={task.id}
+                      itemType="task"
+                      participantNames={participantNames}
+                      tripId={trip.id}
+                    />
                   </li>
                 );
               })}
@@ -340,7 +382,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
         ) : null}
 
         <div className="mt-8 rounded-2xl border border-dashed border-slate-300 p-6 text-sm leading-6 text-slate-600">
-          Comments and expenses will appear here as the next MVP capabilities are delivered.
+          Expenses will appear here as the next MVP capability is delivered.
         </div>
       </section>
     </main>
