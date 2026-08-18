@@ -31,27 +31,17 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
-## Supabase development
+### Task reminder configuration
 
-The repository includes the Supabase CLI, local configuration, and versioned migrations.
+The daily Vercel cron calls `GET /api/cron/task-reminders` at 09:00 UTC. Configure these environment variables in the deployment:
 
-```bash
-npm install
-npm run supabase:start
-cp .env.example .env.local
-npm run dev
-```
+- `CRON_SECRET`: secret used by Vercel to authorize cron requests.
+- `SUPABASE_SERVICE_ROLE_KEY`: server-only Supabase key used by the reminder worker.
+- `RESEND_API_KEY`: API key for email delivery.
+- `REMINDER_EMAIL_FROM`: verified sender, for example `Travel Organizer <reminders@example.com>`.
+- `NEXT_PUBLIC_APP_URL`: public application URL used in reminder links.
 
-After Supabase starts, copy its API URL and publishable key into `.env.local`. Local, hosted development, and production are separate environments; do not link production for routine development.
-
-Database commands:
-
-- `npm run db:diff -- change_name` captures local schema changes.
-- `npm run db:reset` rebuilds the local database from migrations.
-- `npm run db:push` applies committed migrations to a deliberately linked hosted project.
-- `npm run supabase:status` shows local services and credentials.
-
-Never commit real credentials or edit a migration that has already been applied. CI intentionally builds without Supabase credentials.
+Never expose the service-role or email-provider keys through `NEXT_PUBLIC_` variables. Delivery failures store only a technical failure code and reminder identifier, not private trip content.
 
 ## Quality checks
 

@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 
 import { signOut } from "@/features/auth/actions";
 import { respondToInvitation } from "@/features/invitations/actions";
+import { updateReminderPreference } from "@/features/reminders/actions";
 import { TripForm } from "@/features/trips/trip-form";
 import { createClient } from "@/lib/supabase/server";
 
@@ -32,7 +33,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     await Promise.all([
       supabase
         .from("profiles")
-        .select("display_name")
+        .select("display_name, task_reminders_enabled")
         .eq("id", user.id)
         .single(),
       supabase
@@ -75,6 +76,29 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
             </button>
           </form>
         </div>
+      </section>
+
+      <section className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
+        <h2 className="text-xl font-semibold tracking-tight text-slate-950">
+          Email reminders
+        </h2>
+        <p className="mt-2 text-sm leading-6 text-slate-600">
+          Receive a reminder when an assigned task is due within the next three days.
+        </p>
+        <form action={updateReminderPreference} className="mt-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <label className="flex items-center gap-3 text-sm font-medium text-slate-800">
+            <input
+              type="checkbox"
+              name="taskRemindersEnabled"
+              defaultChecked={profile?.task_reminders_enabled ?? true}
+              className="h-5 w-5 rounded border-slate-300 text-sky-700"
+            />
+            Send task deadline reminders
+          </label>
+          <button className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+            Save preference
+          </button>
+        </form>
       </section>
 
       {pendingInvitations?.length || invitationError || invitationsError ? (
