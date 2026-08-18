@@ -4,10 +4,19 @@ import { notFound, redirect } from "next/navigation";
 import { InviteForm } from "@/features/invitations/invite-form";
 import { deleteItineraryItem } from "@/features/itinerary/actions";
 import { ItineraryForm } from "@/features/itinerary/itinerary-form";
+import { setTaskCompletion } from "@/features/tasks/actions";
+import { TaskForm } from "@/features/tasks/task-form";
 import { createClient } from "@/lib/supabase/server";
 
 type TripPageProps = {
   params: Promise<{ tripId: string }>;
+  searchParams: Promise<{ owner?: string; status?: string }>;
+};
+
+type TripParticipant = {
+  user_id: string;
+  display_name: string;
+  role: string;
 };
 
 function formatDate(value: string) {
@@ -21,8 +30,8 @@ function formatTime(value: string | null) {
   return value ? value.slice(0, 5) : "Time not defined";
 }
 
-export default async function TripPage({ params }: TripPageProps) {
-  const { tripId } = await params;
+export default async function TripPage({ params, searchParams }: TripPageProps) {
+  const [{ tripId }, filters] = await Promise.all([params, searchParams]);
   const supabase = await createClient();
   const {
     data: { user },
@@ -43,7 +52,32 @@ export default async function TripPage({ params }: TripPageProps) {
   }
 
   const isCreator = trip.created_by === user.id;
-  const [{ data: itineraryItems, error: itineraryError }, invitationResult] =
+  const statusFilter = filters.status === "completed" || filters.status === "open"
+    ? filters.status
+    : "all";
+  const ownerFilter = filters.owner ?? "all";
+  let taskQuery = supabase
+    .from("trip_tasks")
+    .select("id, title, owner_id, due_date, completed_at, created_at")
+    .eq("trip_id", trip.id);
+
+  if (statusFilter === "completed") {
+    taskQuery = taskQuery.not("completed_at", "is", null);
+  } else if (statusFilter === "open") {
+    taskQuery = taskQuery.is("completed_at", null);
+  }
+  if (ownerFilter === "unassigned") {
+    taskQuery = taskQuery.is("owner_id", null);
+  } else if (/^[0-9a-f-]{36}$/i.test(ownerFilter)) {
+    taskQuery = taskQuery.eq("owner_id", ownerFilter);
+  }
+
+  const [
+    { data: itineraryItems, error: itineraryError },
+    { data: tasks, error: tasksError },
+    { data: participants },
+    invitationResult,
+  ] =
     await Promise.all([
       supabase
         .from("itinerary_items")
@@ -51,6 +85,10 @@ export default async function TripPage({ params }: TripPageProps) {
         .eq("trip_id", trip.id)
         .order("item_date", { ascending: true })
         .order("start_time", { ascending: true, nullsFirst: false }),
+      taskQuery
+        .order("due_date", { ascending: true, nullsFirst: false })
+        .order("created_at", { ascending: true }),
+      supabase.rpc("get_trip_participants", { requested_trip_id: trip.id }),
       isCreator
         ? supabase
             .from("trip_invitations")
@@ -60,6 +98,14 @@ export default async function TripPage({ params }: TripPageProps) {
         : Promise.resolve({ data: [] }),
     ]);
   const invitations = invitationResult.data;
+  const tripParticipants = (participants ?? []) as TripParticipant[];
+  const participantNames = new Map<string, string>(
+    tripParticipants.map((participant) => [
+      participant.user_id,
+      participant.display_name,
+    ]),
+  );
+  const today = new Date().toISOString().slice(0, 10);
 
   return (
     <main className="min-h-screen bg-slate-50 px-6 py-12">
@@ -151,6 +197,118 @@ export default async function TripPage({ params }: TripPageProps) {
           )}
         </section>
 
+        <section className="mt-8 rounded-2xl border border-slate-200 p-6">
+          <h2 className="text-2xl font-semibold text-slate-950">Tasks</h2>
+          <p className="mt-2 text-sm leading-6 text-slate-600">
+            Assign preparation work, track deadlines, and keep progress shared.
+          </p>
+
+          <details className="mt-5 rounded-2xl bg-sky-50 p-5" open={!tasks?.length}>
+            <summary className="cursor-pointer font-semibold text-sky-900">
+              Add task
+            </summary>
+            <div className="mt-5">
+              <TaskForm participants={tripParticipants} tripId={trip.id} />
+            </div>
+          </details>
+
+          <form className="mt-6 grid gap-3 rounded-2xl bg-slate-50 p-4 sm:grid-cols-2">
+            <label className="text-sm font-medium text-slate-700">
+              Status
+              <select
+                name="status"
+                defaultValue={statusFilter}
+                className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2"
+              >
+                <option value="all">All statuses</option>
+                <option value="open">Open</option>
+                <option value="completed">Completed</option>
+              </select>
+            </label>
+            <label className="text-sm font-medium text-slate-700">
+              Owner
+              <select
+                name="owner"
+                defaultValue={ownerFilter}
+                className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2"
+              >
+                <option value="all">All owners</option>
+                <option value="unassigned">Unassigned</option>
+                {tripParticipants.map((participant) => (
+                  <option key={participant.user_id} value={participant.user_id}>
+                    {participant.display_name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <button className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 sm:col-span-2 sm:justify-self-start">
+              Apply filters
+            </button>
+          </form>
+
+          {tasksError ? (
+            <p role="alert" className="mt-5 rounded-xl bg-red-50 p-4 text-sm text-red-800">
+              We could not load the tasks. Try refreshing the page.
+            </p>
+          ) : tasks?.length ? (
+            <ul className="mt-6 space-y-4">
+              {tasks.map((task) => {
+                const overdue = !task.completed_at && task.due_date && task.due_date < today;
+                const upcoming = !task.completed_at && task.due_date && task.due_date >= today;
+                return (
+                  <li
+                    key={task.id}
+                    className={`rounded-2xl border p-5 ${
+                      task.completed_at
+                        ? "border-slate-200 bg-slate-50"
+                        : overdue
+                          ? "border-red-200 bg-red-50"
+                          : upcoming
+                            ? "border-sky-200 bg-sky-50"
+                            : "border-slate-200"
+                    }`}
+                  >
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                      <div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h3 className={`font-semibold ${task.completed_at ? "text-slate-500 line-through" : "text-slate-950"}`}>
+                            {task.title}
+                          </h3>
+                          {overdue ? <span className="rounded-full bg-red-100 px-2 py-1 text-xs font-semibold text-red-800">Overdue</span> : null}
+                          {upcoming ? <span className="rounded-full bg-sky-100 px-2 py-1 text-xs font-semibold text-sky-800">Upcoming</span> : null}
+                          {task.completed_at ? <span className="rounded-full bg-emerald-100 px-2 py-1 text-xs font-semibold text-emerald-800">Completed</span> : null}
+                        </div>
+                        <p className="mt-2 text-sm text-slate-600">
+                          {participantNames.get(task.owner_id) ?? "Unassigned"}
+                          {task.due_date ? ` · Due ${formatDate(task.due_date)}` : " · No deadline"}
+                        </p>
+                      </div>
+                      <form action={setTaskCompletion}>
+                        <input type="hidden" name="tripId" value={trip.id} />
+                        <input type="hidden" name="taskId" value={task.id} />
+                        <input type="hidden" name="completed" value={task.completed_at ? "false" : "true"} />
+                        <button className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100">
+                          {task.completed_at ? "Reopen" : "Complete"}
+                        </button>
+                      </form>
+                    </div>
+                    <details className="mt-4 border-t border-slate-200 pt-4">
+                      <summary className="cursor-pointer text-sm font-semibold text-sky-700">Edit task</summary>
+                      <div className="mt-4">
+                        <TaskForm participants={tripParticipants} task={task} tripId={trip.id} />
+                      </div>
+                    </details>
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            <p className="mt-5 rounded-2xl border border-dashed border-slate-300 p-6 text-sm text-slate-600">
+              No tasks match these filters. Add a task or change the filters.
+            </p>
+          )}
+        </section>
+
         {isCreator ? (
           <section className="mt-8 rounded-2xl border border-slate-200 p-6">
             <h2 className="text-xl font-semibold text-slate-950">
@@ -182,7 +340,7 @@ export default async function TripPage({ params }: TripPageProps) {
         ) : null}
 
         <div className="mt-8 rounded-2xl border border-dashed border-slate-300 p-6 text-sm leading-6 text-slate-600">
-          Tasks, comments, and expenses will appear here as the next MVP capabilities are delivered.
+          Comments and expenses will appear here as the next MVP capabilities are delivered.
         </div>
       </section>
     </main>
