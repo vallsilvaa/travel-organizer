@@ -2,6 +2,8 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
 import { CommentThread, type ItemComment } from "@/features/comments/comment-thread";
+import { deleteExpense } from "@/features/expenses/actions";
+import { ExpenseForm } from "@/features/expenses/expense-form";
 import { InviteForm } from "@/features/invitations/invite-form";
 import { deleteItineraryItem } from "@/features/itinerary/actions";
 import { ItineraryForm } from "@/features/itinerary/itinerary-form";
@@ -26,6 +28,16 @@ type TripComment = ItemComment & {
   task_id: string | null;
 };
 
+type TripExpense = {
+  id: string;
+  description: string;
+  amount: string;
+  currency: string;
+  category: string;
+  expense_date: string;
+  payer_id: string;
+};
+
 function formatDate(value: string) {
   return new Intl.DateTimeFormat("en", {
     dateStyle: "long",
@@ -35,6 +47,17 @@ function formatDate(value: string) {
 
 function formatTime(value: string | null) {
   return value ? value.slice(0, 5) : "Time not defined";
+}
+
+function formatMoney(amount: number | string, currency: string) {
+  try {
+    return new Intl.NumberFormat("en", {
+      style: "currency",
+      currency,
+    }).format(Number(amount));
+  } catch {
+    return `${currency} ${Number(amount).toFixed(2)}`;
+  }
 }
 
 export default async function TripPage({ params, searchParams }: TripPageProps) {
@@ -84,6 +107,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
     { data: tasks, error: tasksError },
     { data: participants },
     { data: comments, error: commentsError },
+    { data: expenses, error: expensesError },
     invitationResult,
   ] =
     await Promise.all([
@@ -102,6 +126,12 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
         .select("id, item_type, itinerary_item_id, task_id, body, author_id, created_at, updated_at")
         .eq("trip_id", trip.id)
         .order("created_at", { ascending: true }),
+      supabase
+        .from("trip_expenses")
+        .select("id, description, amount, currency, category, expense_date, payer_id")
+        .eq("trip_id", trip.id)
+        .order("expense_date", { ascending: false })
+        .order("created_at", { ascending: false }),
       isCreator
         ? supabase
             .from("trip_invitations")
@@ -120,6 +150,16 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
   );
   const today = new Date().toISOString().slice(0, 10);
   const tripComments = (comments ?? []) as TripComment[];
+  const tripExpenses = (expenses ?? []) as TripExpense[];
+  const totalsByCurrency = Array.from(
+    tripExpenses.reduce((totals, expense) => {
+      totals.set(
+        expense.currency,
+        (totals.get(expense.currency) ?? 0) + Number(expense.amount),
+      );
+      return totals;
+    }, new Map<string, number>()),
+  ).sort(([currencyA], [currencyB]) => currencyA.localeCompare(currencyB));
   const commentsFor = (itemType: "itinerary" | "task", itemId: string) =>
     tripComments.filter((comment) =>
       itemType === "itinerary"
@@ -227,6 +267,71 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
           ) : (
             <p className="mt-5 rounded-2xl border border-dashed border-slate-300 p-6 text-sm text-slate-600">
               No itinerary items yet. Add the first activity above.
+            </p>
+          )}
+        </section>
+
+        <section className="mt-8 rounded-2xl border border-slate-200 p-6">
+          <h2 className="text-2xl font-semibold text-slate-950">Expenses</h2>
+          <p className="mt-2 text-sm leading-6 text-slate-600">
+            Record shared costs and review totals separately for each currency.
+          </p>
+
+          {totalsByCurrency.length ? (
+            <dl className="mt-5 grid gap-3 sm:grid-cols-3">
+              {totalsByCurrency.map(([currency, total]) => (
+                <div key={currency} className="rounded-2xl bg-emerald-50 p-4">
+                  <dt className="text-xs font-semibold uppercase tracking-wide text-emerald-700">Total {currency}</dt>
+                  <dd className="mt-1 text-xl font-semibold text-emerald-950">{formatMoney(total, currency)}</dd>
+                </div>
+              ))}
+            </dl>
+          ) : null}
+
+          <details className="mt-5 rounded-2xl bg-sky-50 p-5" open={!tripExpenses.length}>
+            <summary className="cursor-pointer font-semibold text-sky-900">Add expense</summary>
+            <div className="mt-5">
+              <ExpenseForm participants={tripParticipants} tripId={trip.id} />
+            </div>
+          </details>
+
+          {expensesError ? (
+            <p role="alert" className="mt-5 rounded-xl bg-red-50 p-4 text-sm text-red-800">
+              We could not load the expenses. Try refreshing the page.
+            </p>
+          ) : tripExpenses.length ? (
+            <ul className="mt-6 space-y-4">
+              {tripExpenses.map((expense) => (
+                <li key={expense.id} className="rounded-2xl border border-slate-200 p-5">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="font-semibold text-slate-950">{expense.description}</h3>
+                        <span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-semibold capitalize text-slate-700">{expense.category}</span>
+                      </div>
+                      <p className="mt-2 text-lg font-semibold text-emerald-800">{formatMoney(expense.amount, expense.currency)}</p>
+                      <p className="mt-1 text-sm text-slate-600">
+                        Paid by {participantNames.get(expense.payer_id) ?? "Traveler"} · {formatDate(expense.expense_date)}
+                      </p>
+                    </div>
+                    <form action={deleteExpense}>
+                      <input type="hidden" name="tripId" value={trip.id} />
+                      <input type="hidden" name="expenseId" value={expense.id} />
+                      <button className="text-sm font-semibold text-red-700 hover:text-red-800">Delete</button>
+                    </form>
+                  </div>
+                  <details className="mt-4 border-t border-slate-200 pt-4">
+                    <summary className="cursor-pointer text-sm font-semibold text-sky-700">Edit expense</summary>
+                    <div className="mt-4">
+                      <ExpenseForm expense={expense} participants={tripParticipants} tripId={trip.id} />
+                    </div>
+                  </details>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="mt-5 rounded-2xl border border-dashed border-slate-300 p-6 text-sm text-slate-600">
+              No expenses yet. Add the first shared cost above.
             </p>
           )}
         </section>
@@ -382,7 +487,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
         ) : null}
 
         <div className="mt-8 rounded-2xl border border-dashed border-slate-300 p-6 text-sm leading-6 text-slate-600">
-          Expenses will appear here as the next MVP capability is delivered.
+          Task deadline reminders are the next MVP capability.
         </div>
       </section>
     </main>
