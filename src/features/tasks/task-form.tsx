@@ -138,7 +138,7 @@ export function TaskForm({ participants, task, tripId }: TaskFormProps) {
         <Input id="dueDate" name="dueDate" type="date" defaultValue={task?.due_date ?? ""} />
         {state.errors?.dueDate ? <p className="text-sm text-destructive">{state.errors.dueDate}</p> : null}
       </div>
-      <Button disabled={pending} size="lg" className="sm:col-span-2 sm:justify-self-start">
+      <Button type="submit" disabled={pending} size="lg" className="sm:col-span-2 sm:justify-self-start">
         {pending ? "Salvando..." : task ? "Salvar alterações" : "Adicionar tarefa"}
       </Button>
     </form>

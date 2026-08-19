@@ -63,7 +63,7 @@ export function CommentForm({ comment, itemId, itemType, tripId }: CommentFormPr
         className="text-sm"
       />
       <div className="mt-2 flex justify-end">
-        <Button disabled={pending} size="sm">
+        <Button type="submit" disabled={pending} size="sm">
           {pending ? "Salvando..." : comment ? "Salvar" : "Comentar"}
         </Button>
       </div>

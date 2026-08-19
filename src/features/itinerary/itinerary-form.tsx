@@ -94,7 +94,7 @@ export function ItineraryForm({ item, tripId }: ItineraryFormProps) {
         />
         {state.errors?.notes ? <p className="text-sm text-destructive">{state.errors.notes}</p> : null}
       </div>
-      <Button disabled={pending} size="lg" className="sm:col-span-2 sm:justify-self-start">
+      <Button type="submit" disabled={pending} size="lg" className="sm:col-span-2 sm:justify-self-start">
         {pending ? "Salvando..." : item ? "Salvar alterações" : "Adicionar ao itinerário"}
       </Button>
     </form>
