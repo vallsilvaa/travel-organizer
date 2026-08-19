@@ -73,7 +73,7 @@ export function TripForm() {
       </div>
 
       <div className="sm:col-span-2">
-        <Button disabled={pending} size="lg">
+        <Button type="submit" disabled={pending} size="lg">
           {pending ? "Criando viagem..." : "Criar viagem"}
         </Button>
       </div>
