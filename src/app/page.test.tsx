@@ -20,11 +20,26 @@ describe("Home", () => {
   it("links visitors to the authentication flows", () => {
     render(<Home />);
 
+    const signUpLinks = screen.getAllByRole("link", { name: /create account/i });
+    const signInLinks = screen.getAllByRole("link", { name: /sign in/i });
+
+    expect(signUpLinks.length).toBeGreaterThan(0);
+    expect(signInLinks.length).toBeGreaterThan(0);
     expect(
-      screen.getByRole("link", { name: /create account/i }).getAttribute("href"),
-    ).toBe("/auth/sign-up");
+      signUpLinks.every((link) => link.getAttribute("href") === "/auth/sign-up"),
+    ).toBe(true);
     expect(
-      screen.getByRole("link", { name: /sign in/i }).getAttribute("href"),
-    ).toBe("/auth/sign-in");
+      signInLinks.every((link) => link.getAttribute("href") === "/auth/sign-in"),
+    ).toBe(true);
+  });
+
+  it("summarizes the planning features", () => {
+    render(<Home />);
+
+    for (const feature of ["Itinerary", "Tasks", "Expenses", "Collaboration"]) {
+      expect(
+        screen.getByRole("heading", { level: 2, name: feature }),
+      ).toBeDefined();
+    }
   });
 });

@@ -1,4 +1,12 @@
 import { AuthShell } from "@/components/auth/auth-shell";
+import { Button } from "@/components/ui/button";
+import {
+  Field,
+  FieldDescription,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
 import { signUp } from "@/features/auth/actions";
 import { getAuthMessage } from "@/features/auth/messages";
 
@@ -18,53 +26,61 @@ export default async function SignUpPage({ searchParams }: SignUpPageProps) {
       alternateLabel="Sign in"
       error={getAuthMessage(params.error)}
     >
-      <form action={signUp} className="space-y-5">
-        <label className="block text-sm font-medium text-slate-800">
-          Name
-          <input
-            required
-            autoComplete="name"
-            minLength={2}
-            name="displayName"
-            className="mt-2 w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-sky-600 focus:ring-2 focus:ring-sky-100"
-          />
-        </label>
-        <label className="block text-sm font-medium text-slate-800">
-          Email
-          <input
-            required
-            autoComplete="email"
-            name="email"
-            type="email"
-            className="mt-2 w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-sky-600 focus:ring-2 focus:ring-sky-100"
-          />
-        </label>
-        <label className="block text-sm font-medium text-slate-800">
-          Password
-          <input
-            required
-            autoComplete="new-password"
-            minLength={8}
-            name="password"
-            type="password"
-            className="mt-2 w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-sky-600 focus:ring-2 focus:ring-sky-100"
-          />
-          <span className="mt-1 block text-xs text-slate-500">At least eight characters.</span>
-        </label>
-        <label className="block text-sm font-medium text-slate-800">
-          Confirm password
-          <input
-            required
-            autoComplete="new-password"
-            minLength={8}
-            name="passwordConfirmation"
-            type="password"
-            className="mt-2 w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-sky-600 focus:ring-2 focus:ring-sky-100"
-          />
-        </label>
-        <button className="w-full rounded-xl bg-sky-700 px-4 py-3 font-semibold text-white hover:bg-sky-800">
-          Create account
-        </button>
+      <form action={signUp}>
+        <FieldGroup>
+          <Field>
+            <FieldLabel htmlFor="displayName">Name</FieldLabel>
+            <Input
+              required
+              autoComplete="name"
+              id="displayName"
+              minLength={2}
+              name="displayName"
+              className="h-11"
+            />
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="email">Email</FieldLabel>
+            <Input
+              required
+              autoComplete="email"
+              id="email"
+              name="email"
+              type="email"
+              className="h-11"
+            />
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="password">Password</FieldLabel>
+            <Input
+              required
+              autoComplete="new-password"
+              id="password"
+              minLength={8}
+              name="password"
+              type="password"
+              className="h-11"
+            />
+            <FieldDescription>At least eight characters.</FieldDescription>
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="passwordConfirmation">
+              Confirm password
+            </FieldLabel>
+            <Input
+              required
+              autoComplete="new-password"
+              id="passwordConfirmation"
+              minLength={8}
+              name="passwordConfirmation"
+              type="password"
+              className="h-11"
+            />
+          </Field>
+          <Button size="lg" className="h-11 w-full text-base font-semibold">
+            Create account
+          </Button>
+        </FieldGroup>
       </form>
     </AuthShell>
   );

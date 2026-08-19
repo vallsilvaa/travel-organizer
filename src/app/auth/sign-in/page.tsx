@@ -1,4 +1,7 @@
 import { AuthShell } from "@/components/auth/auth-shell";
+import { Button } from "@/components/ui/button";
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
 import { signIn } from "@/features/auth/actions";
 import { getAuthMessage } from "@/features/auth/messages";
 
@@ -19,30 +22,34 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
       error={getAuthMessage(params.error)}
       message={getAuthMessage(params.message)}
     >
-      <form action={signIn} className="space-y-5">
-        <label className="block text-sm font-medium text-slate-800">
-          Email
-          <input
-            required
-            autoComplete="email"
-            name="email"
-            type="email"
-            className="mt-2 w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-sky-600 focus:ring-2 focus:ring-sky-100"
-          />
-        </label>
-        <label className="block text-sm font-medium text-slate-800">
-          Password
-          <input
-            required
-            autoComplete="current-password"
-            name="password"
-            type="password"
-            className="mt-2 w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-sky-600 focus:ring-2 focus:ring-sky-100"
-          />
-        </label>
-        <button className="w-full rounded-xl bg-sky-700 px-4 py-3 font-semibold text-white hover:bg-sky-800">
-          Sign in
-        </button>
+      <form action={signIn}>
+        <FieldGroup>
+          <Field>
+            <FieldLabel htmlFor="email">Email</FieldLabel>
+            <Input
+              required
+              autoComplete="email"
+              id="email"
+              name="email"
+              type="email"
+              className="h-11"
+            />
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="password">Password</FieldLabel>
+            <Input
+              required
+              autoComplete="current-password"
+              id="password"
+              name="password"
+              type="password"
+              className="h-11"
+            />
+          </Field>
+          <Button size="lg" className="h-11 w-full text-base font-semibold">
+            Sign in
+          </Button>
+        </FieldGroup>
       </form>
     </AuthShell>
   );
