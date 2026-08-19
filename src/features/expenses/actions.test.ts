@@ -100,7 +100,7 @@ describe("expense actions", () => {
     const result = await createExpense({}, formData);
 
     expect(result.errors?.amount).toBe(
-      "Enter an amount greater than zero with up to two decimals.",
+      "Informe um valor maior que zero com até duas casas decimais.",
     );
     expect(mocks.createClient).not.toHaveBeenCalled();
   });

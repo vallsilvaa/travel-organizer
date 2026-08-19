@@ -14,24 +14,24 @@ export default async function SignUpPage({ searchParams }: SignUpPageProps) {
 
   return (
     <AuthShell
-      title="Create your account"
-      description="Your trips, tasks, comments, and expenses stay private to invited participants."
-      alternateText="Already have an account?"
+      title="Crie sua conta"
+      description="Suas viagens, tarefas, comentários e despesas permanecem privados para os participantes convidados."
+      alternateText="Já tem uma conta?"
       alternateHref="/auth/sign-in"
-      alternateLabel="Sign in"
+      alternateLabel="Entrar"
       error={getAuthMessage(params.error)}
     >
       <form action={signUp} className="space-y-5">
         <div className="space-y-2">
-          <Label htmlFor="displayName">Name</Label>
+          <Label htmlFor="displayName">Nome</Label>
           <Input required autoComplete="name" minLength={2} id="displayName" name="displayName" />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor="email">E-mail</Label>
           <Input required autoComplete="email" id="email" name="email" type="email" />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="password">Password</Label>
+          <Label htmlFor="password">Senha</Label>
           <Input
             required
             autoComplete="new-password"
@@ -40,10 +40,10 @@ export default async function SignUpPage({ searchParams }: SignUpPageProps) {
             name="password"
             type="password"
           />
-          <p className="text-xs text-muted-foreground">At least eight characters.</p>
+          <p className="text-xs text-muted-foreground">Pelo menos oito caracteres.</p>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="passwordConfirmation">Confirm password</Label>
+          <Label htmlFor="passwordConfirmation">Confirmar senha</Label>
           <Input
             required
             autoComplete="new-password"
@@ -54,7 +54,7 @@ export default async function SignUpPage({ searchParams }: SignUpPageProps) {
           />
         </div>
         <Button className="w-full" size="lg">
-          Create account
+          Criar conta
         </Button>
       </form>
     </AuthShell>

@@ -23,10 +23,10 @@ export async function inviteOrganizer(
   const email = normalizeInvitationEmail(formData.get("email"));
 
   if (!isValidInvitationId(tripId)) {
-    return { error: "The trip could not be identified." };
+    return { error: "Não foi possível identificar a viagem." };
   }
   if (!isValidInvitationEmail(email)) {
-    return { error: "Enter a valid email address." };
+    return { error: "Informe um e-mail válido." };
   }
 
   const supabase = await createClient();
@@ -38,7 +38,7 @@ export async function inviteOrganizer(
     redirect("/auth/sign-in?error=authentication_required");
   }
   if (user.email?.toLowerCase() === email) {
-    return { error: "You already have access to this trip." };
+    return { error: "Você já tem acesso a esta viagem." };
   }
 
   const { data: trip, error: tripError } = await supabase
@@ -49,7 +49,7 @@ export async function inviteOrganizer(
     .single();
 
   if (tripError || !trip) {
-    return { error: "Only the traveler who created the trip can send invitations." };
+    return { error: "Somente quem criou a viagem pode enviar convites." };
   }
 
   const { error } = await supabase.from("trip_invitations").insert({
@@ -64,13 +64,13 @@ export async function inviteOrganizer(
     return {
       error:
         error.code === "23505"
-          ? "A pending invitation already exists for this email."
-          : "We could not create the invitation. Try again.",
+          ? "Já existe um convite pendente para este e-mail."
+          : "Não foi possível criar o convite. Tente novamente.",
     };
   }
 
   revalidatePath(`/trips/${tripId}`);
-  return { message: `Invitation sent to ${email}.` };
+  return { message: `Convite enviado para ${email}.` };
 }
 
 export async function respondToInvitation(formData: FormData) {

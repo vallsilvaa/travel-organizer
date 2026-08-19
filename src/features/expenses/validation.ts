@@ -14,6 +14,15 @@ export const expenseCategories = [
 ] as const;
 
 export type ExpenseCategory = (typeof expenseCategories)[number];
+
+export const expenseCategoryLabels: Record<ExpenseCategory, string> = {
+  transport: "Transporte",
+  lodging: "Hospedagem",
+  food: "Alimentação",
+  activities: "Atividades",
+  shopping: "Compras",
+  other: "Outro",
+};
 export type ExpenseFieldErrors = Partial<
   Record<"description" | "amount" | "currency" | "category" | "date" | "payer", string>
 >;
@@ -32,22 +41,22 @@ export function validateExpenseInput(formData: FormData) {
   const errors: ExpenseFieldErrors = {};
 
   if (!description || description.length > 200) {
-    errors.description = "Enter a description with up to 200 characters.";
+    errors.description = "Informe uma descrição com até 200 caracteres.";
   }
   if (!amountPattern.test(rawAmount) || Number(rawAmount) <= 0) {
-    errors.amount = "Enter an amount greater than zero with up to two decimals.";
+    errors.amount = "Informe um valor maior que zero com até duas casas decimais.";
   }
   if (!currencyPattern.test(currency)) {
-    errors.currency = "Enter a three-letter currency code, such as BRL or USD.";
+    errors.currency = "Informe um código de moeda de três letras, como BRL ou USD.";
   }
   if (!expenseCategories.includes(category as ExpenseCategory)) {
-    errors.category = "Choose a valid category.";
+    errors.category = "Escolha uma categoria válida.";
   }
   if (!datePattern.test(date) || Number.isNaN(Date.parse(`${date}T00:00:00Z`))) {
-    errors.date = "Enter a valid expense date.";
+    errors.date = "Informe uma data de despesa válida.";
   }
   if (!isValidExpenseId(payerId)) {
-    errors.payer = "Choose a valid payer.";
+    errors.payer = "Escolha um pagador válido.";
   }
 
   return Object.keys(errors).length

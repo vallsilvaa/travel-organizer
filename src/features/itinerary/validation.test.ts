@@ -51,8 +51,8 @@ describe("validateItineraryInput", () => {
 
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.errors.date).toBe("Enter a valid date.");
-      expect(result.errors.title).toBe("Enter a title with up to 200 characters.");
+      expect(result.errors.date).toBe("Informe uma data válida.");
+      expect(result.errors.title).toBe("Informe um título com até 200 caracteres.");
     }
   });
 });

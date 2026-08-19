@@ -32,12 +32,12 @@ type ItemActionsMenuProps = {
 
 export function ItemActionsMenu({
   editForm,
-  editLabel = "Edit",
+  editLabel = "Editar",
   deleteAction,
   deleteHiddenFields,
   deleteTitle,
   deleteDescription,
-  deleteLabel = "Delete",
+  deleteLabel = "Excluir",
 }: ItemActionsMenuProps) {
   const formId = useId();
   const [editOpen, setEditOpen] = useState(false);
@@ -50,11 +50,11 @@ export function ItemActionsMenu({
           render={<Button type="button" variant="ghost" size="icon-sm" />}
         >
           <EllipsisIcon className="size-4" />
-          <span className="sr-only">Item actions</span>
+          <span className="sr-only">Ações do item</span>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem onClick={() => setEditOpen((open) => !open)}>
-            {editOpen ? `Hide ${editLabel.toLowerCase()}` : editLabel}
+            {editOpen ? "Ocultar formulário" : editLabel}
           </DropdownMenuItem>
           <DropdownMenuItem variant="destructive" onClick={() => setDeleteOpen(true)}>
             {deleteLabel}
@@ -77,7 +77,7 @@ export function ItemActionsMenu({
           </DialogHeader>
           <DialogFooter>
             <DialogClose render={<Button type="button" variant="outline" />}>
-              Cancel
+              Cancelar
             </DialogClose>
             <Button type="submit" form={formId} variant="destructive">
               {deleteLabel}

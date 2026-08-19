@@ -35,7 +35,7 @@ export async function createExpense(
   const validation = validateExpenseInput(formData);
 
   if (!isValidExpenseId(tripId)) {
-    return { message: "The trip could not be identified." };
+    return { message: "Não foi possível identificar a viagem." };
   }
   if (!validation.success) {
     return { errors: validation.errors };
@@ -54,7 +54,7 @@ export async function createExpense(
   });
 
   if (error) {
-    return { message: "We could not add this expense. Check the payer and your trip access." };
+    return { message: "Não foi possível adicionar esta despesa. Verifique o pagador e seu acesso à viagem." };
   }
 
   revalidatePath(`/trips/${tripId}`);
@@ -70,7 +70,7 @@ export async function updateExpense(
   const validation = validateExpenseInput(formData);
 
   if (!isValidExpenseId(tripId) || !isValidExpenseId(expenseId)) {
-    return { message: "The expense could not be identified." };
+    return { message: "Não foi possível identificar a despesa." };
   }
   if (!validation.success) {
     return { errors: validation.errors };
@@ -92,7 +92,7 @@ export async function updateExpense(
     .eq("trip_id", tripId);
 
   if (error) {
-    return { message: "We could not update this expense. Try again." };
+    return { message: "Não foi possível atualizar esta despesa. Tente novamente." };
   }
 
   revalidatePath(`/trips/${tripId}`);

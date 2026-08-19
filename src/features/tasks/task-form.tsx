@@ -44,7 +44,7 @@ export function TaskForm({ participants, task, tripId }: TaskFormProps) {
 
   useEffect(() => {
     if (state.success) {
-      toast.success(task ? "Task updated." : "Task added.");
+      toast.success(task ? "Tarefa atualizada." : "Tarefa adicionada.");
     } else if (state.message) {
       toast.error(state.message);
     }
@@ -55,27 +55,27 @@ export function TaskForm({ participants, task, tripId }: TaskFormProps) {
       <input type="hidden" name="tripId" value={tripId} />
       {task ? <input type="hidden" name="taskId" value={task.id} /> : null}
       <div className="space-y-2 sm:col-span-2">
-        <Label htmlFor="title">Task</Label>
+        <Label htmlFor="title">Tarefa</Label>
         <Input
           required
           maxLength={200}
           id="title"
           name="title"
           defaultValue={task?.title}
-          placeholder="Book airport transfer"
+          placeholder="Reservar transporte do aeroporto"
         />
         {state.errors?.title ? <p className="text-sm text-destructive">{state.errors.title}</p> : null}
       </div>
       <div className="space-y-2">
         <Label htmlFor="ownerId">
-          Owner <span className="font-normal text-muted-foreground">(optional)</span>
+          Responsável <span className="font-normal text-muted-foreground">(opcional)</span>
         </Label>
         <Select name="ownerId" defaultValue={task?.owner_id ?? ""}>
           <SelectTrigger id="ownerId" className="w-full">
-            <SelectValue placeholder="Unassigned" />
+            <SelectValue placeholder="Sem responsável" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Unassigned</SelectItem>
+            <SelectItem value="">Sem responsável</SelectItem>
             {participants.map((participant) => (
               <SelectItem key={participant.user_id} value={participant.user_id}>
                 {participant.display_name} ({participant.role})
@@ -86,7 +86,7 @@ export function TaskForm({ participants, task, tripId }: TaskFormProps) {
         {state.errors?.owner ? <p className="text-sm text-destructive">{state.errors.owner}</p> : null}
       </div>
       <div className="space-y-2">
-        <Label htmlFor="category">Category</Label>
+        <Label htmlFor="category">Categoria</Label>
         <Select name="category" defaultValue={task?.category ?? "other"}>
           <SelectTrigger id="category" className="w-full">
             <SelectValue />
@@ -101,24 +101,24 @@ export function TaskForm({ participants, task, tripId }: TaskFormProps) {
       </div>
       <label className="flex items-center gap-3 rounded-xl border px-4 py-3 text-sm font-medium">
         <input name="isCritical" type="checkbox" defaultChecked={task?.is_critical} className="size-4 accent-primary" />
-        Critical before departure
+        Crítica antes da partida
       </label>
       <div className="space-y-2">
         <Label htmlFor="referenceLabel">
-          Reference label <span className="font-normal text-muted-foreground">(optional)</span>
+          Rótulo de referência <span className="font-normal text-muted-foreground">(opcional)</span>
         </Label>
         <Input
           maxLength={100}
           id="referenceLabel"
           name="referenceLabel"
           defaultValue={task?.reference_label ?? ""}
-          placeholder="Insurance policy"
+          placeholder="Apólice de seguro"
         />
         {state.errors?.referenceLabel ? <p className="text-sm text-destructive">{state.errors.referenceLabel}</p> : null}
       </div>
       <div className="space-y-2">
         <Label htmlFor="referenceUrl">
-          Secure reference URL <span className="font-normal text-muted-foreground">(optional)</span>
+          URL segura de referência <span className="font-normal text-muted-foreground">(opcional)</span>
         </Label>
         <Input
           maxLength={500}
@@ -133,13 +133,13 @@ export function TaskForm({ participants, task, tripId }: TaskFormProps) {
       </div>
       <div className="space-y-2">
         <Label htmlFor="dueDate">
-          Due date <span className="font-normal text-muted-foreground">(optional)</span>
+          Data limite <span className="font-normal text-muted-foreground">(opcional)</span>
         </Label>
         <Input id="dueDate" name="dueDate" type="date" defaultValue={task?.due_date ?? ""} />
         {state.errors?.dueDate ? <p className="text-sm text-destructive">{state.errors.dueDate}</p> : null}
       </div>
       <Button disabled={pending} size="lg" className="sm:col-span-2 sm:justify-self-start">
-        {pending ? "Saving..." : task ? "Save changes" : "Add task"}
+        {pending ? "Salvando..." : task ? "Salvar alterações" : "Adicionar tarefa"}
       </Button>
     </form>
   );

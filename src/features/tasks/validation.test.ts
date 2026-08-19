@@ -63,8 +63,8 @@ describe("validateTaskInput", () => {
 
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.errors.owner).toBe("Choose a valid task owner.");
-      expect(result.errors.dueDate).toBe("Enter a valid due date.");
+      expect(result.errors.owner).toBe("Escolha um responsável válido.");
+      expect(result.errors.dueDate).toBe("Informe uma data limite válida.");
     }
   });
 
@@ -77,7 +77,7 @@ describe("validateTaskInput", () => {
 
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.errors.category).toBe("Choose a valid preparation category.");
+      expect(result.errors.category).toBe("Escolha uma categoria de preparação válida.");
       expect(result.errors.referenceUrl).toContain("HTTPS");
     }
   });

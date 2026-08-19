@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/select";
 
 import { createExpense, updateExpense, type ExpenseActionState } from "./actions";
-import { expenseCategories } from "./validation";
+import { expenseCategories, expenseCategoryLabels } from "./validation";
 
 type Participant = { user_id: string; display_name: string; role: string };
 
@@ -43,7 +43,7 @@ export function ExpenseForm({ expense, participants, tripId }: ExpenseFormProps)
 
   useEffect(() => {
     if (state.success) {
-      toast.success(expense ? "Expense updated." : "Expense added.");
+      toast.success(expense ? "Despesa atualizada." : "Despesa adicionada.");
     } else if (state.message) {
       toast.error(state.message);
     }
@@ -54,19 +54,19 @@ export function ExpenseForm({ expense, participants, tripId }: ExpenseFormProps)
       <input type="hidden" name="tripId" value={tripId} />
       {expense ? <input type="hidden" name="expenseId" value={expense.id} /> : null}
       <div className="space-y-2 sm:col-span-2">
-        <Label htmlFor="description">Description</Label>
+        <Label htmlFor="description">Descrição</Label>
         <Input
           required
           maxLength={200}
           id="description"
           name="description"
           defaultValue={expense?.description}
-          placeholder="Dinner reservation"
+          placeholder="Reserva de jantar"
         />
         {state.errors?.description ? <p className="text-sm text-destructive">{state.errors.description}</p> : null}
       </div>
       <div className="space-y-2">
-        <Label htmlFor="amount">Amount</Label>
+        <Label htmlFor="amount">Valor</Label>
         <Input
           required
           min="0.01"
@@ -81,7 +81,7 @@ export function ExpenseForm({ expense, participants, tripId }: ExpenseFormProps)
         {state.errors?.amount ? <p className="text-sm text-destructive">{state.errors.amount}</p> : null}
       </div>
       <div className="space-y-2">
-        <Label htmlFor="currency">Currency</Label>
+        <Label htmlFor="currency">Moeda</Label>
         <Input
           required
           minLength={3}
@@ -95,29 +95,29 @@ export function ExpenseForm({ expense, participants, tripId }: ExpenseFormProps)
         {state.errors?.currency ? <p className="text-sm text-destructive">{state.errors.currency}</p> : null}
       </div>
       <div className="space-y-2">
-        <Label htmlFor="category">Category</Label>
+        <Label htmlFor="category">Categoria</Label>
         <Select required name="category" defaultValue={expense?.category ?? "other"}>
           <SelectTrigger id="category" className="w-full">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
             {expenseCategories.map((category) => (
-              <SelectItem key={category} value={category}>{category[0].toUpperCase() + category.slice(1)}</SelectItem>
+              <SelectItem key={category} value={category}>{expenseCategoryLabels[category]}</SelectItem>
             ))}
           </SelectContent>
         </Select>
         {state.errors?.category ? <p className="text-sm text-destructive">{state.errors.category}</p> : null}
       </div>
       <div className="space-y-2">
-        <Label htmlFor="date">Date</Label>
+        <Label htmlFor="date">Data</Label>
         <Input required id="date" name="date" type="date" defaultValue={expense?.expense_date} />
         {state.errors?.date ? <p className="text-sm text-destructive">{state.errors.date}</p> : null}
       </div>
       <div className="space-y-2 sm:col-span-2">
-        <Label htmlFor="payerId">Payer</Label>
+        <Label htmlFor="payerId">Pagador</Label>
         <Select required name="payerId" defaultValue={expense?.payer_id}>
           <SelectTrigger id="payerId" className="w-full">
-            <SelectValue placeholder="Choose a participant" />
+            <SelectValue placeholder="Escolha um participante" />
           </SelectTrigger>
           <SelectContent>
             {participants.map((participant) => (
@@ -130,7 +130,7 @@ export function ExpenseForm({ expense, participants, tripId }: ExpenseFormProps)
         {state.errors?.payer ? <p className="text-sm text-destructive">{state.errors.payer}</p> : null}
       </div>
       <Button disabled={pending} size="lg" className="sm:col-span-2 sm:justify-self-start">
-        {pending ? "Saving..." : expense ? "Save changes" : "Add expense"}
+        {pending ? "Salvando..." : expense ? "Salvar alterações" : "Adicionar despesa"}
       </Button>
     </form>
   );

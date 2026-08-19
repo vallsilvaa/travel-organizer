@@ -23,19 +23,19 @@ export function validateTripInput(formData: FormData) {
   const errors: TripFieldErrors = {};
 
   if (!destination) {
-    errors.destination = "Destination is required.";
+    errors.destination = "O destino é obrigatório.";
   } else if (destination.length > 200) {
-    errors.destination = "Destination must be 200 characters or fewer.";
+    errors.destination = "O destino deve ter no máximo 200 caracteres.";
   }
 
   if (!isIsoDate(startDate)) {
-    errors.startDate = "Enter a valid start date.";
+    errors.startDate = "Informe uma data de início válida.";
   }
 
   if (endDate && !isIsoDate(endDate)) {
-    errors.endDate = "Enter a valid end date.";
+    errors.endDate = "Informe uma data de término válida.";
   } else if (endDate && isIsoDate(startDate) && endDate < startDate) {
-    errors.endDate = "End date cannot be earlier than start date.";
+    errors.endDate = "A data de término não pode ser anterior à data de início.";
   }
 
   return {

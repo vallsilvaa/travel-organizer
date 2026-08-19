@@ -35,19 +35,19 @@ export function validateItineraryInput(formData: FormData):
   const errors: ItineraryFieldErrors = {};
 
   if (!datePattern.test(date) || Number.isNaN(Date.parse(`${date}T00:00:00Z`))) {
-    errors.date = "Enter a valid date.";
+    errors.date = "Informe uma data válida.";
   }
   if (time && !timePattern.test(time)) {
-    errors.time = "Enter a valid time.";
+    errors.time = "Informe um horário válido.";
   }
   if (!title || title.length > 200) {
-    errors.title = "Enter a title with up to 200 characters.";
+    errors.title = "Informe um título com até 200 caracteres.";
   }
   if (location && location.length > 200) {
-    errors.location = "Location must have up to 200 characters.";
+    errors.location = "O local deve ter até 200 caracteres.";
   }
   if (notes && notes.length > 2000) {
-    errors.notes = "Notes must have up to 2,000 characters.";
+    errors.notes = "As notas devem ter até 2.000 caracteres.";
   }
 
   return Object.keys(errors).length

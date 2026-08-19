@@ -98,7 +98,7 @@ describe("comment actions", () => {
 
     const result = await createComment({}, formData);
 
-    expect(result.error).toBe("Enter a comment with up to 2,000 characters.");
+    expect(result.error).toBe("Informe um comentário com até 2.000 caracteres.");
     expect(mocks.createClient).not.toHaveBeenCalled();
   });
 });

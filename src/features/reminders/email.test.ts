@@ -20,8 +20,8 @@ describe("task reminder email", () => {
     });
 
     expect(message.subject).toContain("Lisbon");
-    expect(message.text).toContain("Task: Book train tickets");
-    expect(message.text).toContain("Deadline: 2026-08-21");
+    expect(message.text).toContain("Tarefa: Book train tickets");
+    expect(message.text).toContain("Prazo: 2026-08-21");
     expect(message.text).toContain(
       "https://travel.example.com/trips/27823996-ec50-4cc2-8506-a29d07b86f94",
     );

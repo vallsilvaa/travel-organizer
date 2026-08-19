@@ -22,7 +22,7 @@ type CommentThreadProps = {
 };
 
 function formatCommentTime(value: string) {
-  return new Intl.DateTimeFormat("en", {
+  return new Intl.DateTimeFormat("pt-BR", {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(new Date(value));
@@ -39,7 +39,7 @@ export function CommentThread({
   return (
     <section className="mt-4 border-t border-slate-200 pt-4">
       <h4 className="text-sm font-semibold text-slate-800">
-        Comments {comments.length ? `(${comments.length})` : ""}
+        Comentários {comments.length ? `(${comments.length})` : ""}
       </h4>
       {comments.length ? (
         <ol className="mt-3 space-y-3">
@@ -47,25 +47,25 @@ export function CommentThread({
             <li key={comment.id} className="rounded-xl bg-white p-3 text-sm shadow-sm ring-1 ring-slate-200">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <p className="font-semibold text-slate-800">
-                  {participantNames.get(comment.author_id) ?? "Traveler"}
+                  {participantNames.get(comment.author_id) ?? "Viajante"}
                 </p>
                 <time className="text-xs text-slate-500" dateTime={comment.created_at}>
                   {formatCommentTime(comment.created_at)}
-                  {comment.updated_at !== comment.created_at ? " · edited" : ""}
+                  {comment.updated_at !== comment.created_at ? " · editado" : ""}
                 </time>
               </div>
               <p className="mt-2 whitespace-pre-wrap leading-6 text-slate-700">{comment.body}</p>
               {comment.author_id === currentUserId ? (
                 <details className="mt-3">
-                  <summary className="cursor-pointer text-xs font-semibold text-sky-700">Edit</summary>
+                  <summary className="cursor-pointer text-xs font-semibold text-sky-700">Editar</summary>
                   <CommentForm comment={comment} itemId={itemId} itemType={itemType} tripId={tripId} />
                   <div className="mt-2 text-right">
                     <ConfirmDeleteForm
                       action={deleteComment}
                       hiddenFields={{ tripId, commentId: comment.id }}
-                      title="Delete comment?"
-                      description="This will permanently remove this comment from the thread."
-                      triggerLabel="Delete comment"
+                      title="Excluir comentário?"
+                      description="Isso vai remover permanentemente este comentário da conversa."
+                      triggerLabel="Excluir comentário"
                       triggerClassName="h-auto p-0 text-xs text-destructive"
                     />
                   </div>
@@ -75,7 +75,7 @@ export function CommentThread({
           ))}
         </ol>
       ) : (
-        <p className="mt-2 text-xs text-slate-500">No comments yet.</p>
+        <p className="mt-2 text-xs text-slate-500">Nenhum comentário ainda.</p>
       )}
       <CommentForm itemId={itemId} itemType={itemType} tripId={tripId} />
     </section>

@@ -28,7 +28,7 @@ export function ConfirmDeleteForm({
   hiddenFields,
   title,
   description,
-  triggerLabel = "Delete",
+  triggerLabel = "Excluir",
   triggerClassName = "h-auto p-0 text-destructive",
 }: ConfirmDeleteFormProps) {
   const formId = useId();
@@ -54,7 +54,7 @@ export function ConfirmDeleteForm({
           </DialogHeader>
           <DialogFooter>
             <DialogClose render={<Button type="button" variant="outline" />}>
-              Cancel
+              Cancelar
             </DialogClose>
             <Button type="submit" form={formId} variant="destructive">
               {triggerLabel}

@@ -41,7 +41,7 @@ describe("validateExpenseInput", () => {
       expect(result.success).toBe(false);
       if (!result.success) {
         expect(result.errors.amount).toBe(
-          "Enter an amount greater than zero with up to two decimals.",
+          "Informe um valor maior que zero com até duas casas decimais.",
         );
       }
     },
