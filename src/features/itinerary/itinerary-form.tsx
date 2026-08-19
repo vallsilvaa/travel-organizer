@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,6 +31,14 @@ const initialState: ItineraryActionState = {};
 export function ItineraryForm({ item, tripId }: ItineraryFormProps) {
   const action = item ? updateItineraryItem : createItineraryItem;
   const [state, formAction, pending] = useActionState(action, initialState);
+
+  useEffect(() => {
+    if (state.success) {
+      toast.success(item ? "Itinerary item updated." : "Itinerary item added.");
+    } else if (state.message) {
+      toast.error(state.message);
+    }
+  }, [state, item]);
 
   return (
     <form action={formAction} className="grid gap-4 sm:grid-cols-2">
@@ -85,14 +94,6 @@ export function ItineraryForm({ item, tripId }: ItineraryFormProps) {
         />
         {state.errors?.notes ? <p className="text-sm text-destructive">{state.errors.notes}</p> : null}
       </div>
-      {state.message ? (
-        <p role="alert" className="text-sm text-destructive sm:col-span-2">{state.message}</p>
-      ) : null}
-      {state.success ? (
-        <p className="text-sm text-emerald-700 sm:col-span-2">
-          {item ? "Itinerary item updated." : "Itinerary item added."}
-        </p>
-      ) : null}
       <Button disabled={pending} size="lg" className="sm:col-span-2 sm:justify-self-start">
         {pending ? "Saving..." : item ? "Save changes" : "Add to itinerary"}
       </Button>

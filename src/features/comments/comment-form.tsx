@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useRef } from "react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -33,7 +34,12 @@ export function CommentForm({ comment, itemId, itemType, tripId }: CommentFormPr
     if (state.success && !comment) {
       formRef.current?.reset();
     }
-  }, [comment, state.success]);
+    if (state.success) {
+      toast.success(comment ? "Comment updated." : "Comment added.");
+    } else if (state.error) {
+      toast.error(state.error);
+    }
+  }, [comment, state]);
 
   const fieldId = `comment-${comment?.id ?? itemType + itemId}`;
 
@@ -56,11 +62,7 @@ export function CommentForm({ comment, itemId, itemType, tripId }: CommentFormPr
         rows={comment ? 2 : 3}
         className="text-sm"
       />
-      <div className="mt-2 flex items-center justify-between gap-3">
-        <div>
-          {state.error ? <p role="alert" className="text-xs text-destructive">{state.error}</p> : null}
-          {state.success ? <p className="text-xs text-emerald-700">{comment ? "Comment updated." : "Comment added."}</p> : null}
-        </div>
+      <div className="mt-2 flex justify-end">
         <Button disabled={pending} size="sm">
           {pending ? "Saving..." : comment ? "Save" : "Comment"}
         </Button>

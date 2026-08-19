@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,6 +40,14 @@ export function ExpenseForm({ expense, participants, tripId }: ExpenseFormProps)
     expense ? updateExpense : createExpense,
     initialState,
   );
+
+  useEffect(() => {
+    if (state.success) {
+      toast.success(expense ? "Expense updated." : "Expense added.");
+    } else if (state.message) {
+      toast.error(state.message);
+    }
+  }, [state, expense]);
 
   return (
     <form action={formAction} className="grid gap-4 sm:grid-cols-2">
@@ -120,8 +129,6 @@ export function ExpenseForm({ expense, participants, tripId }: ExpenseFormProps)
         </Select>
         {state.errors?.payer ? <p className="text-sm text-destructive">{state.errors.payer}</p> : null}
       </div>
-      {state.message ? <p role="alert" className="text-sm text-destructive sm:col-span-2">{state.message}</p> : null}
-      {state.success ? <p className="text-sm text-emerald-700 sm:col-span-2">{expense ? "Expense updated." : "Expense added."}</p> : null}
       <Button disabled={pending} size="lg" className="sm:col-span-2 sm:justify-self-start">
         {pending ? "Saving..." : expense ? "Save changes" : "Add expense"}
       </Button>
