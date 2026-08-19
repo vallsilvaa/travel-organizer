@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+import { ConfirmDeleteForm } from "@/components/confirm-delete-form";
 
 import { deleteComment } from "./actions";
 import { CommentForm } from "./comment-form";
@@ -59,11 +59,16 @@ export function CommentThread({
                 <details className="mt-3">
                   <summary className="cursor-pointer text-xs font-semibold text-sky-700">Edit</summary>
                   <CommentForm comment={comment} itemId={itemId} itemType={itemType} tripId={tripId} />
-                  <form action={deleteComment} className="mt-2 text-right">
-                    <input type="hidden" name="tripId" value={tripId} />
-                    <input type="hidden" name="commentId" value={comment.id} />
-                    <Button variant="link" className="h-auto p-0 text-xs text-destructive">Delete comment</Button>
-                  </form>
+                  <div className="mt-2 text-right">
+                    <ConfirmDeleteForm
+                      action={deleteComment}
+                      hiddenFields={{ tripId, commentId: comment.id }}
+                      title="Delete comment?"
+                      description="This will permanently remove this comment from the thread."
+                      triggerLabel="Delete comment"
+                      triggerClassName="h-auto p-0 text-xs text-destructive"
+                    />
+                  </div>
                 </details>
               ) : null}
             </li>
