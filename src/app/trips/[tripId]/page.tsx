@@ -20,7 +20,7 @@ import {
 } from "@/features/tasks/templates";
 import { createClient } from "@/lib/supabase/server";
 import { Badge } from "@/components/ui/badge";
-import { ConfirmDeleteForm } from "@/components/confirm-delete-form";
+import { ItemActionsMenu } from "@/components/item-actions-menu";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -297,21 +297,15 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                         {item.location ? <p className="mt-1 text-sm text-slate-600">{item.location}</p> : null}
                         {item.notes ? <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-slate-600">{item.notes}</p> : null}
                       </div>
-                      <ConfirmDeleteForm
-                        action={deleteItineraryItem}
-                        hiddenFields={{ tripId: trip.id, itemId: item.id }}
-                        title="Delete itinerary item?"
-                        description={`This will permanently remove "${item.title}" from the itinerary.`}
+                      <ItemActionsMenu
+                        editLabel="Edit item"
+                        editForm={<ItineraryForm item={item} tripId={trip.id} />}
+                        deleteAction={deleteItineraryItem}
+                        deleteHiddenFields={{ tripId: trip.id, itemId: item.id }}
+                        deleteTitle="Delete itinerary item?"
+                        deleteDescription={`This will permanently remove "${item.title}" from the itinerary.`}
                       />
                     </div>
-                    <details className="mt-4 border-t border-slate-200 pt-4">
-                      <summary className="cursor-pointer text-sm font-semibold text-sky-700">
-                        Edit item
-                      </summary>
-                      <div className="mt-4">
-                        <ItineraryForm item={item} tripId={trip.id} />
-                      </div>
-                    </details>
                     <CommentThread
                       comments={commentsFor("itinerary", item.id)}
                       currentUserId={user.id}
@@ -376,19 +370,15 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                           Paid by {participantNames.get(expense.payer_id) ?? "Traveler"} · {formatDate(expense.expense_date)}
                         </p>
                       </div>
-                      <ConfirmDeleteForm
-                        action={deleteExpense}
-                        hiddenFields={{ tripId: trip.id, expenseId: expense.id }}
-                        title="Delete expense?"
-                        description={`This will permanently remove "${expense.description}" and its total from your currency breakdown.`}
+                      <ItemActionsMenu
+                        editLabel="Edit expense"
+                        editForm={<ExpenseForm expense={expense} participants={tripParticipants} tripId={trip.id} />}
+                        deleteAction={deleteExpense}
+                        deleteHiddenFields={{ tripId: trip.id, expenseId: expense.id }}
+                        deleteTitle="Delete expense?"
+                        deleteDescription={`This will permanently remove "${expense.description}" and its total from your currency breakdown.`}
                       />
                     </div>
-                    <details className="mt-4 border-t border-slate-200 pt-4">
-                      <summary className="cursor-pointer text-sm font-semibold text-sky-700">Edit expense</summary>
-                      <div className="mt-4">
-                        <ExpenseForm expense={expense} participants={tripParticipants} tripId={trip.id} />
-                      </div>
-                    </details>
                   </li>
                 ))}
               </ul>
@@ -519,26 +509,24 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                                   </a>
                                 ) : null}
                               </div>
-                              <form action={setTaskCompletion}>
-                                <input type="hidden" name="tripId" value={trip.id} />
-                                <input type="hidden" name="taskId" value={task.id} />
-                                <input type="hidden" name="completed" value={task.completed_at ? "false" : "true"} />
-                                <Button variant="outline" size="sm">{task.completed_at ? "Reopen" : "Complete"}</Button>
-                              </form>
-                            </div>
-                            <details className="mt-4 border-t border-slate-200 pt-4">
-                              <summary className="cursor-pointer text-sm font-semibold text-sky-700">Edit or remove</summary>
-                              <div className="mt-4"><TaskForm participants={tripParticipants} task={task} tripId={trip.id} /></div>
-                              <div className="mt-4">
-                                <ConfirmDeleteForm
-                                  action={deleteTask}
-                                  hiddenFields={{ tripId: trip.id, taskId: task.id }}
-                                  title="Remove this preparation task?"
-                                  description={`This will permanently remove "${task.title}" from your preparation checklist.`}
-                                  triggerLabel="Remove this preparation task"
+                              <div className="flex items-center gap-2">
+                                <form action={setTaskCompletion}>
+                                  <input type="hidden" name="tripId" value={trip.id} />
+                                  <input type="hidden" name="taskId" value={task.id} />
+                                  <input type="hidden" name="completed" value={task.completed_at ? "false" : "true"} />
+                                  <Button variant="outline" size="sm">{task.completed_at ? "Reopen" : "Complete"}</Button>
+                                </form>
+                                <ItemActionsMenu
+                                  editLabel="Edit task"
+                                  editForm={<TaskForm participants={tripParticipants} task={task} tripId={trip.id} />}
+                                  deleteAction={deleteTask}
+                                  deleteHiddenFields={{ tripId: trip.id, taskId: task.id }}
+                                  deleteTitle="Remove this preparation task?"
+                                  deleteDescription={`This will permanently remove "${task.title}" from your preparation checklist.`}
+                                  deleteLabel="Remove"
                                 />
                               </div>
-                            </details>
+                            </div>
                             <CommentThread comments={commentsFor("task", task.id)} currentUserId={user.id} itemId={task.id} itemType="task" participantNames={participantNames} tripId={trip.id} />
                           </li>
                         );
