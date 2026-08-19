@@ -5,6 +5,13 @@ import { useActionState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 import { createTask, updateTask, type TaskActionState } from "./actions";
 import { taskCategories, taskCategoryLabels, type TaskCategory } from "./templates";
@@ -54,33 +61,33 @@ export function TaskForm({ participants, task, tripId }: TaskFormProps) {
         <Label htmlFor="ownerId">
           Owner <span className="font-normal text-muted-foreground">(optional)</span>
         </Label>
-        <select
-          id="ownerId"
-          name="ownerId"
-          defaultValue={task?.owner_id ?? ""}
-          className="border-input flex h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
-        >
-          <option value="">Unassigned</option>
-          {participants.map((participant) => (
-            <option key={participant.user_id} value={participant.user_id}>
-              {participant.display_name} ({participant.role})
-            </option>
-          ))}
-        </select>
+        <Select name="ownerId" defaultValue={task?.owner_id ?? ""}>
+          <SelectTrigger id="ownerId" className="w-full">
+            <SelectValue placeholder="Unassigned" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="">Unassigned</SelectItem>
+            {participants.map((participant) => (
+              <SelectItem key={participant.user_id} value={participant.user_id}>
+                {participant.display_name} ({participant.role})
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         {state.errors?.owner ? <p className="text-sm text-destructive">{state.errors.owner}</p> : null}
       </div>
       <div className="space-y-2">
         <Label htmlFor="category">Category</Label>
-        <select
-          id="category"
-          name="category"
-          defaultValue={task?.category ?? "other"}
-          className="border-input flex h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
-        >
-          {taskCategories.map((category) => (
-            <option key={category} value={category}>{taskCategoryLabels[category]}</option>
-          ))}
-        </select>
+        <Select name="category" defaultValue={task?.category ?? "other"}>
+          <SelectTrigger id="category" className="w-full">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {taskCategories.map((category) => (
+              <SelectItem key={category} value={category}>{taskCategoryLabels[category]}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         {state.errors?.category ? <p className="text-sm text-destructive">{state.errors.category}</p> : null}
       </div>
       <label className="flex items-center gap-3 rounded-xl border px-4 py-3 text-sm font-medium">

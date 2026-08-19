@@ -5,6 +5,13 @@ import { useActionState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 import { createExpense, updateExpense, type ExpenseActionState } from "./actions";
 import { expenseCategories } from "./validation";
@@ -26,9 +33,6 @@ type ExpenseFormProps = {
 };
 
 const initialState: ExpenseActionState = {};
-
-const selectClassName =
-  "border-input flex h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]";
 
 export function ExpenseForm({ expense, participants, tripId }: ExpenseFormProps) {
   const [state, formAction, pending] = useActionState(
@@ -83,17 +87,16 @@ export function ExpenseForm({ expense, participants, tripId }: ExpenseFormProps)
       </div>
       <div className="space-y-2">
         <Label htmlFor="category">Category</Label>
-        <select
-          required
-          id="category"
-          name="category"
-          defaultValue={expense?.category ?? "other"}
-          className={selectClassName}
-        >
-          {expenseCategories.map((category) => (
-            <option key={category} value={category}>{category[0].toUpperCase() + category.slice(1)}</option>
-          ))}
-        </select>
+        <Select required name="category" defaultValue={expense?.category ?? "other"}>
+          <SelectTrigger id="category" className="w-full">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {expenseCategories.map((category) => (
+              <SelectItem key={category} value={category}>{category[0].toUpperCase() + category.slice(1)}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         {state.errors?.category ? <p className="text-sm text-destructive">{state.errors.category}</p> : null}
       </div>
       <div className="space-y-2">
@@ -103,20 +106,18 @@ export function ExpenseForm({ expense, participants, tripId }: ExpenseFormProps)
       </div>
       <div className="space-y-2 sm:col-span-2">
         <Label htmlFor="payerId">Payer</Label>
-        <select
-          required
-          id="payerId"
-          name="payerId"
-          defaultValue={expense?.payer_id ?? ""}
-          className={selectClassName}
-        >
-          <option value="" disabled>Choose a participant</option>
-          {participants.map((participant) => (
-            <option key={participant.user_id} value={participant.user_id}>
-              {participant.display_name} ({participant.role})
-            </option>
-          ))}
-        </select>
+        <Select required name="payerId" defaultValue={expense?.payer_id}>
+          <SelectTrigger id="payerId" className="w-full">
+            <SelectValue placeholder="Choose a participant" />
+          </SelectTrigger>
+          <SelectContent>
+            {participants.map((participant) => (
+              <SelectItem key={participant.user_id} value={participant.user_id}>
+                {participant.display_name} ({participant.role})
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         {state.errors?.payer ? <p className="text-sm text-destructive">{state.errors.payer}</p> : null}
       </div>
       {state.message ? <p role="alert" className="text-sm text-destructive sm:col-span-2">{state.message}</p> : null}

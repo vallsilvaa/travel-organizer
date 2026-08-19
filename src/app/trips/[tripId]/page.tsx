@@ -19,6 +19,7 @@ import {
   type TaskCategory,
 } from "@/features/tasks/templates";
 import { createClient } from "@/lib/supabase/server";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -27,6 +28,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type TripPageProps = {
   params: Promise<{ tripId: string }>;
@@ -360,7 +369,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                       <div>
                         <div className="flex flex-wrap items-center gap-2">
                           <h3 className="font-semibold text-slate-950">{expense.description}</h3>
-                          <span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-semibold capitalize text-slate-700">{expense.category}</span>
+                          <Badge variant="secondary" className="capitalize">{expense.category}</Badge>
                         </div>
                         <p className="mt-2 text-lg font-semibold text-emerald-800">{formatMoney(expense.amount, expense.currency)}</p>
                         <p className="mt-1 text-sm text-slate-600">
@@ -417,9 +426,9 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
               <div className="mt-4 h-3 overflow-hidden rounded-full bg-white" aria-label={`${readiness}% ready`} role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={readiness}>
                 <div className="h-full rounded-full bg-sky-600" style={{ width: `${readiness}%` }} />
               </div>
-              <div className="mt-4 flex flex-wrap gap-2 text-xs font-semibold">
-                <span className="rounded-full bg-white px-3 py-1.5 text-slate-700">{criticalOpenCount} critical open</span>
-                <span className={`rounded-full px-3 py-1.5 ${overdueTaskCount ? "bg-red-100 text-red-800" : "bg-white text-slate-700"}`}>{overdueTaskCount} overdue</span>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <Badge variant="outline" className="bg-white">{criticalOpenCount} critical open</Badge>
+                <Badge variant="outline" className={overdueTaskCount ? "border-red-200 bg-red-100 text-red-800" : "bg-white"}>{overdueTaskCount} overdue</Badge>
               </div>
             </div>
 
@@ -431,29 +440,48 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
             </details>
 
             <form className="mt-6 grid gap-3 rounded-2xl bg-slate-50 p-4 sm:grid-cols-3">
-              <label className="text-sm font-medium text-slate-700">
-                Status
-                <select name="status" defaultValue={statusFilter} className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2">
-                  <option value="all">All statuses</option>
-                  <option value="open">Open</option>
-                  <option value="completed">Completed</option>
-                </select>
-              </label>
-              <label className="text-sm font-medium text-slate-700">
-                Owner
-                <select name="owner" defaultValue={ownerFilter} className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2">
-                  <option value="all">All owners</option>
-                  <option value="unassigned">Unassigned</option>
-                  {tripParticipants.map((participant) => <option key={participant.user_id} value={participant.user_id}>{participant.display_name}</option>)}
-                </select>
-              </label>
-              <label className="text-sm font-medium text-slate-700">
-                Category
-                <select name="category" defaultValue={categoryFilter} className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2">
-                  <option value="all">All categories</option>
-                  {taskCategories.map((category) => <option key={category} value={category}>{taskCategoryLabels[category]}</option>)}
-                </select>
-              </label>
+              <div className="space-y-1.5">
+                <Label htmlFor="status-filter" className="text-slate-700">Status</Label>
+                <Select name="status" defaultValue={statusFilter}>
+                  <SelectTrigger id="status-filter" className="w-full bg-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All statuses</SelectItem>
+                    <SelectItem value="open">Open</SelectItem>
+                    <SelectItem value="completed">Completed</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="owner-filter" className="text-slate-700">Owner</Label>
+                <Select name="owner" defaultValue={ownerFilter}>
+                  <SelectTrigger id="owner-filter" className="w-full bg-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All owners</SelectItem>
+                    <SelectItem value="unassigned">Unassigned</SelectItem>
+                    {tripParticipants.map((participant) => (
+                      <SelectItem key={participant.user_id} value={participant.user_id}>{participant.display_name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="category-filter" className="text-slate-700">Category</Label>
+                <Select name="category" defaultValue={categoryFilter}>
+                  <SelectTrigger id="category-filter" className="w-full bg-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All categories</SelectItem>
+                    {taskCategories.map((category) => (
+                      <SelectItem key={category} value={category}>{taskCategoryLabels[category]}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <Button type="submit" variant="outline" className="sm:col-span-3 sm:justify-self-start">Apply filters</Button>
             </form>
 
@@ -474,10 +502,10 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                               <div>
                                 <div className="flex flex-wrap items-center gap-2">
                                   <h4 className={`font-semibold ${task.completed_at ? "text-slate-500 line-through" : "text-slate-950"}`}>{task.title}</h4>
-                                  {task.is_critical && !task.completed_at ? <span className="rounded-full bg-amber-100 px-2 py-1 text-xs font-semibold text-amber-900">Critical</span> : null}
-                                  {overdue ? <span className="rounded-full bg-red-100 px-2 py-1 text-xs font-semibold text-red-800">Overdue</span> : null}
-                                  {upcoming ? <span className="rounded-full bg-sky-100 px-2 py-1 text-xs font-semibold text-sky-800">Upcoming</span> : null}
-                                  {task.completed_at ? <span className="rounded-full bg-emerald-100 px-2 py-1 text-xs font-semibold text-emerald-800">Completed</span> : null}
+                                  {task.is_critical && !task.completed_at ? <Badge className="bg-amber-100 text-amber-900">Critical</Badge> : null}
+                                  {overdue ? <Badge className="bg-red-100 text-red-800">Overdue</Badge> : null}
+                                  {upcoming ? <Badge className="bg-sky-100 text-sky-800">Upcoming</Badge> : null}
+                                  {task.completed_at ? <Badge className="bg-emerald-100 text-emerald-800">Completed</Badge> : null}
                                 </div>
                                 <p className="mt-2 text-sm text-slate-600">
                                   {participantNames.get(task.owner_id ?? "") ?? "Unassigned"}
@@ -541,9 +569,18 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                       <span className="text-sm font-medium text-slate-800">
                         {invitation.email}
                       </span>
-                      <span className="text-sm capitalize text-slate-500">
+                      <Badge
+                        variant="outline"
+                        className={`capitalize ${
+                          invitation.status === "accepted"
+                            ? "border-emerald-200 bg-emerald-100 text-emerald-800"
+                            : invitation.status === "declined"
+                              ? "border-red-200 bg-red-100 text-red-800"
+                              : ""
+                        }`}
+                      >
                         {invitation.status}
-                      </span>
+                      </Badge>
                     </li>
                   ))}
                 </ul>
