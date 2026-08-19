@@ -53,7 +53,7 @@ export default async function SignUpPage({ searchParams }: SignUpPageProps) {
             type="password"
           />
         </div>
-        <Button className="w-full" size="lg">
+        <Button type="submit" className="w-full" size="lg">
           Criar conta
         </Button>
       </form>

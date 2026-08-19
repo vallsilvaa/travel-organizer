@@ -37,7 +37,7 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
             type="password"
           />
         </div>
-        <Button className="w-full" size="lg">
+        <Button type="submit" className="w-full" size="lg">
           Entrar
         </Button>
       </form>
