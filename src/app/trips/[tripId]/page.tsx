@@ -426,7 +426,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                 </div>
                 <form action={addEnglandPreparationChecklist}>
                   <input type="hidden" name="tripId" value={trip.id} />
-                  <Button size="lg">Adicionar checklist da Inglaterra</Button>
+                  <Button type="submit" size="lg">Adicionar checklist da Inglaterra</Button>
                 </form>
               </div>
 
@@ -538,7 +538,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                                     <input type="hidden" name="tripId" value={trip.id} />
                                     <input type="hidden" name="taskId" value={task.id} />
                                     <input type="hidden" name="completed" value={task.completed_at ? "false" : "true"} />
-                                    <Button variant="outline" size="sm">{task.completed_at ? "Reabrir" : "Concluir"}</Button>
+                                    <Button type="submit" variant="outline" size="sm">{task.completed_at ? "Reabrir" : "Concluir"}</Button>
                                   </form>
                                   <ItemActionsMenu
                                     editLabel="Editar tarefa"
