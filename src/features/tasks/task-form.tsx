@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,6 +41,14 @@ export function TaskForm({ participants, task, tripId }: TaskFormProps) {
     task ? updateTask : createTask,
     initialState,
   );
+
+  useEffect(() => {
+    if (state.success) {
+      toast.success(task ? "Task updated." : "Task added.");
+    } else if (state.message) {
+      toast.error(state.message);
+    }
+  }, [state, task]);
 
   return (
     <form action={formAction} className="grid gap-4 sm:grid-cols-2">
@@ -129,12 +138,6 @@ export function TaskForm({ participants, task, tripId }: TaskFormProps) {
         <Input id="dueDate" name="dueDate" type="date" defaultValue={task?.due_date ?? ""} />
         {state.errors?.dueDate ? <p className="text-sm text-destructive">{state.errors.dueDate}</p> : null}
       </div>
-      {state.message ? <p role="alert" className="text-sm text-destructive sm:col-span-2">{state.message}</p> : null}
-      {state.success ? (
-        <p className="text-sm text-emerald-700 sm:col-span-2">
-          {task ? "Task updated." : "Task added."}
-        </p>
-      ) : null}
       <Button disabled={pending} size="lg" className="sm:col-span-2 sm:justify-self-start">
         {pending ? "Saving..." : task ? "Save changes" : "Add task"}
       </Button>

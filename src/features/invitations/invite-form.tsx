@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +20,14 @@ export function InviteForm({ tripId }: { tripId: string }) {
     initialState,
   );
 
+  useEffect(() => {
+    if (state.message) {
+      toast.success(state.message);
+    } else if (state.error) {
+      toast.error(state.error);
+    }
+  }, [state]);
+
   return (
     <form action={formAction} className="mt-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
       <input type="hidden" name="tripId" value={tripId} />
@@ -36,14 +45,6 @@ export function InviteForm({ tripId }: { tripId: string }) {
       <Button disabled={pending} size="lg">
         {pending ? "Inviting..." : "Invite organizer"}
       </Button>
-      {state.error ? (
-        <p role="alert" className="text-sm text-destructive sm:basis-full">
-          {state.error}
-        </p>
-      ) : null}
-      {state.message ? (
-        <p className="text-sm text-emerald-700 sm:basis-full">{state.message}</p>
-      ) : null}
     </form>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +13,12 @@ const initialState: CreateTripState = {};
 
 export function TripForm() {
   const [state, formAction, pending] = useActionState(createTrip, initialState);
+
+  useEffect(() => {
+    if (state.message) {
+      toast.error(state.message);
+    }
+  }, [state]);
 
   return (
     <form action={formAction} className="mt-6 grid gap-5 sm:grid-cols-2">
@@ -64,12 +71,6 @@ export function TripForm() {
           </p>
         ) : null}
       </div>
-
-      {state.message ? (
-        <p role="alert" className="rounded-xl bg-destructive/10 p-3 text-sm text-destructive sm:col-span-2">
-          {state.message}
-        </p>
-      ) : null}
 
       <div className="sm:col-span-2">
         <Button disabled={pending} size="lg">
