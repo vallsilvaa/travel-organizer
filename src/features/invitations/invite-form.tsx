@@ -2,6 +2,10 @@
 
 import { useActionState } from "react";
 
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+
 import {
   inviteOrganizer,
   type InviteOrganizerState,
@@ -16,27 +20,24 @@ export function InviteForm({ tripId }: { tripId: string }) {
   );
 
   return (
-    <form action={formAction} className="mt-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+    <form action={formAction} className="mt-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
       <input type="hidden" name="tripId" value={tripId} />
-      <label className="flex-1 text-sm font-medium text-slate-800">
-        Organizer email
-        <input
+      <div className="flex-1 space-y-2">
+        <Label htmlFor="email">Organizer email</Label>
+        <Input
           required
           autoComplete="email"
+          id="email"
           name="email"
           type="email"
           placeholder="organizer@example.com"
-          className="mt-2 w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-sky-600 focus:ring-2 focus:ring-sky-100"
         />
-      </label>
-      <button
-        disabled={pending}
-        className="self-end rounded-xl bg-sky-700 px-5 py-3 font-semibold text-white hover:bg-sky-800 disabled:cursor-not-allowed disabled:opacity-60"
-      >
+      </div>
+      <Button disabled={pending} size="lg">
         {pending ? "Inviting..." : "Invite organizer"}
-      </button>
+      </Button>
       {state.error ? (
-        <p role="alert" className="text-sm text-red-700 sm:basis-full">
+        <p role="alert" className="text-sm text-destructive sm:basis-full">
           {state.error}
         </p>
       ) : null}

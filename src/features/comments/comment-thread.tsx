@@ -1,3 +1,5 @@
+import { Button } from "@/components/ui/button";
+
 import { deleteComment } from "./actions";
 import { CommentForm } from "./comment-form";
 import type { CommentItemType } from "./validation";
@@ -60,7 +62,7 @@ export function CommentThread({
                   <form action={deleteComment} className="mt-2 text-right">
                     <input type="hidden" name="tripId" value={tripId} />
                     <input type="hidden" name="commentId" value={comment.id} />
-                    <button className="text-xs font-semibold text-red-700 hover:text-red-800">Delete comment</button>
+                    <Button variant="link" className="h-auto p-0 text-xs text-destructive">Delete comment</Button>
                   </form>
                 </details>
               ) : null}

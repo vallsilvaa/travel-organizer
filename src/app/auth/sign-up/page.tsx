@@ -1,6 +1,9 @@
 import { AuthShell } from "@/components/auth/auth-shell";
 import { signUp } from "@/features/auth/actions";
 import { getAuthMessage } from "@/features/auth/messages";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 type SignUpPageProps = {
   searchParams: Promise<{ error?: string }>;
@@ -19,52 +22,40 @@ export default async function SignUpPage({ searchParams }: SignUpPageProps) {
       error={getAuthMessage(params.error)}
     >
       <form action={signUp} className="space-y-5">
-        <label className="block text-sm font-medium text-slate-800">
-          Name
-          <input
-            required
-            autoComplete="name"
-            minLength={2}
-            name="displayName"
-            className="mt-2 w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-sky-600 focus:ring-2 focus:ring-sky-100"
-          />
-        </label>
-        <label className="block text-sm font-medium text-slate-800">
-          Email
-          <input
-            required
-            autoComplete="email"
-            name="email"
-            type="email"
-            className="mt-2 w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-sky-600 focus:ring-2 focus:ring-sky-100"
-          />
-        </label>
-        <label className="block text-sm font-medium text-slate-800">
-          Password
-          <input
+        <div className="space-y-2">
+          <Label htmlFor="displayName">Name</Label>
+          <Input required autoComplete="name" minLength={2} id="displayName" name="displayName" />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="email">Email</Label>
+          <Input required autoComplete="email" id="email" name="email" type="email" />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="password">Password</Label>
+          <Input
             required
             autoComplete="new-password"
             minLength={8}
+            id="password"
             name="password"
             type="password"
-            className="mt-2 w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-sky-600 focus:ring-2 focus:ring-sky-100"
           />
-          <span className="mt-1 block text-xs text-slate-500">At least eight characters.</span>
-        </label>
-        <label className="block text-sm font-medium text-slate-800">
-          Confirm password
-          <input
+          <p className="text-xs text-muted-foreground">At least eight characters.</p>
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="passwordConfirmation">Confirm password</Label>
+          <Input
             required
             autoComplete="new-password"
             minLength={8}
+            id="passwordConfirmation"
             name="passwordConfirmation"
             type="password"
-            className="mt-2 w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-sky-600 focus:ring-2 focus:ring-sky-100"
           />
-        </label>
-        <button className="w-full rounded-xl bg-sky-700 px-4 py-3 font-semibold text-white hover:bg-sky-800">
+        </div>
+        <Button className="w-full" size="lg">
           Create account
-        </button>
+        </Button>
       </form>
     </AuthShell>
   );
