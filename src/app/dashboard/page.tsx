@@ -7,6 +7,14 @@ import { updateReminderPreference } from "@/features/reminders/actions";
 import { TripForm } from "@/features/trips/trip-form";
 import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 type DashboardPageProps = {
   searchParams: Promise<{ invitationError?: string }>;
@@ -58,133 +66,141 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   return (
     <main className="min-h-screen bg-slate-50 px-6 py-12">
       <div className="mx-auto max-w-5xl space-y-8">
-      <section className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
-        <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-sky-700">
+        <Card className="[--card-spacing:--spacing(8)]">
+          <CardHeader>
+            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">
               Travel Organizer
             </p>
-            <h1 className="mt-4 text-3xl font-semibold tracking-tight text-slate-950">
-              Welcome, {displayName}
-            </h1>
-            <p className="mt-2 text-slate-600">
+            <CardTitle className="mt-2 text-3xl">Welcome, {displayName}</CardTitle>
+            <CardDescription className="mt-2 text-base">
               Create a trip and keep its planning details in one private workspace.
-            </p>
-          </div>
-          <form action={signOut}>
-            <Button variant="outline">Sign out</Button>
-          </form>
-        </div>
-      </section>
+            </CardDescription>
+            <CardAction>
+              <form action={signOut}>
+                <Button variant="outline">Sign out</Button>
+              </form>
+            </CardAction>
+          </CardHeader>
+        </Card>
 
-      <section className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
-        <h2 className="text-xl font-semibold tracking-tight text-slate-950">
-          Email reminders
-        </h2>
-        <p className="mt-2 text-sm leading-6 text-slate-600">
-          Receive a reminder when an assigned task is due within the next three days.
-        </p>
-        <form action={updateReminderPreference} className="mt-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <label className="flex items-center gap-3 text-sm font-medium text-slate-800">
-            <input
-              type="checkbox"
-              name="taskRemindersEnabled"
-              defaultChecked={profile?.task_reminders_enabled ?? true}
-              className="h-5 w-5 rounded border-slate-300 text-sky-700"
-            />
-            Send task deadline reminders
-          </label>
-          <Button variant="outline">Save preference</Button>
-        </form>
-      </section>
+        <Card className="[--card-spacing:--spacing(8)]">
+          <CardHeader>
+            <CardTitle className="text-xl">Email reminders</CardTitle>
+            <CardDescription>
+              Receive a reminder when an assigned task is due within the next three days.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form
+              action={updateReminderPreference}
+              className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+            >
+              <label className="flex items-center gap-3 text-sm font-medium">
+                <input
+                  type="checkbox"
+                  name="taskRemindersEnabled"
+                  defaultChecked={profile?.task_reminders_enabled ?? true}
+                  className="h-5 w-5 rounded border-input accent-primary"
+                />
+                Send task deadline reminders
+              </label>
+              <Button variant="outline">Save preference</Button>
+            </form>
+          </CardContent>
+        </Card>
 
-      {pendingInvitations?.length || invitationError || invitationsError ? (
-        <section className="rounded-3xl border border-sky-200 bg-sky-50 p-8 shadow-sm">
-          <h2 className="text-2xl font-semibold tracking-tight text-slate-950">
-            Trip invitations
-          </h2>
-          {invitationError || invitationsError ? (
-            <p role="alert" className="mt-4 rounded-xl bg-red-50 p-3 text-sm text-red-800">
-              {invitationError ?? "We could not load your invitations."}
-            </p>
-          ) : null}
-          {pendingInvitations?.length ? (
-            <ul className="mt-5 space-y-3">
-              {pendingInvitations.map((invitation) => (
-                <li
-                  key={invitation.id}
-                  className="rounded-2xl border border-sky-200 bg-white p-5"
-                >
-                  <p className="font-semibold text-slate-950">
-                    {invitation.trip_destination}
-                  </p>
-                  <p className="mt-1 text-sm text-slate-600">
-                    You were invited to collaborate as the travel organizer.
-                  </p>
-                  <form action={respondToInvitation} className="mt-4 flex gap-3">
-                    <input
-                      type="hidden"
-                      name="invitationId"
-                      value={invitation.id}
-                    />
-                    <Button name="response" value="accepted">
-                      Accept
-                    </Button>
-                    <Button name="response" value="declined" variant="outline">
-                      Decline
-                    </Button>
-                  </form>
-                </li>
-              ))}
-            </ul>
-          ) : null}
-        </section>
-      ) : null}
+        {pendingInvitations?.length || invitationError || invitationsError ? (
+          <Card className="border-sky-200 bg-sky-50 [--card-spacing:--spacing(8)]">
+            <CardHeader>
+              <CardTitle className="text-2xl">Trip invitations</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {invitationError || invitationsError ? (
+                <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-800">
+                  {invitationError ?? "We could not load your invitations."}
+                </p>
+              ) : null}
+              {pendingInvitations?.length ? (
+                <ul className="mt-5 space-y-3">
+                  {pendingInvitations.map((invitation) => (
+                    <li
+                      key={invitation.id}
+                      className="rounded-2xl border border-sky-200 bg-white p-5"
+                    >
+                      <p className="font-semibold text-slate-950">
+                        {invitation.trip_destination}
+                      </p>
+                      <p className="mt-1 text-sm text-slate-600">
+                        You were invited to collaborate as the travel organizer.
+                      </p>
+                      <form action={respondToInvitation} className="mt-4 flex gap-3">
+                        <input
+                          type="hidden"
+                          name="invitationId"
+                          value={invitation.id}
+                        />
+                        <Button name="response" value="accepted">
+                          Accept
+                        </Button>
+                        <Button name="response" value="declined" variant="outline">
+                          Decline
+                        </Button>
+                      </form>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+            </CardContent>
+          </Card>
+        ) : null}
 
-      <section className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
-        <h2 className="text-2xl font-semibold tracking-tight text-slate-950">
-          Create a trip
-        </h2>
-        <p className="mt-2 text-sm leading-6 text-slate-600">
-          Start with the destination and dates. More planning tools will be added inside the trip.
-        </p>
-        <TripForm />
-      </section>
+        <Card className="[--card-spacing:--spacing(8)]">
+          <CardHeader>
+            <CardTitle className="text-2xl">Create a trip</CardTitle>
+            <CardDescription>
+              Start with the destination and dates. More planning tools will be added inside the trip.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <TripForm />
+          </CardContent>
+        </Card>
 
-      <section className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
-        <h2 className="text-2xl font-semibold tracking-tight text-slate-950">
-          Your trips
-        </h2>
-
-        {tripsError ? (
-          <p role="alert" className="mt-5 rounded-xl bg-red-50 p-4 text-sm text-red-800">
-            We could not load your trips. Try refreshing the page.
-          </p>
-        ) : trips?.length ? (
-          <ul className="mt-6 grid gap-4 sm:grid-cols-2">
-            {trips.map((trip) => (
-              <li key={trip.id}>
-                <Link
-                  href={`/trips/${trip.id}`}
-                  className="block h-full rounded-2xl border border-slate-200 p-5 transition hover:border-sky-300 hover:bg-sky-50"
-                >
-                  <h3 className="text-lg font-semibold text-slate-950">
-                    {trip.destination}
-                  </h3>
-                  <p className="mt-2 text-sm text-slate-600">
-                    {formatDate(trip.start_date)}
-                    {trip.end_date ? ` – ${formatDate(trip.end_date)}` : ""}
-                  </p>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="mt-5 rounded-2xl border border-dashed border-slate-300 p-6 text-sm text-slate-600">
-            No trips yet. Create your first trip above.
-          </p>
-        )}
-      </section>
+        <Card className="[--card-spacing:--spacing(8)]">
+          <CardHeader>
+            <CardTitle className="text-2xl">Your trips</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {tripsError ? (
+              <p role="alert" className="rounded-xl bg-red-50 p-4 text-sm text-red-800">
+                We could not load your trips. Try refreshing the page.
+              </p>
+            ) : trips?.length ? (
+              <ul className="grid gap-4 sm:grid-cols-2">
+                {trips.map((trip) => (
+                  <li key={trip.id}>
+                    <Link
+                      href={`/trips/${trip.id}`}
+                      className="block h-full rounded-2xl border border-slate-200 p-5 transition hover:border-sky-300 hover:bg-sky-50"
+                    >
+                      <h3 className="text-lg font-semibold text-slate-950">
+                        {trip.destination}
+                      </h3>
+                      <p className="mt-2 text-sm text-slate-600">
+                        {formatDate(trip.start_date)}
+                        {trip.end_date ? ` – ${formatDate(trip.end_date)}` : ""}
+                      </p>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="rounded-2xl border border-dashed border-slate-300 p-6 text-sm text-slate-600">
+                No trips yet. Create your first trip above.
+              </p>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </main>
   );
