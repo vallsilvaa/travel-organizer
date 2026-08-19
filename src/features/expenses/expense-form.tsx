@@ -129,7 +129,7 @@ export function ExpenseForm({ expense, participants, tripId }: ExpenseFormProps)
         </Select>
         {state.errors?.payer ? <p className="text-sm text-destructive">{state.errors.payer}</p> : null}
       </div>
-      <Button disabled={pending} size="lg" className="sm:col-span-2 sm:justify-self-start">
+      <Button type="submit" disabled={pending} size="lg" className="sm:col-span-2 sm:justify-self-start">
         {pending ? "Salvando..." : expense ? "Salvar alterações" : "Adicionar despesa"}
       </Button>
     </form>

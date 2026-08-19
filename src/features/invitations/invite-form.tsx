@@ -42,7 +42,7 @@ export function InviteForm({ tripId }: { tripId: string }) {
           placeholder="organizador@exemplo.com"
         />
       </div>
-      <Button disabled={pending} size="lg">
+      <Button type="submit" disabled={pending} size="lg">
         {pending ? "Convidando..." : "Convidar organizador"}
       </Button>
     </form>
