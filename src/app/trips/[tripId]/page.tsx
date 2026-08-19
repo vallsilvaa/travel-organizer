@@ -19,6 +19,7 @@ import {
   type TaskCategory,
 } from "@/features/tasks/templates";
 import { createClient } from "@/lib/supabase/server";
+import { Button } from "@/components/ui/button";
 
 type TripPageProps = {
   params: Promise<{ tripId: string }>;
@@ -276,9 +277,9 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                     <form action={deleteItineraryItem}>
                       <input type="hidden" name="tripId" value={trip.id} />
                       <input type="hidden" name="itemId" value={item.id} />
-                      <button className="text-sm font-semibold text-red-700 hover:text-red-800">
+                      <Button variant="link" className="h-auto p-0 text-destructive">
                         Delete
-                      </button>
+                      </Button>
                     </form>
                   </div>
                   <details className="mt-4 border-t border-slate-200 pt-4">
@@ -353,7 +354,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                     <form action={deleteExpense}>
                       <input type="hidden" name="tripId" value={trip.id} />
                       <input type="hidden" name="expenseId" value={expense.id} />
-                      <button className="text-sm font-semibold text-red-700 hover:text-red-800">Delete</button>
+                      <Button variant="link" className="h-auto p-0 text-destructive">Delete</Button>
                     </form>
                   </div>
                   <details className="mt-4 border-t border-slate-200 pt-4">
@@ -383,9 +384,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
             </div>
             <form action={addEnglandPreparationChecklist}>
               <input type="hidden" name="tripId" value={trip.id} />
-              <button className="rounded-xl bg-sky-700 px-4 py-3 text-sm font-semibold text-white hover:bg-sky-800">
-                Add England checklist
-              </button>
+              <Button size="lg">Add England checklist</Button>
             </form>
           </div>
 
@@ -437,7 +436,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                 {taskCategories.map((category) => <option key={category} value={category}>{taskCategoryLabels[category]}</option>)}
               </select>
             </label>
-            <button className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 sm:col-span-3 sm:justify-self-start">Apply filters</button>
+            <Button type="submit" variant="outline" className="sm:col-span-3 sm:justify-self-start">Apply filters</Button>
           </form>
 
           {tasksError ? (
@@ -477,7 +476,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                               <input type="hidden" name="tripId" value={trip.id} />
                               <input type="hidden" name="taskId" value={task.id} />
                               <input type="hidden" name="completed" value={task.completed_at ? "false" : "true"} />
-                              <button className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100">{task.completed_at ? "Reopen" : "Complete"}</button>
+                              <Button variant="outline" size="sm">{task.completed_at ? "Reopen" : "Complete"}</Button>
                             </form>
                           </div>
                           <details className="mt-4 border-t border-slate-200 pt-4">
@@ -486,7 +485,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                             <form action={deleteTask} className="mt-4">
                               <input type="hidden" name="tripId" value={trip.id} />
                               <input type="hidden" name="taskId" value={task.id} />
-                              <button className="text-sm font-semibold text-red-700 hover:text-red-800">Remove this preparation task</button>
+                              <Button variant="link" className="h-auto p-0 text-destructive">Remove this preparation task</Button>
                             </form>
                           </details>
                           <CommentThread comments={commentsFor("task", task.id)} currentUserId={user.id} itemId={task.id} itemType="task" participantNames={participantNames} tripId={trip.id} />

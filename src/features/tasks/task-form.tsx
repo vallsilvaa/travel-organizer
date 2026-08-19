@@ -2,6 +2,10 @@
 
 import { useActionState } from "react";
 
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+
 import { createTask, updateTask, type TaskActionState } from "./actions";
 import { taskCategories, taskCategoryLabels, type TaskCategory } from "./templates";
 
@@ -34,24 +38,27 @@ export function TaskForm({ participants, task, tripId }: TaskFormProps) {
     <form action={formAction} className="grid gap-4 sm:grid-cols-2">
       <input type="hidden" name="tripId" value={tripId} />
       {task ? <input type="hidden" name="taskId" value={task.id} /> : null}
-      <label className="text-sm font-medium text-slate-800 sm:col-span-2">
-        Task
-        <input
+      <div className="space-y-2 sm:col-span-2">
+        <Label htmlFor="title">Task</Label>
+        <Input
           required
           maxLength={200}
+          id="title"
           name="title"
           defaultValue={task?.title}
           placeholder="Book airport transfer"
-          className="mt-2 w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-sky-600 focus:ring-2 focus:ring-sky-100"
         />
-        {state.errors?.title ? <span className="mt-1 block text-red-700">{state.errors.title}</span> : null}
-      </label>
-      <label className="text-sm font-medium text-slate-800">
-        Owner <span className="font-normal text-slate-500">(optional)</span>
+        {state.errors?.title ? <p className="text-sm text-destructive">{state.errors.title}</p> : null}
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="ownerId">
+          Owner <span className="font-normal text-muted-foreground">(optional)</span>
+        </Label>
         <select
+          id="ownerId"
           name="ownerId"
           defaultValue={task?.owner_id ?? ""}
-          className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 outline-none focus:border-sky-600 focus:ring-2 focus:ring-sky-100"
+          className="border-input flex h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
         >
           <option value="">Unassigned</option>
           {participants.map((participant) => (
@@ -60,71 +67,70 @@ export function TaskForm({ participants, task, tripId }: TaskFormProps) {
             </option>
           ))}
         </select>
-        {state.errors?.owner ? <span className="mt-1 block text-red-700">{state.errors.owner}</span> : null}
-      </label>
-      <label className="text-sm font-medium text-slate-800">
-        Category
+        {state.errors?.owner ? <p className="text-sm text-destructive">{state.errors.owner}</p> : null}
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="category">Category</Label>
         <select
+          id="category"
           name="category"
           defaultValue={task?.category ?? "other"}
-          className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 outline-none focus:border-sky-600 focus:ring-2 focus:ring-sky-100"
+          className="border-input flex h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
         >
           {taskCategories.map((category) => (
             <option key={category} value={category}>{taskCategoryLabels[category]}</option>
           ))}
         </select>
-        {state.errors?.category ? <span className="mt-1 block text-red-700">{state.errors.category}</span> : null}
-      </label>
-      <label className="flex items-center gap-3 rounded-xl border border-slate-200 px-4 py-3 text-sm font-medium text-slate-800">
-        <input name="isCritical" type="checkbox" defaultChecked={task?.is_critical} className="size-4 accent-sky-700" />
+        {state.errors?.category ? <p className="text-sm text-destructive">{state.errors.category}</p> : null}
+      </div>
+      <label className="flex items-center gap-3 rounded-xl border px-4 py-3 text-sm font-medium">
+        <input name="isCritical" type="checkbox" defaultChecked={task?.is_critical} className="size-4 accent-primary" />
         Critical before departure
       </label>
-      <label className="text-sm font-medium text-slate-800">
-        Reference label <span className="font-normal text-slate-500">(optional)</span>
-        <input
+      <div className="space-y-2">
+        <Label htmlFor="referenceLabel">
+          Reference label <span className="font-normal text-muted-foreground">(optional)</span>
+        </Label>
+        <Input
           maxLength={100}
+          id="referenceLabel"
           name="referenceLabel"
           defaultValue={task?.reference_label ?? ""}
           placeholder="Insurance policy"
-          className="mt-2 w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-sky-600 focus:ring-2 focus:ring-sky-100"
         />
-        {state.errors?.referenceLabel ? <span className="mt-1 block text-red-700">{state.errors.referenceLabel}</span> : null}
-      </label>
-      <label className="text-sm font-medium text-slate-800">
-        Secure reference URL <span className="font-normal text-slate-500">(optional)</span>
-        <input
+        {state.errors?.referenceLabel ? <p className="text-sm text-destructive">{state.errors.referenceLabel}</p> : null}
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="referenceUrl">
+          Secure reference URL <span className="font-normal text-muted-foreground">(optional)</span>
+        </Label>
+        <Input
           maxLength={500}
+          id="referenceUrl"
           name="referenceUrl"
           type="url"
           pattern="https://.*"
           defaultValue={task?.reference_url ?? ""}
           placeholder="https://..."
-          className="mt-2 w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-sky-600 focus:ring-2 focus:ring-sky-100"
         />
-        {state.errors?.referenceUrl ? <span className="mt-1 block text-red-700">{state.errors.referenceUrl}</span> : null}
-      </label>
-      <label className="text-sm font-medium text-slate-800">
-        Due date <span className="font-normal text-slate-500">(optional)</span>
-        <input
-          name="dueDate"
-          type="date"
-          defaultValue={task?.due_date ?? ""}
-          className="mt-2 w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-sky-600 focus:ring-2 focus:ring-sky-100"
-        />
-        {state.errors?.dueDate ? <span className="mt-1 block text-red-700">{state.errors.dueDate}</span> : null}
-      </label>
-      {state.message ? <p role="alert" className="text-sm text-red-700 sm:col-span-2">{state.message}</p> : null}
+        {state.errors?.referenceUrl ? <p className="text-sm text-destructive">{state.errors.referenceUrl}</p> : null}
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="dueDate">
+          Due date <span className="font-normal text-muted-foreground">(optional)</span>
+        </Label>
+        <Input id="dueDate" name="dueDate" type="date" defaultValue={task?.due_date ?? ""} />
+        {state.errors?.dueDate ? <p className="text-sm text-destructive">{state.errors.dueDate}</p> : null}
+      </div>
+      {state.message ? <p role="alert" className="text-sm text-destructive sm:col-span-2">{state.message}</p> : null}
       {state.success ? (
         <p className="text-sm text-emerald-700 sm:col-span-2">
           {task ? "Task updated." : "Task added."}
         </p>
       ) : null}
-      <button
-        disabled={pending}
-        className="rounded-xl bg-sky-700 px-5 py-3 font-semibold text-white hover:bg-sky-800 disabled:cursor-not-allowed disabled:opacity-60 sm:col-span-2 sm:justify-self-start"
-      >
+      <Button disabled={pending} size="lg" className="sm:col-span-2 sm:justify-self-start">
         {pending ? "Saving..." : task ? "Save changes" : "Add task"}
-      </button>
+      </Button>
     </form>
   );
 }

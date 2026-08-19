@@ -6,6 +6,7 @@ import { respondToInvitation } from "@/features/invitations/actions";
 import { updateReminderPreference } from "@/features/reminders/actions";
 import { TripForm } from "@/features/trips/trip-form";
 import { createClient } from "@/lib/supabase/server";
+import { Button } from "@/components/ui/button";
 
 type DashboardPageProps = {
   searchParams: Promise<{ invitationError?: string }>;
@@ -71,9 +72,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
             </p>
           </div>
           <form action={signOut}>
-            <button className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
-              Sign out
-            </button>
+            <Button variant="outline">Sign out</Button>
           </form>
         </div>
       </section>
@@ -95,9 +94,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
             />
             Send task deadline reminders
           </label>
-          <button className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
-            Save preference
-          </button>
+          <Button variant="outline">Save preference</Button>
         </form>
       </section>
 
@@ -130,20 +127,12 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                       name="invitationId"
                       value={invitation.id}
                     />
-                    <button
-                      name="response"
-                      value="accepted"
-                      className="rounded-xl bg-sky-700 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-800"
-                    >
+                    <Button name="response" value="accepted">
                       Accept
-                    </button>
-                    <button
-                      name="response"
-                      value="declined"
-                      className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-                    >
+                    </Button>
+                    <Button name="response" value="declined" variant="outline">
                       Decline
-                    </button>
+                    </Button>
                   </form>
                 </li>
               ))}

@@ -2,6 +2,10 @@
 
 import { useActionState } from "react";
 
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+
 import { createExpense, updateExpense, type ExpenseActionState } from "./actions";
 import { expenseCategories } from "./validation";
 
@@ -23,6 +27,9 @@ type ExpenseFormProps = {
 
 const initialState: ExpenseActionState = {};
 
+const selectClassName =
+  "border-input flex h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]";
+
 export function ExpenseForm({ expense, participants, tripId }: ExpenseFormProps) {
   const [state, formAction, pending] = useActionState(
     expense ? updateExpense : createExpense,
@@ -33,78 +40,75 @@ export function ExpenseForm({ expense, participants, tripId }: ExpenseFormProps)
     <form action={formAction} className="grid gap-4 sm:grid-cols-2">
       <input type="hidden" name="tripId" value={tripId} />
       {expense ? <input type="hidden" name="expenseId" value={expense.id} /> : null}
-      <label className="text-sm font-medium text-slate-800 sm:col-span-2">
-        Description
-        <input
+      <div className="space-y-2 sm:col-span-2">
+        <Label htmlFor="description">Description</Label>
+        <Input
           required
           maxLength={200}
+          id="description"
           name="description"
           defaultValue={expense?.description}
           placeholder="Dinner reservation"
-          className="mt-2 w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-sky-600 focus:ring-2 focus:ring-sky-100"
         />
-        {state.errors?.description ? <span className="mt-1 block text-red-700">{state.errors.description}</span> : null}
-      </label>
-      <label className="text-sm font-medium text-slate-800">
-        Amount
-        <input
+        {state.errors?.description ? <p className="text-sm text-destructive">{state.errors.description}</p> : null}
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="amount">Amount</Label>
+        <Input
           required
           min="0.01"
           max="999999999999.99"
           step="0.01"
+          id="amount"
           name="amount"
           type="number"
           inputMode="decimal"
           defaultValue={expense?.amount}
-          className="mt-2 w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-sky-600 focus:ring-2 focus:ring-sky-100"
         />
-        {state.errors?.amount ? <span className="mt-1 block text-red-700">{state.errors.amount}</span> : null}
-      </label>
-      <label className="text-sm font-medium text-slate-800">
-        Currency
-        <input
+        {state.errors?.amount ? <p className="text-sm text-destructive">{state.errors.amount}</p> : null}
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="currency">Currency</Label>
+        <Input
           required
           minLength={3}
           maxLength={3}
+          id="currency"
           name="currency"
           defaultValue={expense?.currency ?? "BRL"}
           placeholder="BRL"
-          className="mt-2 w-full uppercase rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-sky-600 focus:ring-2 focus:ring-sky-100"
+          className="uppercase"
         />
-        {state.errors?.currency ? <span className="mt-1 block text-red-700">{state.errors.currency}</span> : null}
-      </label>
-      <label className="text-sm font-medium text-slate-800">
-        Category
+        {state.errors?.currency ? <p className="text-sm text-destructive">{state.errors.currency}</p> : null}
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="category">Category</Label>
         <select
           required
+          id="category"
           name="category"
           defaultValue={expense?.category ?? "other"}
-          className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 outline-none focus:border-sky-600 focus:ring-2 focus:ring-sky-100"
+          className={selectClassName}
         >
           {expenseCategories.map((category) => (
             <option key={category} value={category}>{category[0].toUpperCase() + category.slice(1)}</option>
           ))}
         </select>
-        {state.errors?.category ? <span className="mt-1 block text-red-700">{state.errors.category}</span> : null}
-      </label>
-      <label className="text-sm font-medium text-slate-800">
-        Date
-        <input
-          required
-          name="date"
-          type="date"
-          defaultValue={expense?.expense_date}
-          className="mt-2 w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-sky-600 focus:ring-2 focus:ring-sky-100"
-        />
-        {state.errors?.date ? <span className="mt-1 block text-red-700">{state.errors.date}</span> : null}
-      </label>
-      <label className="text-sm font-medium text-slate-800 sm:col-span-2">
-        Payer
+        {state.errors?.category ? <p className="text-sm text-destructive">{state.errors.category}</p> : null}
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="date">Date</Label>
+        <Input required id="date" name="date" type="date" defaultValue={expense?.expense_date} />
+        {state.errors?.date ? <p className="text-sm text-destructive">{state.errors.date}</p> : null}
+      </div>
+      <div className="space-y-2 sm:col-span-2">
+        <Label htmlFor="payerId">Payer</Label>
         <select
           required
+          id="payerId"
           name="payerId"
           defaultValue={expense?.payer_id ?? ""}
-          className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 outline-none focus:border-sky-600 focus:ring-2 focus:ring-sky-100"
+          className={selectClassName}
         >
           <option value="" disabled>Choose a participant</option>
           {participants.map((participant) => (
@@ -113,16 +117,13 @@ export function ExpenseForm({ expense, participants, tripId }: ExpenseFormProps)
             </option>
           ))}
         </select>
-        {state.errors?.payer ? <span className="mt-1 block text-red-700">{state.errors.payer}</span> : null}
-      </label>
-      {state.message ? <p role="alert" className="text-sm text-red-700 sm:col-span-2">{state.message}</p> : null}
+        {state.errors?.payer ? <p className="text-sm text-destructive">{state.errors.payer}</p> : null}
+      </div>
+      {state.message ? <p role="alert" className="text-sm text-destructive sm:col-span-2">{state.message}</p> : null}
       {state.success ? <p className="text-sm text-emerald-700 sm:col-span-2">{expense ? "Expense updated." : "Expense added."}</p> : null}
-      <button
-        disabled={pending}
-        className="rounded-xl bg-sky-700 px-5 py-3 font-semibold text-white hover:bg-sky-800 disabled:cursor-not-allowed disabled:opacity-60 sm:col-span-2 sm:justify-self-start"
-      >
+      <Button disabled={pending} size="lg" className="sm:col-span-2 sm:justify-self-start">
         {pending ? "Saving..." : expense ? "Save changes" : "Add expense"}
-      </button>
+      </Button>
     </form>
   );
 }

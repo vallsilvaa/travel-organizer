@@ -1,6 +1,9 @@
 import { AuthShell } from "@/components/auth/auth-shell";
 import { signIn } from "@/features/auth/actions";
 import { getAuthMessage } from "@/features/auth/messages";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 type SignInPageProps = {
   searchParams: Promise<{ error?: string; message?: string }>;
@@ -20,29 +23,23 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
       message={getAuthMessage(params.message)}
     >
       <form action={signIn} className="space-y-5">
-        <label className="block text-sm font-medium text-slate-800">
-          Email
-          <input
-            required
-            autoComplete="email"
-            name="email"
-            type="email"
-            className="mt-2 w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-sky-600 focus:ring-2 focus:ring-sky-100"
-          />
-        </label>
-        <label className="block text-sm font-medium text-slate-800">
-          Password
-          <input
+        <div className="space-y-2">
+          <Label htmlFor="email">Email</Label>
+          <Input required autoComplete="email" id="email" name="email" type="email" />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="password">Password</Label>
+          <Input
             required
             autoComplete="current-password"
+            id="password"
             name="password"
             type="password"
-            className="mt-2 w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-sky-600 focus:ring-2 focus:ring-sky-100"
           />
-        </label>
-        <button className="w-full rounded-xl bg-sky-700 px-4 py-3 font-semibold text-white hover:bg-sky-800">
+        </div>
+        <Button className="w-full" size="lg">
           Sign in
-        </button>
+        </Button>
       </form>
     </AuthShell>
   );

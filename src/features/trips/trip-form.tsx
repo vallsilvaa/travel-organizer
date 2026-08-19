@@ -2,6 +2,10 @@
 
 import { useActionState } from "react";
 
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+
 import { createTrip, type CreateTripState } from "./actions";
 
 const initialState: CreateTripState = {};
@@ -11,67 +15,66 @@ export function TripForm() {
 
   return (
     <form action={formAction} className="mt-6 grid gap-5 sm:grid-cols-2">
-      <label className="block text-sm font-medium text-slate-800 sm:col-span-2">
-        Destination
-        <input
+      <div className="space-y-2 sm:col-span-2">
+        <Label htmlFor="destination">Destination</Label>
+        <Input
           required
           maxLength={200}
+          id="destination"
           name="destination"
           placeholder="London, United Kingdom"
-          className="mt-2 w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-sky-600 focus:ring-2 focus:ring-sky-100"
           aria-describedby={state.errors?.destination ? "destination-error" : undefined}
         />
         {state.errors?.destination ? (
-          <span id="destination-error" className="mt-1 block text-sm text-red-700">
+          <p id="destination-error" className="text-sm text-destructive">
             {state.errors.destination}
-          </span>
+          </p>
         ) : null}
-      </label>
+      </div>
 
-      <label className="block text-sm font-medium text-slate-800">
-        Start date
-        <input
+      <div className="space-y-2">
+        <Label htmlFor="startDate">Start date</Label>
+        <Input
           required
+          id="startDate"
           name="startDate"
           type="date"
-          className="mt-2 w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-sky-600 focus:ring-2 focus:ring-sky-100"
           aria-describedby={state.errors?.startDate ? "start-date-error" : undefined}
         />
         {state.errors?.startDate ? (
-          <span id="start-date-error" className="mt-1 block text-sm text-red-700">
+          <p id="start-date-error" className="text-sm text-destructive">
             {state.errors.startDate}
-          </span>
+          </p>
         ) : null}
-      </label>
+      </div>
 
-      <label className="block text-sm font-medium text-slate-800">
-        End date <span className="font-normal text-slate-500">(optional)</span>
-        <input
+      <div className="space-y-2">
+        <Label htmlFor="endDate">
+          End date <span className="font-normal text-muted-foreground">(optional)</span>
+        </Label>
+        <Input
+          id="endDate"
           name="endDate"
           type="date"
-          className="mt-2 w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-sky-600 focus:ring-2 focus:ring-sky-100"
           aria-describedby={state.errors?.endDate ? "end-date-error" : undefined}
         />
         {state.errors?.endDate ? (
-          <span id="end-date-error" className="mt-1 block text-sm text-red-700">
+          <p id="end-date-error" className="text-sm text-destructive">
             {state.errors.endDate}
-          </span>
+          </p>
         ) : null}
-      </label>
+      </div>
 
       {state.message ? (
-        <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-800 sm:col-span-2">
+        <p role="alert" className="rounded-xl bg-destructive/10 p-3 text-sm text-destructive sm:col-span-2">
           {state.message}
         </p>
       ) : null}
 
       <div className="sm:col-span-2">
-        <button
-          disabled={pending}
-          className="rounded-xl bg-sky-700 px-5 py-3 font-semibold text-white hover:bg-sky-800 disabled:cursor-not-allowed disabled:opacity-60"
-        >
+        <Button disabled={pending} size="lg">
           {pending ? "Creating trip..." : "Create trip"}
-        </button>
+        </Button>
       </div>
     </form>
   );
