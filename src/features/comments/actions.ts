@@ -40,7 +40,7 @@ export async function createComment(
     !isValidCommentId(itemId) ||
     !isCommentItemType(itemType)
   ) {
-    return { error: "The comment target could not be identified." };
+    return { error: "Não foi possível identificar o alvo do comentário." };
   }
   if (!validation.success) {
     return { error: validation.error };
@@ -57,7 +57,7 @@ export async function createComment(
   });
 
   if (error) {
-    return { error: "We could not add this comment. Check your trip access." };
+    return { error: "Não foi possível adicionar este comentário. Verifique seu acesso à viagem." };
   }
 
   revalidatePath(`/trips/${tripId}`);
@@ -73,7 +73,7 @@ export async function updateComment(
   const validation = validateCommentBody(formData.get("body"));
 
   if (!isValidCommentId(tripId) || !isValidCommentId(commentId)) {
-    return { error: "The comment could not be identified." };
+    return { error: "Não foi possível identificar o comentário." };
   }
   if (!validation.success) {
     return { error: validation.error };
@@ -88,7 +88,7 @@ export async function updateComment(
     .eq("author_id", user.id);
 
   if (error) {
-    return { error: "We could not update this comment." };
+    return { error: "Não foi possível atualizar este comentário." };
   }
 
   revalidatePath(`/trips/${tripId}`);

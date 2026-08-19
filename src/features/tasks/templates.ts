@@ -12,14 +12,14 @@ export const taskCategories = [
 export type TaskCategory = (typeof taskCategories)[number];
 
 export const taskCategoryLabels: Record<TaskCategory, string> = {
-  documents: "Documents",
-  lodging: "Lodging",
-  money: "Money",
-  transport: "Transport",
-  health: "Health",
-  connectivity: "Connectivity",
-  packing: "Packing",
-  other: "Other",
+  documents: "Documentos",
+  lodging: "Hospedagem",
+  money: "Dinheiro",
+  transport: "Transporte",
+  health: "Saúde",
+  connectivity: "Conectividade",
+  packing: "Bagagem",
+  other: "Outro",
 };
 
 type PreparationTemplateItem = {
@@ -31,30 +31,30 @@ type PreparationTemplateItem = {
 };
 
 export const englandPreparationTemplate: PreparationTemplateItem[] = [
-  { key: "passport", title: "Check passport validity", category: "documents", daysBefore: 180, critical: true },
-  { key: "eta", title: "Apply for the UK ETA", category: "documents", daysBefore: 180, critical: true },
-  { key: "lodging-research", title: "Research refundable lodging options", category: "lodging", daysBefore: 180 },
-  { key: "daily-budget", title: "Plan the daily travel budget", category: "money", daysBefore: 180 },
-  { key: "travel-card", title: "Open a Wise or Nomad account and order the physical card", category: "money", daysBefore: 180 },
-  { key: "lodging-confirmed", title: "Confirm all lodging reservations", category: "lodging", daysBefore: 120, critical: true },
-  { key: "travel-insurance", title: "Purchase travel insurance", category: "health", daysBefore: 120, critical: true },
-  { key: "remote-work", title: "Research reliable cafés or coworking spaces", category: "connectivity", daysBefore: 120 },
-  { key: "bank-travel-notice", title: "Notify banks and prepare a backup international card", category: "money", daysBefore: 120 },
-  { key: "advance-tickets", title: "Buy high-demand attraction tickets", category: "transport", daysBefore: 90 },
-  { key: "main-trains", title: "Book the main train routes", category: "transport", daysBefore: 90, critical: true },
-  { key: "type-g-adapter", title: "Buy at least one type G power adapter", category: "packing", daysBefore: 90 },
-  { key: "medication", title: "Arrange medication, sufficient supply, and a prescription in English", category: "health", daysBefore: 90, critical: true },
-  { key: "esim", title: "Choose and purchase an eSIM", category: "connectivity", daysBefore: 30 },
-  { key: "packing-draft", title: "Draft and test the packing list", category: "packing", daysBefore: 30 },
-  { key: "voucher-review", title: "Review all lodging and tour vouchers", category: "documents", daysBefore: 30, critical: true },
-  { key: "essential-apps", title: "Install essential apps and create accounts", category: "connectivity", daysBefore: 30 },
-  { key: "flight-check-in", title: "Complete online flight check-in when it opens", category: "transport", daysBefore: 1, critical: true },
-  { key: "offline-documents", title: "Save passport, ETA, insurance, vouchers, and first trains offline", category: "documents", daysBefore: 7, critical: true },
-  { key: "document-copies", title: "Keep cloud and physical copies of essential documents", category: "documents", daysBefore: 7, critical: true },
-  { key: "trusted-contacts", title: "Share the itinerary and check-in plan with trusted contacts", category: "documents", daysBefore: 7 },
-  { key: "cards-funded", title: "Load travel cards with pounds", category: "money", daysBefore: 1, critical: true },
-  { key: "esim-test", title: "Install and test the eSIM", category: "connectivity", daysBefore: 1 },
-  { key: "carry-on-check", title: "Pack adapter, charged power bank, and medication in carry-on", category: "packing", daysBefore: 1, critical: true },
+  { key: "passport", title: "Verificar a validade do passaporte", category: "documents", daysBefore: 180, critical: true },
+  { key: "eta", title: "Solicitar o ETA do Reino Unido", category: "documents", daysBefore: 180, critical: true },
+  { key: "lodging-research", title: "Pesquisar opções de hospedagem reembolsáveis", category: "lodging", daysBefore: 180 },
+  { key: "daily-budget", title: "Planejar o orçamento diário da viagem", category: "money", daysBefore: 180 },
+  { key: "travel-card", title: "Abrir uma conta Wise ou Nomad e pedir o cartão físico", category: "money", daysBefore: 180 },
+  { key: "lodging-confirmed", title: "Confirmar todas as reservas de hospedagem", category: "lodging", daysBefore: 120, critical: true },
+  { key: "travel-insurance", title: "Contratar seguro viagem", category: "health", daysBefore: 120, critical: true },
+  { key: "remote-work", title: "Pesquisar cafés ou coworkings confiáveis", category: "connectivity", daysBefore: 120 },
+  { key: "bank-travel-notice", title: "Avisar os bancos e preparar um cartão internacional reserva", category: "money", daysBefore: 120 },
+  { key: "advance-tickets", title: "Comprar ingressos de atrações concorridas", category: "transport", daysBefore: 90 },
+  { key: "main-trains", title: "Reservar as principais rotas de trem", category: "transport", daysBefore: 90, critical: true },
+  { key: "type-g-adapter", title: "Comprar pelo menos um adaptador de tomada tipo G", category: "packing", daysBefore: 90 },
+  { key: "medication", title: "Providenciar medicamentos, quantidade suficiente e receita em inglês", category: "health", daysBefore: 90, critical: true },
+  { key: "esim", title: "Escolher e comprar um eSIM", category: "connectivity", daysBefore: 30 },
+  { key: "packing-draft", title: "Rascunhar e testar a lista de bagagem", category: "packing", daysBefore: 30 },
+  { key: "voucher-review", title: "Revisar todos os vouchers de hospedagem e passeios", category: "documents", daysBefore: 30, critical: true },
+  { key: "essential-apps", title: "Instalar aplicativos essenciais e criar contas", category: "connectivity", daysBefore: 30 },
+  { key: "flight-check-in", title: "Fazer o check-in online do voo assim que abrir", category: "transport", daysBefore: 1, critical: true },
+  { key: "offline-documents", title: "Salvar passaporte, ETA, seguro, vouchers e primeiros trens offline", category: "documents", daysBefore: 7, critical: true },
+  { key: "document-copies", title: "Manter cópias em nuvem e físicas dos documentos essenciais", category: "documents", daysBefore: 7, critical: true },
+  { key: "trusted-contacts", title: "Compartilhar o itinerário e o plano de check-in com contatos de confiança", category: "documents", daysBefore: 7 },
+  { key: "cards-funded", title: "Carregar os cartões de viagem com libras", category: "money", daysBefore: 1, critical: true },
+  { key: "esim-test", title: "Instalar e testar o eSIM", category: "connectivity", daysBefore: 1 },
+  { key: "carry-on-check", title: "Colocar adaptador, power bank carregado e medicamentos na bagagem de mão", category: "packing", daysBefore: 1, critical: true },
 ];
 
 export function dateBeforeTrip(startDate: string, daysBefore: number) {
@@ -64,7 +64,7 @@ export function dateBeforeTrip(startDate: string, daysBefore: number) {
 }
 
 export function isEnglandDestination(destination: string) {
-  return /\b(england|united kingdom|uk|london|oxford|cambridge|york|bath|liverpool|manchester)\b/i.test(destination);
+  return /\b(england|inglaterra|united kingdom|reino unido|uk|london|londres|oxford|cambridge|york|iorque|bath|liverpool|manchester)\b/i.test(destination);
 }
 
 export function buildEnglandPreparationTasks(

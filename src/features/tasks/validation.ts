@@ -36,34 +36,34 @@ export function validateTaskInput(formData: FormData):
   const errors: TaskFieldErrors = {};
 
   if (!title || title.length > 200) {
-    errors.title = "Enter a task with up to 200 characters.";
+    errors.title = "Informe uma tarefa com até 200 caracteres.";
   }
   if (ownerId && !isValidTaskId(ownerId)) {
-    errors.owner = "Choose a valid task owner.";
+    errors.owner = "Escolha um responsável válido.";
   }
   if (
     dueDate &&
     (!datePattern.test(dueDate) || Number.isNaN(Date.parse(`${dueDate}T00:00:00Z`)))
   ) {
-    errors.dueDate = "Enter a valid due date.";
+    errors.dueDate = "Informe uma data limite válida.";
   }
   if (!taskCategories.includes(category)) {
-    errors.category = "Choose a valid preparation category.";
+    errors.category = "Escolha uma categoria de preparação válida.";
   }
   if (referenceLabel && referenceLabel.length > 100) {
-    errors.referenceLabel = "Use a reference label with up to 100 characters.";
+    errors.referenceLabel = "Use um rótulo de referência com até 100 caracteres.";
   }
   if (referenceLabel && !referenceUrl) {
-    errors.referenceUrl = "Add the HTTPS address for this reference.";
+    errors.referenceUrl = "Adicione o endereço HTTPS para esta referência.";
   }
   if (referenceUrl) {
     try {
       const url = new URL(referenceUrl);
       if (url.protocol !== "https:" || referenceUrl.length > 500) {
-        errors.referenceUrl = "Enter a secure HTTPS address with up to 500 characters.";
+        errors.referenceUrl = "Informe um endereço HTTPS seguro com até 500 caracteres.";
       }
     } catch {
-      errors.referenceUrl = "Enter a valid HTTPS address.";
+      errors.referenceUrl = "Informe um endereço HTTPS válido.";
     }
   }
 

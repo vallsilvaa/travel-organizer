@@ -42,7 +42,7 @@ export async function createTrip(
   });
 
   if (error) {
-    return { message: "We could not create the trip. Try again." };
+    return { message: "Não foi possível criar a viagem. Tente novamente." };
   }
 
   if (isEnglandDestination(validation.data.destination)) {

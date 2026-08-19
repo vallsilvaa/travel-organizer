@@ -17,6 +17,6 @@ export function validateCommentBody(value: FormDataEntryValue | null) {
     ? { success: true as const, body }
     : {
         success: false as const,
-        error: "Enter a comment with up to 2,000 characters.",
+        error: "Informe um comentário com até 2.000 caracteres.",
       };
 }

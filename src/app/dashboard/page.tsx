@@ -21,7 +21,7 @@ type DashboardPageProps = {
 };
 
 function formatDate(value: string) {
-  return new Intl.DateTimeFormat("en", {
+  return new Intl.DateTimeFormat("pt-BR", {
     dateStyle: "medium",
     timeZone: "UTC",
   }).format(new Date(`${value}T00:00:00Z`));
@@ -51,7 +51,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         .order("start_date", { ascending: true }),
     ]);
 
-  const displayName = profile?.display_name ?? user.email ?? "Traveler";
+  const displayName = profile?.display_name ?? user.email ?? "Viajante";
   const { data: pendingInvitations, error: invitationsError } = user.email
     ? await supabase
         .from("trip_invitations")
@@ -60,7 +60,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         .order("created_at", { ascending: false })
     : { data: [], error: null };
   const invitationError = params.invitationError
-    ? "The invitation is no longer available or could not be updated."
+    ? "O convite não está mais disponível ou não pôde ser atualizado."
     : null;
 
   return (
@@ -71,13 +71,13 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
             <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">
               Travel Organizer
             </p>
-            <CardTitle className="mt-2 text-3xl">Welcome, {displayName}</CardTitle>
+            <CardTitle className="mt-2 text-3xl">Bem-vindo, {displayName}</CardTitle>
             <CardDescription className="mt-2 text-base">
-              Create a trip and keep its planning details in one private workspace.
+              Crie uma viagem e mantenha os detalhes do planejamento em um espaço privado.
             </CardDescription>
             <CardAction>
               <form action={signOut}>
-                <Button variant="outline">Sign out</Button>
+                <Button variant="outline">Sair</Button>
               </form>
             </CardAction>
           </CardHeader>
@@ -85,9 +85,9 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
 
         <Card className="[--card-spacing:--spacing(8)]">
           <CardHeader>
-            <CardTitle className="text-xl">Email reminders</CardTitle>
+            <CardTitle className="text-xl">Lembretes por e-mail</CardTitle>
             <CardDescription>
-              Receive a reminder when an assigned task is due within the next three days.
+              Receba um lembrete quando uma tarefa atribuída vencer nos próximos três dias.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -102,9 +102,9 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                   defaultChecked={profile?.task_reminders_enabled ?? true}
                   className="h-5 w-5 rounded border-input accent-primary"
                 />
-                Send task deadline reminders
+                Enviar lembretes de prazos de tarefas
               </label>
-              <Button variant="outline">Save preference</Button>
+              <Button variant="outline">Salvar preferência</Button>
             </form>
           </CardContent>
         </Card>
@@ -112,12 +112,12 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         {pendingInvitations?.length || invitationError || invitationsError ? (
           <Card className="border-sky-200 bg-sky-50 [--card-spacing:--spacing(8)]">
             <CardHeader>
-              <CardTitle className="text-2xl">Trip invitations</CardTitle>
+              <CardTitle className="text-2xl">Convites de viagem</CardTitle>
             </CardHeader>
             <CardContent>
               {invitationError || invitationsError ? (
                 <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-800">
-                  {invitationError ?? "We could not load your invitations."}
+                  {invitationError ?? "Não foi possível carregar seus convites."}
                 </p>
               ) : null}
               {pendingInvitations?.length ? (
@@ -131,7 +131,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                         {invitation.trip_destination}
                       </p>
                       <p className="mt-1 text-sm text-slate-600">
-                        You were invited to collaborate as the travel organizer.
+                        Você foi convidado para colaborar como organizador da viagem.
                       </p>
                       <form action={respondToInvitation} className="mt-4 flex gap-3">
                         <input
@@ -140,10 +140,10 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                           value={invitation.id}
                         />
                         <Button name="response" value="accepted">
-                          Accept
+                          Aceitar
                         </Button>
                         <Button name="response" value="declined" variant="outline">
-                          Decline
+                          Recusar
                         </Button>
                       </form>
                     </li>
@@ -156,9 +156,9 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
 
         <Card className="[--card-spacing:--spacing(8)]">
           <CardHeader>
-            <CardTitle className="text-2xl">Create a trip</CardTitle>
+            <CardTitle className="text-2xl">Criar uma viagem</CardTitle>
             <CardDescription>
-              Start with the destination and dates. More planning tools will be added inside the trip.
+              Comece com o destino e as datas. Mais ferramentas de planejamento serão adicionadas dentro da viagem.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -168,12 +168,12 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
 
         <Card className="[--card-spacing:--spacing(8)]">
           <CardHeader>
-            <CardTitle className="text-2xl">Your trips</CardTitle>
+            <CardTitle className="text-2xl">Suas viagens</CardTitle>
           </CardHeader>
           <CardContent>
             {tripsError ? (
               <p role="alert" className="rounded-xl bg-red-50 p-4 text-sm text-red-800">
-                We could not load your trips. Try refreshing the page.
+                Não foi possível carregar suas viagens. Tente atualizar a página.
               </p>
             ) : trips?.length ? (
               <ul className="grid gap-4 sm:grid-cols-2">
@@ -196,7 +196,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
               </ul>
             ) : (
               <p className="rounded-2xl border border-dashed border-slate-300 p-6 text-sm text-slate-600">
-                No trips yet. Create your first trip above.
+                Nenhuma viagem ainda. Crie sua primeira viagem acima.
               </p>
             )}
           </CardContent>

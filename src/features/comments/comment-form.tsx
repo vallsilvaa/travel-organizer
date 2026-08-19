@@ -35,7 +35,7 @@ export function CommentForm({ comment, itemId, itemType, tripId }: CommentFormPr
       formRef.current?.reset();
     }
     if (state.success) {
-      toast.success(comment ? "Comment updated." : "Comment added.");
+      toast.success(comment ? "Comentário atualizado." : "Comentário adicionado.");
     } else if (state.error) {
       toast.error(state.error);
     }
@@ -50,7 +50,7 @@ export function CommentForm({ comment, itemId, itemType, tripId }: CommentFormPr
       <input type="hidden" name="itemType" value={itemType} />
       {comment ? <input type="hidden" name="commentId" value={comment.id} /> : null}
       <Label className="sr-only" htmlFor={fieldId}>
-        {comment ? "Edit comment" : "Add comment"}
+        {comment ? "Editar comentário" : "Adicionar comentário"}
       </Label>
       <Textarea
         id={fieldId}
@@ -58,13 +58,13 @@ export function CommentForm({ comment, itemId, itemType, tripId }: CommentFormPr
         maxLength={2000}
         name="body"
         defaultValue={comment?.body}
-        placeholder="Add context or a decision..."
+        placeholder="Adicione um contexto ou uma decisão..."
         rows={comment ? 2 : 3}
         className="text-sm"
       />
       <div className="mt-2 flex justify-end">
         <Button disabled={pending} size="sm">
-          {pending ? "Saving..." : comment ? "Save" : "Comment"}
+          {pending ? "Salvando..." : comment ? "Salvar" : "Comentar"}
         </Button>
       </div>
     </form>

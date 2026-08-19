@@ -23,13 +23,13 @@ export function TripForm() {
   return (
     <form action={formAction} className="mt-6 grid gap-5 sm:grid-cols-2">
       <div className="space-y-2 sm:col-span-2">
-        <Label htmlFor="destination">Destination</Label>
+        <Label htmlFor="destination">Destino</Label>
         <Input
           required
           maxLength={200}
           id="destination"
           name="destination"
-          placeholder="London, United Kingdom"
+          placeholder="Londres, Reino Unido"
           aria-describedby={state.errors?.destination ? "destination-error" : undefined}
         />
         {state.errors?.destination ? (
@@ -40,7 +40,7 @@ export function TripForm() {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="startDate">Start date</Label>
+        <Label htmlFor="startDate">Data de início</Label>
         <Input
           required
           id="startDate"
@@ -57,7 +57,7 @@ export function TripForm() {
 
       <div className="space-y-2">
         <Label htmlFor="endDate">
-          End date <span className="font-normal text-muted-foreground">(optional)</span>
+          Data de término <span className="font-normal text-muted-foreground">(opcional)</span>
         </Label>
         <Input
           id="endDate"
@@ -74,7 +74,7 @@ export function TripForm() {
 
       <div className="sm:col-span-2">
         <Button disabled={pending} size="lg">
-          {pending ? "Creating trip..." : "Create trip"}
+          {pending ? "Criando viagem..." : "Criar viagem"}
         </Button>
       </div>
     </form>

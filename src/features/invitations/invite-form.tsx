@@ -32,18 +32,18 @@ export function InviteForm({ tripId }: { tripId: string }) {
     <form action={formAction} className="mt-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
       <input type="hidden" name="tripId" value={tripId} />
       <div className="flex-1 space-y-2">
-        <Label htmlFor="email">Organizer email</Label>
+        <Label htmlFor="email">E-mail do organizador</Label>
         <Input
           required
           autoComplete="email"
           id="email"
           name="email"
           type="email"
-          placeholder="organizer@example.com"
+          placeholder="organizador@exemplo.com"
         />
       </div>
       <Button disabled={pending} size="lg">
-        {pending ? "Inviting..." : "Invite organizer"}
+        {pending ? "Convidando..." : "Convidar organizador"}
       </Button>
     </form>
   );

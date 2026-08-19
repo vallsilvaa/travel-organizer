@@ -31,8 +31,8 @@ describe("validateTripInput", () => {
       tripForm({ destination: " ", startDate: "2026-02-30" }),
     );
 
-    expect(result.errors.destination).toBe("Destination is required.");
-    expect(result.errors.startDate).toBe("Enter a valid start date.");
+    expect(result.errors.destination).toBe("O destino é obrigatório.");
+    expect(result.errors.startDate).toBe("Informe uma data de início válida.");
   });
 
   it("rejects an end date before the start date", () => {
@@ -45,7 +45,7 @@ describe("validateTripInput", () => {
     );
 
     expect(result.errors.endDate).toBe(
-      "End date cannot be earlier than start date.",
+      "A data de término não pode ser anterior à data de início.",
     );
   });
 });

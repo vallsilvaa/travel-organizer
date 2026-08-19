@@ -14,21 +14,21 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
 
   return (
     <AuthShell
-      title="Welcome back"
-      description="Sign in to access your private trips and planning workspace."
-      alternateText="New to Travel Organizer?"
+      title="Bem-vindo de volta"
+      description="Entre para acessar suas viagens privadas e seu espaço de planejamento."
+      alternateText="Novo no Travel Organizer?"
       alternateHref="/auth/sign-up"
-      alternateLabel="Create an account"
+      alternateLabel="Criar uma conta"
       error={getAuthMessage(params.error)}
       message={getAuthMessage(params.message)}
     >
       <form action={signIn} className="space-y-5">
         <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor="email">E-mail</Label>
           <Input required autoComplete="email" id="email" name="email" type="email" />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="password">Password</Label>
+          <Label htmlFor="password">Senha</Label>
           <Input
             required
             autoComplete="current-password"
@@ -38,7 +38,7 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
           />
         </div>
         <Button className="w-full" size="lg">
-          Sign in
+          Entrar
         </Button>
       </form>
     </AuthShell>

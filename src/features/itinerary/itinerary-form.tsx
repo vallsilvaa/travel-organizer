@@ -34,7 +34,7 @@ export function ItineraryForm({ item, tripId }: ItineraryFormProps) {
 
   useEffect(() => {
     if (state.success) {
-      toast.success(item ? "Itinerary item updated." : "Itinerary item added.");
+      toast.success(item ? "Item do itinerário atualizado." : "Item do itinerário adicionado.");
     } else if (state.message) {
       toast.error(state.message);
     }
@@ -45,45 +45,45 @@ export function ItineraryForm({ item, tripId }: ItineraryFormProps) {
       <input type="hidden" name="tripId" value={tripId} />
       {item ? <input type="hidden" name="itemId" value={item.id} /> : null}
       <div className="space-y-2">
-        <Label htmlFor="date">Date</Label>
+        <Label htmlFor="date">Data</Label>
         <Input required id="date" name="date" type="date" defaultValue={item?.item_date} />
         {state.errors?.date ? <p className="text-sm text-destructive">{state.errors.date}</p> : null}
       </div>
       <div className="space-y-2">
         <Label htmlFor="time">
-          Time <span className="font-normal text-muted-foreground">(optional)</span>
+          Horário <span className="font-normal text-muted-foreground">(opcional)</span>
         </Label>
         <Input id="time" name="time" type="time" defaultValue={item?.start_time?.slice(0, 5)} />
         {state.errors?.time ? <p className="text-sm text-destructive">{state.errors.time}</p> : null}
       </div>
       <div className="space-y-2 sm:col-span-2">
-        <Label htmlFor="title">Title</Label>
+        <Label htmlFor="title">Título</Label>
         <Input
           required
           maxLength={200}
           id="title"
           name="title"
           defaultValue={item?.title}
-          placeholder="Museum visit"
+          placeholder="Visita ao museu"
         />
         {state.errors?.title ? <p className="text-sm text-destructive">{state.errors.title}</p> : null}
       </div>
       <div className="space-y-2 sm:col-span-2">
         <Label htmlFor="location">
-          Location <span className="font-normal text-muted-foreground">(optional)</span>
+          Local <span className="font-normal text-muted-foreground">(opcional)</span>
         </Label>
         <Input
           maxLength={200}
           id="location"
           name="location"
           defaultValue={item?.location ?? ""}
-          placeholder="Address or meeting point"
+          placeholder="Endereço ou ponto de encontro"
         />
         {state.errors?.location ? <p className="text-sm text-destructive">{state.errors.location}</p> : null}
       </div>
       <div className="space-y-2 sm:col-span-2">
         <Label htmlFor="notes">
-          Notes <span className="font-normal text-muted-foreground">(optional)</span>
+          Notas <span className="font-normal text-muted-foreground">(opcional)</span>
         </Label>
         <Textarea
           maxLength={2000}
@@ -95,7 +95,7 @@ export function ItineraryForm({ item, tripId }: ItineraryFormProps) {
         {state.errors?.notes ? <p className="text-sm text-destructive">{state.errors.notes}</p> : null}
       </div>
       <Button disabled={pending} size="lg" className="sm:col-span-2 sm:justify-self-start">
-        {pending ? "Saving..." : item ? "Save changes" : "Add to itinerary"}
+        {pending ? "Salvando..." : item ? "Salvar alterações" : "Adicionar ao itinerário"}
       </Button>
     </form>
   );

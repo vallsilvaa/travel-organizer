@@ -1,14 +1,14 @@
 const messages = {
-  authentication_required: "Sign in to continue.",
-  check_email: "Check your email to confirm your account before signing in.",
-  invalid_credentials: "Email or password is incorrect.",
-  invalid_email: "Enter a valid email address.",
-  invalid_name: "Enter a name with at least two characters.",
-  invalid_password: "Use at least eight characters for your password.",
-  password_mismatch: "The passwords do not match.",
-  rate_limited: "Too many attempts. Wait a moment and try again.",
-  signup_failed: "We could not create your account. Try again.",
-  callback_failed: "The confirmation link is invalid or has expired.",
+  authentication_required: "Entre para continuar.",
+  check_email: "Verifique seu e-mail para confirmar sua conta antes de entrar.",
+  invalid_credentials: "E-mail ou senha incorretos.",
+  invalid_email: "Informe um e-mail válido.",
+  invalid_name: "Informe um nome com pelo menos dois caracteres.",
+  invalid_password: "Use pelo menos oito caracteres para sua senha.",
+  password_mismatch: "As senhas não coincidem.",
+  rate_limited: "Muitas tentativas. Aguarde um instante e tente novamente.",
+  signup_failed: "Não foi possível criar sua conta. Tente novamente.",
+  callback_failed: "O link de confirmação é inválido ou expirou.",
 } as const;
 
 export type AuthMessageCode = keyof typeof messages;

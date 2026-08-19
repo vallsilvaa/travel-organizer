@@ -16,7 +16,7 @@ function tripDestination(task: ReminderTask) {
   const destination = Array.isArray(task.trips)
     ? task.trips[0]?.destination
     : task.trips.destination;
-  return destination ?? "Your trip";
+  return destination ?? "Sua viagem";
 }
 
 export async function GET(request: NextRequest) {

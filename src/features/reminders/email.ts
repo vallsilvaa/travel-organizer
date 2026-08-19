@@ -37,22 +37,22 @@ export function buildReminderEmail(input: ReminderEmailInput) {
   const tripUrl = `${input.appUrl.replace(/\/$/, "")}/trips/${encodeURIComponent(input.tripId)}`;
 
   return {
-    subject: `Upcoming task for ${input.tripDestination}`,
+    subject: `Tarefa pendente para ${input.tripDestination}`,
     html: `
-      <h1>Trip task reminder</h1>
-      <p><strong>Trip:</strong> ${destination}</p>
-      <p><strong>Task:</strong> ${task}</p>
-      <p><strong>Deadline:</strong> ${deadline}</p>
-      <p><a href="${tripUrl}">Open the trip</a></p>
-      <p>You can disable task reminder emails from your Travel Organizer dashboard.</p>
+      <h1>Lembrete de tarefa da viagem</h1>
+      <p><strong>Viagem:</strong> ${destination}</p>
+      <p><strong>Tarefa:</strong> ${task}</p>
+      <p><strong>Prazo:</strong> ${deadline}</p>
+      <p><a href="${tripUrl}">Abrir a viagem</a></p>
+      <p>Você pode desativar os e-mails de lembrete de tarefas no seu painel do Travel Organizer.</p>
     `,
     text: [
-      "Trip task reminder",
-      `Trip: ${input.tripDestination}`,
-      `Task: ${input.taskTitle}`,
-      `Deadline: ${input.deadline}`,
-      `Open the trip: ${tripUrl}`,
-      "You can disable task reminder emails from your Travel Organizer dashboard.",
+      "Lembrete de tarefa da viagem",
+      `Viagem: ${input.tripDestination}`,
+      `Tarefa: ${input.taskTitle}`,
+      `Prazo: ${input.deadline}`,
+      `Abrir a viagem: ${tripUrl}`,
+      "Você pode desativar os e-mails de lembrete de tarefas no seu painel do Travel Organizer.",
     ].join("\n"),
   };
 }

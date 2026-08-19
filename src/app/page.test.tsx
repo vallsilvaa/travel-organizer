@@ -12,7 +12,7 @@ describe("Home", () => {
     expect(
       screen.getByRole("heading", {
         level: 1,
-        name: /everything for your next trip/i,
+        name: /tudo para sua próxima viagem/i,
       }),
     ).toBeDefined();
   });
@@ -21,10 +21,10 @@ describe("Home", () => {
     render(<Home />);
 
     expect(
-      screen.getByRole("link", { name: /create account/i }).getAttribute("href"),
+      screen.getByRole("link", { name: /criar conta/i }).getAttribute("href"),
     ).toBe("/auth/sign-up");
     expect(
-      screen.getByRole("link", { name: /sign in/i }).getAttribute("href"),
+      screen.getByRole("link", { name: /entrar/i }).getAttribute("href"),
     ).toBe("/auth/sign-in");
   });
 });

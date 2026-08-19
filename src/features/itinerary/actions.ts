@@ -37,7 +37,7 @@ export async function createItineraryItem(
   const validation = validateItineraryInput(formData);
 
   if (!isValidItineraryId(tripId)) {
-    return { message: "The trip could not be identified." };
+    return { message: "Não foi possível identificar a viagem." };
   }
   if (!validation.success) {
     return { errors: validation.errors };
@@ -55,7 +55,7 @@ export async function createItineraryItem(
   });
 
   if (error) {
-    return { message: "We could not add this itinerary item. Check your trip access and try again." };
+    return { message: "Não foi possível adicionar este item ao itinerário. Verifique seu acesso à viagem e tente novamente." };
   }
 
   revalidatePath(`/trips/${tripId}`);
@@ -71,7 +71,7 @@ export async function updateItineraryItem(
   const validation = validateItineraryInput(formData);
 
   if (!isValidItineraryId(tripId) || !isValidItineraryId(itemId)) {
-    return { message: "The itinerary item could not be identified." };
+    return { message: "Não foi possível identificar o item do itinerário." };
   }
   if (!validation.success) {
     return { errors: validation.errors };
@@ -92,7 +92,7 @@ export async function updateItineraryItem(
     .eq("trip_id", tripId);
 
   if (error) {
-    return { message: "We could not update this itinerary item. Try again." };
+    return { message: "Não foi possível atualizar este item do itinerário. Tente novamente." };
   }
 
   revalidatePath(`/trips/${tripId}`);

@@ -17,13 +17,13 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Travel Organizer",
-  description: "Plan trips, coordinate tasks, and keep travel details together.",
+  description: "Planeje viagens, organize tarefas e mantenha os detalhes da viagem em um só lugar.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
-      lang="en"
+      lang="pt-BR"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >

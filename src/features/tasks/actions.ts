@@ -36,7 +36,7 @@ export async function createTask(
   const validation = validateTaskInput(formData);
 
   if (!isValidTaskId(tripId)) {
-    return { message: "The trip could not be identified." };
+    return { message: "Não foi possível identificar a viagem." };
   }
   if (!validation.success) {
     return { errors: validation.errors };
@@ -57,7 +57,7 @@ export async function createTask(
   });
 
   if (error) {
-    return { message: "We could not add this task. Check the owner and your trip access." };
+    return { message: "Não foi possível adicionar esta tarefa. Verifique o responsável e seu acesso à viagem." };
   }
 
   revalidatePath(`/trips/${tripId}`);
@@ -73,7 +73,7 @@ export async function updateTask(
   const validation = validateTaskInput(formData);
 
   if (!isValidTaskId(tripId) || !isValidTaskId(taskId)) {
-    return { message: "The task could not be identified." };
+    return { message: "Não foi possível identificar a tarefa." };
   }
   if (!validation.success) {
     return { errors: validation.errors };
@@ -97,7 +97,7 @@ export async function updateTask(
     .eq("trip_id", tripId);
 
   if (error) {
-    return { message: "We could not update this task. Try again." };
+    return { message: "Não foi possível atualizar esta tarefa. Tente novamente." };
   }
 
   revalidatePath(`/trips/${tripId}`);

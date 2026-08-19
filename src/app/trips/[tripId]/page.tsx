@@ -4,6 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import { CommentThread, type ItemComment } from "@/features/comments/comment-thread";
 import { deleteExpense } from "@/features/expenses/actions";
 import { ExpenseForm } from "@/features/expenses/expense-form";
+import { expenseCategoryLabels } from "@/features/expenses/validation";
 import { InviteForm } from "@/features/invitations/invite-form";
 import { deleteItineraryItem } from "@/features/itinerary/actions";
 import { ItineraryForm } from "@/features/itinerary/itinerary-form";
@@ -81,20 +82,26 @@ type TripTask = {
   reference_url: string | null;
 };
 
+const invitationStatusLabels: Record<string, string> = {
+  pending: "Pendente",
+  accepted: "Aceito",
+  declined: "Recusado",
+};
+
 function formatDate(value: string) {
-  return new Intl.DateTimeFormat("en", {
+  return new Intl.DateTimeFormat("pt-BR", {
     dateStyle: "long",
     timeZone: "UTC",
   }).format(new Date(`${value}T00:00:00Z`));
 }
 
 function formatTime(value: string | null) {
-  return value ? value.slice(0, 5) : "Time not defined";
+  return value ? value.slice(0, 5) : "Horário não definido";
 }
 
 function formatMoney(amount: number | string, currency: string) {
   try {
-    return new Intl.NumberFormat("en", {
+    return new Intl.NumberFormat("pt-BR", {
       style: "currency",
       currency,
     }).format(Number(amount));
@@ -232,11 +239,11 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
               href="/dashboard"
               className="text-sm font-semibold text-primary hover:text-primary/80"
             >
-              ← Back to dashboard
+              ← Voltar ao painel
             </Link>
 
             <p className="mt-8 text-sm font-semibold uppercase tracking-[0.18em] text-primary">
-              Trip overview
+              Visão geral da viagem
             </p>
             <h1 className="mt-3 text-4xl font-semibold tracking-tight text-slate-950">
               {trip.destination}
@@ -244,22 +251,22 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
 
             <dl className="mt-8 grid gap-4 sm:grid-cols-2">
               <div className="rounded-2xl bg-slate-50 p-5">
-                <dt className="text-sm font-medium text-slate-500">Start date</dt>
+                <dt className="text-sm font-medium text-slate-500">Data de início</dt>
                 <dd className="mt-2 text-lg font-semibold text-slate-950">
                   {formatDate(trip.start_date)}
                 </dd>
               </div>
               <div className="rounded-2xl bg-slate-50 p-5">
-                <dt className="text-sm font-medium text-slate-500">End date</dt>
+                <dt className="text-sm font-medium text-slate-500">Data de término</dt>
                 <dd className="mt-2 text-lg font-semibold text-slate-950">
-                  {trip.end_date ? formatDate(trip.end_date) : "Not defined"}
+                  {trip.end_date ? formatDate(trip.end_date) : "Não definida"}
                 </dd>
               </div>
             </dl>
 
             {commentsError ? (
               <p role="alert" className="mt-8 rounded-xl bg-red-50 p-4 text-sm text-red-800">
-                Comments could not be loaded. Other trip content is still available.
+                Não foi possível carregar os comentários. O restante do conteúdo da viagem continua disponível.
               </p>
             ) : null}
           </CardContent>
@@ -267,24 +274,24 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
 
         <Tabs defaultValue={defaultTab}>
           <TabsList className="w-full sm:w-auto">
-            <TabsTrigger value="itinerary">Itinerary</TabsTrigger>
-            <TabsTrigger value="expenses">Expenses</TabsTrigger>
-            <TabsTrigger value="preparation">Preparation</TabsTrigger>
-            {isCreator ? <TabsTrigger value="organizer">Organizer</TabsTrigger> : null}
+            <TabsTrigger value="itinerary">Itinerário</TabsTrigger>
+            <TabsTrigger value="expenses">Despesas</TabsTrigger>
+            <TabsTrigger value="preparation">Preparação</TabsTrigger>
+            {isCreator ? <TabsTrigger value="organizer">Organizador</TabsTrigger> : null}
           </TabsList>
 
           <TabsContent value="itinerary">
           <Card className="[--card-spacing:--spacing(6)]">
             <CardHeader>
-              <CardTitle className="text-2xl">Itinerary</CardTitle>
+              <CardTitle className="text-2xl">Itinerário</CardTitle>
               <CardDescription>
-                Keep activities, reservations, and meeting points in chronological order.
+                Mantenha atividades, reservas e pontos de encontro em ordem cronológica.
               </CardDescription>
             </CardHeader>
             <CardContent>
               <details className="mt-5 rounded-2xl bg-sky-50 p-5" open={!itineraryItems?.length}>
                 <summary className="cursor-pointer font-semibold text-sky-900">
-                  Add itinerary item
+                  Adicionar item ao itinerário
                 </summary>
                 <div className="mt-5">
                   <ItineraryForm tripId={trip.id} />
@@ -293,7 +300,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
 
               {itineraryError ? (
                 <p role="alert" className="mt-5 rounded-xl bg-red-50 p-4 text-sm text-red-800">
-                  We could not load the itinerary. Try refreshing the page.
+                  Não foi possível carregar o itinerário. Tente atualizar a página.
                 </p>
               ) : itineraryItems?.length ? (
                 <ol className="mt-6 space-y-4">
@@ -309,12 +316,12 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                           {item.notes ? <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-slate-600">{item.notes}</p> : null}
                         </div>
                         <ItemActionsMenu
-                          editLabel="Edit item"
+                          editLabel="Editar item"
                           editForm={<ItineraryForm item={item} tripId={trip.id} />}
                           deleteAction={deleteItineraryItem}
                           deleteHiddenFields={{ tripId: trip.id, itemId: item.id }}
-                          deleteTitle="Delete itinerary item?"
-                          deleteDescription={`This will permanently remove "${item.title}" from the itinerary.`}
+                          deleteTitle="Excluir item do itinerário?"
+                          deleteDescription={`Isso vai remover permanentemente "${item.title}" do itinerário.`}
                         />
                       </div>
                       <CommentThread
@@ -330,7 +337,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                 </ol>
               ) : (
                 <p className="mt-5 rounded-2xl border border-dashed border-slate-300 p-6 text-sm text-slate-600">
-                  No itinerary items yet. Add the first activity above.
+                  Nenhum item no itinerário ainda. Adicione a primeira atividade acima.
                 </p>
               )}
             </CardContent>
@@ -340,9 +347,9 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
           <TabsContent value="expenses">
           <Card className="[--card-spacing:--spacing(6)]">
             <CardHeader>
-              <CardTitle className="text-2xl">Expenses</CardTitle>
+              <CardTitle className="text-2xl">Despesas</CardTitle>
               <CardDescription>
-                Record shared costs and review totals separately for each currency.
+                Registre custos compartilhados e veja os totais separados por moeda.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -358,7 +365,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
               ) : null}
 
               <details className="mt-5 rounded-2xl bg-sky-50 p-5" open={!tripExpenses.length}>
-                <summary className="cursor-pointer font-semibold text-sky-900">Add expense</summary>
+                <summary className="cursor-pointer font-semibold text-sky-900">Adicionar despesa</summary>
                 <div className="mt-5">
                   <ExpenseForm participants={tripParticipants} tripId={trip.id} />
                 </div>
@@ -366,7 +373,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
 
               {expensesError ? (
                 <p role="alert" className="mt-5 rounded-xl bg-red-50 p-4 text-sm text-red-800">
-                  We could not load the expenses. Try refreshing the page.
+                  Não foi possível carregar as despesas. Tente atualizar a página.
                 </p>
               ) : tripExpenses.length ? (
                 <ul className="mt-6 space-y-4">
@@ -376,20 +383,22 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                         <div>
                           <div className="flex flex-wrap items-center gap-2">
                             <h3 className="font-semibold text-slate-950">{expense.description}</h3>
-                            <Badge variant="secondary" className="capitalize">{expense.category}</Badge>
+                            <Badge variant="secondary" className="capitalize">
+                              {expenseCategoryLabels[expense.category as keyof typeof expenseCategoryLabels] ?? expense.category}
+                            </Badge>
                           </div>
                           <p className="mt-2 text-lg font-semibold text-emerald-800">{formatMoney(expense.amount, expense.currency)}</p>
                           <p className="mt-1 text-sm text-slate-600">
-                            Paid by {participantNames.get(expense.payer_id) ?? "Traveler"} · {formatDate(expense.expense_date)}
+                            Pago por {participantNames.get(expense.payer_id) ?? "Viajante"} · {formatDate(expense.expense_date)}
                           </p>
                         </div>
                         <ItemActionsMenu
-                          editLabel="Edit expense"
+                          editLabel="Editar despesa"
                           editForm={<ExpenseForm expense={expense} participants={tripParticipants} tripId={trip.id} />}
                           deleteAction={deleteExpense}
                           deleteHiddenFields={{ tripId: trip.id, expenseId: expense.id }}
-                          deleteTitle="Delete expense?"
-                          deleteDescription={`This will permanently remove "${expense.description}" and its total from your currency breakdown.`}
+                          deleteTitle="Excluir despesa?"
+                          deleteDescription={`Isso vai remover permanentemente "${expense.description}" e seu valor do resumo por moeda.`}
                         />
                       </div>
                     </li>
@@ -397,7 +406,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                 </ul>
               ) : (
                 <p className="mt-5 rounded-2xl border border-dashed border-slate-300 p-6 text-sm text-slate-600">
-                  No expenses yet. Add the first shared cost above.
+                  Nenhuma despesa ainda. Adicione o primeiro custo compartilhado acima.
                 </p>
               )}
             </CardContent>
@@ -409,37 +418,37 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
             <CardContent>
               <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">Before the itinerary</p>
-                  <h2 className="mt-2 text-2xl font-semibold text-slate-950">Pre-trip preparation</h2>
+                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">Antes do itinerário</p>
+                  <h2 className="mt-2 text-2xl font-semibold text-slate-950">Preparação pré-viagem</h2>
                   <p className="mt-2 text-sm leading-6 text-slate-600">
-                    Complete documents, bookings, money, health, connectivity, and packing before departure.
+                    Complete documentos, reservas, dinheiro, saúde, conectividade e bagagem antes da partida.
                   </p>
                 </div>
                 <form action={addEnglandPreparationChecklist}>
                   <input type="hidden" name="tripId" value={trip.id} />
-                  <Button size="lg">Add England checklist</Button>
+                  <Button size="lg">Adicionar checklist da Inglaterra</Button>
                 </form>
               </div>
 
               <div className="mt-6 overflow-hidden rounded-2xl border border-sky-100 bg-sky-50 p-5">
                 <div className="flex items-end justify-between gap-4">
                   <div>
-                    <p className="text-sm font-medium text-sky-800">Travel readiness</p>
+                    <p className="text-sm font-medium text-sky-800">Prontidão para a viagem</p>
                     <p className="mt-1 text-3xl font-semibold text-sky-950">{readiness}%</p>
                   </div>
-                  <p className="text-right text-sm text-sky-800">{completedTaskCount} of {allTasks.length} completed</p>
+                  <p className="text-right text-sm text-sky-800">{completedTaskCount} de {allTasks.length} concluídas</p>
                 </div>
-                <div className="mt-4 h-3 overflow-hidden rounded-full bg-white" aria-label={`${readiness}% ready`} role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={readiness}>
+                <div className="mt-4 h-3 overflow-hidden rounded-full bg-white" aria-label={`${readiness}% pronto`} role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={readiness}>
                   <div className="h-full rounded-full bg-sky-600" style={{ width: `${readiness}%` }} />
                 </div>
                 <div className="mt-4 flex flex-wrap gap-2">
-                  <Badge variant="outline" className="bg-white">{criticalOpenCount} critical open</Badge>
-                  <Badge variant="outline" className={overdueTaskCount ? "border-red-200 bg-red-100 text-red-800" : "bg-white"}>{overdueTaskCount} overdue</Badge>
+                  <Badge variant="outline" className="bg-white">{criticalOpenCount} críticas em aberto</Badge>
+                  <Badge variant="outline" className={overdueTaskCount ? "border-red-200 bg-red-100 text-red-800" : "bg-white"}>{overdueTaskCount} atrasadas</Badge>
                 </div>
               </div>
 
               <details className="mt-5 rounded-2xl bg-slate-50 p-5" open={!allTasks.length}>
-                <summary className="cursor-pointer font-semibold text-slate-900">Add a custom preparation task</summary>
+                <summary className="cursor-pointer font-semibold text-slate-900">Adicionar tarefa personalizada</summary>
                 <div className="mt-5">
                   <TaskForm participants={tripParticipants} tripId={trip.id} />
                 </div>
@@ -453,21 +462,21 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">All statuses</SelectItem>
-                      <SelectItem value="open">Open</SelectItem>
-                      <SelectItem value="completed">Completed</SelectItem>
+                      <SelectItem value="all">Todos os status</SelectItem>
+                      <SelectItem value="open">Em aberto</SelectItem>
+                      <SelectItem value="completed">Concluídas</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="owner-filter" className="text-slate-700">Owner</Label>
+                  <Label htmlFor="owner-filter" className="text-slate-700">Responsável</Label>
                   <Select name="owner" defaultValue={ownerFilter}>
                     <SelectTrigger id="owner-filter" className="w-full bg-white">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">All owners</SelectItem>
-                      <SelectItem value="unassigned">Unassigned</SelectItem>
+                      <SelectItem value="all">Todos os responsáveis</SelectItem>
+                      <SelectItem value="unassigned">Sem responsável</SelectItem>
                       {tripParticipants.map((participant) => (
                         <SelectItem key={participant.user_id} value={participant.user_id}>{participant.display_name}</SelectItem>
                       ))}
@@ -475,24 +484,24 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                   </Select>
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="category-filter" className="text-slate-700">Category</Label>
+                  <Label htmlFor="category-filter" className="text-slate-700">Categoria</Label>
                   <Select name="category" defaultValue={categoryFilter}>
                     <SelectTrigger id="category-filter" className="w-full bg-white">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">All categories</SelectItem>
+                      <SelectItem value="all">Todas as categorias</SelectItem>
                       {taskCategories.map((category) => (
                         <SelectItem key={category} value={category}>{taskCategoryLabels[category]}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
-                <Button type="submit" variant="outline" className="sm:col-span-3 sm:justify-self-start">Apply filters</Button>
+                <Button type="submit" variant="outline" className="sm:col-span-3 sm:justify-self-start">Aplicar filtros</Button>
               </form>
 
               {tasksError ? (
-                <p role="alert" className="mt-5 rounded-xl bg-red-50 p-4 text-sm text-red-800">We could not load preparation tasks. Try refreshing the page.</p>
+                <p role="alert" className="mt-5 rounded-xl bg-red-50 p-4 text-sm text-red-800">Não foi possível carregar as tarefas de preparação. Tente atualizar a página.</p>
               ) : tasksByCategory.length ? (
                 <div className="mt-7 space-y-8">
                   {tasksByCategory.map((group) => (
@@ -508,19 +517,19 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                                 <div>
                                   <div className="flex flex-wrap items-center gap-2">
                                     <h4 className={`font-semibold ${task.completed_at ? "text-slate-500 line-through" : "text-slate-950"}`}>{task.title}</h4>
-                                    {task.is_critical && !task.completed_at ? <Badge className="bg-amber-100 text-amber-900">Critical</Badge> : null}
-                                    {overdue ? <Badge className="bg-red-100 text-red-800">Overdue</Badge> : null}
-                                    {upcoming ? <Badge className="bg-sky-100 text-sky-800">Upcoming</Badge> : null}
-                                    {task.completed_at ? <Badge className="bg-emerald-100 text-emerald-800">Completed</Badge> : null}
+                                    {task.is_critical && !task.completed_at ? <Badge className="bg-amber-100 text-amber-900">Crítica</Badge> : null}
+                                    {overdue ? <Badge className="bg-red-100 text-red-800">Atrasada</Badge> : null}
+                                    {upcoming ? <Badge className="bg-sky-100 text-sky-800">Próxima</Badge> : null}
+                                    {task.completed_at ? <Badge className="bg-emerald-100 text-emerald-800">Concluída</Badge> : null}
                                   </div>
                                   <p className="mt-2 text-sm text-slate-600">
-                                    {participantNames.get(task.owner_id ?? "") ?? "Unassigned"}
-                                    {task.due_date ? ` · Due ${formatDate(task.due_date)}` : " · No deadline"}
-                                    {task.due_offset_days !== null ? ` · ${task.due_offset_days} days before departure` : ""}
+                                    {participantNames.get(task.owner_id ?? "") ?? "Sem responsável"}
+                                    {task.due_date ? ` · Prazo: ${formatDate(task.due_date)}` : " · Sem prazo"}
+                                    {task.due_offset_days !== null ? ` · ${task.due_offset_days} dias antes da partida` : ""}
                                   </p>
                                   {task.reference_url ? (
                                     <a href={task.reference_url} target="_blank" rel="noreferrer noopener" className="mt-3 inline-flex text-sm font-semibold text-sky-700 hover:text-sky-800">
-                                      {task.reference_label ?? "Open supporting reference"} ↗
+                                      {task.reference_label ?? "Abrir referência"} ↗
                                     </a>
                                   ) : null}
                                 </div>
@@ -529,16 +538,16 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                                     <input type="hidden" name="tripId" value={trip.id} />
                                     <input type="hidden" name="taskId" value={task.id} />
                                     <input type="hidden" name="completed" value={task.completed_at ? "false" : "true"} />
-                                    <Button variant="outline" size="sm">{task.completed_at ? "Reopen" : "Complete"}</Button>
+                                    <Button variant="outline" size="sm">{task.completed_at ? "Reabrir" : "Concluir"}</Button>
                                   </form>
                                   <ItemActionsMenu
-                                    editLabel="Edit task"
+                                    editLabel="Editar tarefa"
                                     editForm={<TaskForm participants={tripParticipants} task={task} tripId={trip.id} />}
                                     deleteAction={deleteTask}
                                     deleteHiddenFields={{ tripId: trip.id, taskId: task.id }}
-                                    deleteTitle="Remove this preparation task?"
-                                    deleteDescription={`This will permanently remove "${task.title}" from your preparation checklist.`}
-                                    deleteLabel="Remove"
+                                    deleteTitle="Remover esta tarefa de preparação?"
+                                    deleteDescription={`Isso vai remover permanentemente "${task.title}" da sua lista de preparação.`}
+                                    deleteLabel="Remover"
                                   />
                                 </div>
                               </div>
@@ -551,7 +560,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                   ))}
                 </div>
               ) : (
-                <p className="mt-5 rounded-2xl border border-dashed border-slate-300 p-6 text-sm text-slate-600">No preparation tasks match these filters. Add the England checklist or create a custom task.</p>
+                <p className="mt-5 rounded-2xl border border-dashed border-slate-300 p-6 text-sm text-slate-600">Nenhuma tarefa de preparação corresponde a esses filtros. Adicione o checklist da Inglaterra ou crie uma tarefa personalizada.</p>
               )}
             </CardContent>
           </Card>
@@ -561,9 +570,9 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
             <TabsContent value="organizer">
               <Card className="[--card-spacing:--spacing(6)]">
                 <CardHeader>
-                  <CardTitle className="text-xl">Travel organizer</CardTitle>
+                  <CardTitle className="text-xl">Organizador da viagem</CardTitle>
                   <CardDescription>
-                    Invite an organizer by email. They can accept after signing in with the same address.
+                    Convide um organizador por e-mail. A pessoa pode aceitar após entrar com o mesmo endereço.
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -581,15 +590,15 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                           </span>
                           <Badge
                             variant="outline"
-                            className={`capitalize ${
+                            className={
                               invitation.status === "accepted"
                                 ? "border-emerald-200 bg-emerald-100 text-emerald-800"
                                 : invitation.status === "declined"
                                   ? "border-red-200 bg-red-100 text-red-800"
                                   : ""
-                            }`}
+                            }
                           >
-                            {invitation.status}
+                            {invitationStatusLabels[invitation.status] ?? invitation.status}
                           </Badge>
                         </li>
                       ))}
