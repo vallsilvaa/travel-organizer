@@ -37,6 +37,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 type TripPageProps = {
   params: Promise<{ tripId: string }>;
@@ -220,6 +221,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
         ? comment.itinerary_item_id === itemId
         : comment.task_id === itemId,
     );
+  const defaultTab = filters.status || filters.owner || filters.category ? "preparation" : "itinerary";
 
   return (
     <main className="min-h-screen bg-slate-50 px-6 py-12">
@@ -263,324 +265,341 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
           </CardContent>
         </Card>
 
-        <Card className="[--card-spacing:--spacing(6)]">
-          <CardHeader>
-            <CardTitle className="text-2xl">Itinerary</CardTitle>
-            <CardDescription>
-              Keep activities, reservations, and meeting points in chronological order.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <details className="mt-5 rounded-2xl bg-sky-50 p-5" open={!itineraryItems?.length}>
-              <summary className="cursor-pointer font-semibold text-sky-900">
-                Add itinerary item
-              </summary>
-              <div className="mt-5">
-                <ItineraryForm tripId={trip.id} />
-              </div>
-            </details>
+        <Tabs defaultValue={defaultTab}>
+          <TabsList className="w-full sm:w-auto">
+            <TabsTrigger value="itinerary">Itinerary</TabsTrigger>
+            <TabsTrigger value="expenses">Expenses</TabsTrigger>
+            <TabsTrigger value="preparation">Preparation</TabsTrigger>
+            {isCreator ? <TabsTrigger value="organizer">Organizer</TabsTrigger> : null}
+          </TabsList>
 
-            {itineraryError ? (
-              <p role="alert" className="mt-5 rounded-xl bg-red-50 p-4 text-sm text-red-800">
-                We could not load the itinerary. Try refreshing the page.
-              </p>
-            ) : itineraryItems?.length ? (
-              <ol className="mt-6 space-y-4">
-                {itineraryItems.map((item) => (
-                  <li key={item.id} className="rounded-2xl border border-slate-200 p-5">
-                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                      <div>
-                        <p className="text-sm font-semibold text-sky-700">
-                          {formatDate(item.item_date)} · {formatTime(item.start_time)}
-                        </p>
-                        <h3 className="mt-2 text-lg font-semibold text-slate-950">{item.title}</h3>
-                        {item.location ? <p className="mt-1 text-sm text-slate-600">{item.location}</p> : null}
-                        {item.notes ? <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-slate-600">{item.notes}</p> : null}
-                      </div>
-                      <ItemActionsMenu
-                        editLabel="Edit item"
-                        editForm={<ItineraryForm item={item} tripId={trip.id} />}
-                        deleteAction={deleteItineraryItem}
-                        deleteHiddenFields={{ tripId: trip.id, itemId: item.id }}
-                        deleteTitle="Delete itinerary item?"
-                        deleteDescription={`This will permanently remove "${item.title}" from the itinerary.`}
-                      />
-                    </div>
-                    <CommentThread
-                      comments={commentsFor("itinerary", item.id)}
-                      currentUserId={user.id}
-                      itemId={item.id}
-                      itemType="itinerary"
-                      participantNames={participantNames}
-                      tripId={trip.id}
-                    />
-                  </li>
-                ))}
-              </ol>
-            ) : (
-              <p className="mt-5 rounded-2xl border border-dashed border-slate-300 p-6 text-sm text-slate-600">
-                No itinerary items yet. Add the first activity above.
-              </p>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card className="[--card-spacing:--spacing(6)]">
-          <CardHeader>
-            <CardTitle className="text-2xl">Expenses</CardTitle>
-            <CardDescription>
-              Record shared costs and review totals separately for each currency.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {totalsByCurrency.length ? (
-              <dl className="grid gap-3 sm:grid-cols-3">
-                {totalsByCurrency.map(([currency, total]) => (
-                  <div key={currency} className="rounded-2xl bg-emerald-50 p-4">
-                    <dt className="text-xs font-semibold uppercase tracking-wide text-emerald-700">Total {currency}</dt>
-                    <dd className="mt-1 text-xl font-semibold text-emerald-950">{formatMoney(total, currency)}</dd>
-                  </div>
-                ))}
-              </dl>
-            ) : null}
-
-            <details className="mt-5 rounded-2xl bg-sky-50 p-5" open={!tripExpenses.length}>
-              <summary className="cursor-pointer font-semibold text-sky-900">Add expense</summary>
-              <div className="mt-5">
-                <ExpenseForm participants={tripParticipants} tripId={trip.id} />
-              </div>
-            </details>
-
-            {expensesError ? (
-              <p role="alert" className="mt-5 rounded-xl bg-red-50 p-4 text-sm text-red-800">
-                We could not load the expenses. Try refreshing the page.
-              </p>
-            ) : tripExpenses.length ? (
-              <ul className="mt-6 space-y-4">
-                {tripExpenses.map((expense) => (
-                  <li key={expense.id} className="rounded-2xl border border-slate-200 p-5">
-                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                      <div>
-                        <div className="flex flex-wrap items-center gap-2">
-                          <h3 className="font-semibold text-slate-950">{expense.description}</h3>
-                          <Badge variant="secondary" className="capitalize">{expense.category}</Badge>
-                        </div>
-                        <p className="mt-2 text-lg font-semibold text-emerald-800">{formatMoney(expense.amount, expense.currency)}</p>
-                        <p className="mt-1 text-sm text-slate-600">
-                          Paid by {participantNames.get(expense.payer_id) ?? "Traveler"} · {formatDate(expense.expense_date)}
-                        </p>
-                      </div>
-                      <ItemActionsMenu
-                        editLabel="Edit expense"
-                        editForm={<ExpenseForm expense={expense} participants={tripParticipants} tripId={trip.id} />}
-                        deleteAction={deleteExpense}
-                        deleteHiddenFields={{ tripId: trip.id, expenseId: expense.id }}
-                        deleteTitle="Delete expense?"
-                        deleteDescription={`This will permanently remove "${expense.description}" and its total from your currency breakdown.`}
-                      />
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="mt-5 rounded-2xl border border-dashed border-slate-300 p-6 text-sm text-slate-600">
-                No expenses yet. Add the first shared cost above.
-              </p>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card className="[--card-spacing:--spacing(6)]">
-          <CardContent>
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">Before the itinerary</p>
-                <h2 className="mt-2 text-2xl font-semibold text-slate-950">Pre-trip preparation</h2>
-                <p className="mt-2 text-sm leading-6 text-slate-600">
-                  Complete documents, bookings, money, health, connectivity, and packing before departure.
-                </p>
-              </div>
-              <form action={addEnglandPreparationChecklist}>
-                <input type="hidden" name="tripId" value={trip.id} />
-                <Button size="lg">Add England checklist</Button>
-              </form>
-            </div>
-
-            <div className="mt-6 overflow-hidden rounded-2xl border border-sky-100 bg-sky-50 p-5">
-              <div className="flex items-end justify-between gap-4">
-                <div>
-                  <p className="text-sm font-medium text-sky-800">Travel readiness</p>
-                  <p className="mt-1 text-3xl font-semibold text-sky-950">{readiness}%</p>
-                </div>
-                <p className="text-right text-sm text-sky-800">{completedTaskCount} of {allTasks.length} completed</p>
-              </div>
-              <div className="mt-4 h-3 overflow-hidden rounded-full bg-white" aria-label={`${readiness}% ready`} role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={readiness}>
-                <div className="h-full rounded-full bg-sky-600" style={{ width: `${readiness}%` }} />
-              </div>
-              <div className="mt-4 flex flex-wrap gap-2">
-                <Badge variant="outline" className="bg-white">{criticalOpenCount} critical open</Badge>
-                <Badge variant="outline" className={overdueTaskCount ? "border-red-200 bg-red-100 text-red-800" : "bg-white"}>{overdueTaskCount} overdue</Badge>
-              </div>
-            </div>
-
-            <details className="mt-5 rounded-2xl bg-slate-50 p-5" open={!allTasks.length}>
-              <summary className="cursor-pointer font-semibold text-slate-900">Add a custom preparation task</summary>
-              <div className="mt-5">
-                <TaskForm participants={tripParticipants} tripId={trip.id} />
-              </div>
-            </details>
-
-            <form className="mt-6 grid gap-3 rounded-2xl bg-slate-50 p-4 sm:grid-cols-3">
-              <div className="space-y-1.5">
-                <Label htmlFor="status-filter" className="text-slate-700">Status</Label>
-                <Select name="status" defaultValue={statusFilter}>
-                  <SelectTrigger id="status-filter" className="w-full bg-white">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All statuses</SelectItem>
-                    <SelectItem value="open">Open</SelectItem>
-                    <SelectItem value="completed">Completed</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="owner-filter" className="text-slate-700">Owner</Label>
-                <Select name="owner" defaultValue={ownerFilter}>
-                  <SelectTrigger id="owner-filter" className="w-full bg-white">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All owners</SelectItem>
-                    <SelectItem value="unassigned">Unassigned</SelectItem>
-                    {tripParticipants.map((participant) => (
-                      <SelectItem key={participant.user_id} value={participant.user_id}>{participant.display_name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="category-filter" className="text-slate-700">Category</Label>
-                <Select name="category" defaultValue={categoryFilter}>
-                  <SelectTrigger id="category-filter" className="w-full bg-white">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All categories</SelectItem>
-                    {taskCategories.map((category) => (
-                      <SelectItem key={category} value={category}>{taskCategoryLabels[category]}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <Button type="submit" variant="outline" className="sm:col-span-3 sm:justify-self-start">Apply filters</Button>
-            </form>
-
-            {tasksError ? (
-              <p role="alert" className="mt-5 rounded-xl bg-red-50 p-4 text-sm text-red-800">We could not load preparation tasks. Try refreshing the page.</p>
-            ) : tasksByCategory.length ? (
-              <div className="mt-7 space-y-8">
-                {tasksByCategory.map((group) => (
-                  <section key={group.category}>
-                    <h3 className="text-sm font-semibold uppercase tracking-[0.12em] text-slate-500">{taskCategoryLabels[group.category]}</h3>
-                    <ul className="mt-3 space-y-4">
-                      {group.tasks.map((task) => {
-                        const overdue = !task.completed_at && task.due_date && task.due_date < today;
-                        const upcoming = !task.completed_at && task.due_date && task.due_date >= today;
-                        return (
-                          <li key={task.id} className={`rounded-2xl border p-5 ${task.completed_at ? "border-slate-200 bg-slate-50" : overdue ? "border-red-200 bg-red-50" : upcoming ? "border-sky-200 bg-sky-50" : "border-slate-200"}`}>
-                            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                              <div>
-                                <div className="flex flex-wrap items-center gap-2">
-                                  <h4 className={`font-semibold ${task.completed_at ? "text-slate-500 line-through" : "text-slate-950"}`}>{task.title}</h4>
-                                  {task.is_critical && !task.completed_at ? <Badge className="bg-amber-100 text-amber-900">Critical</Badge> : null}
-                                  {overdue ? <Badge className="bg-red-100 text-red-800">Overdue</Badge> : null}
-                                  {upcoming ? <Badge className="bg-sky-100 text-sky-800">Upcoming</Badge> : null}
-                                  {task.completed_at ? <Badge className="bg-emerald-100 text-emerald-800">Completed</Badge> : null}
-                                </div>
-                                <p className="mt-2 text-sm text-slate-600">
-                                  {participantNames.get(task.owner_id ?? "") ?? "Unassigned"}
-                                  {task.due_date ? ` · Due ${formatDate(task.due_date)}` : " · No deadline"}
-                                  {task.due_offset_days !== null ? ` · ${task.due_offset_days} days before departure` : ""}
-                                </p>
-                                {task.reference_url ? (
-                                  <a href={task.reference_url} target="_blank" rel="noreferrer noopener" className="mt-3 inline-flex text-sm font-semibold text-sky-700 hover:text-sky-800">
-                                    {task.reference_label ?? "Open supporting reference"} ↗
-                                  </a>
-                                ) : null}
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <form action={setTaskCompletion}>
-                                  <input type="hidden" name="tripId" value={trip.id} />
-                                  <input type="hidden" name="taskId" value={task.id} />
-                                  <input type="hidden" name="completed" value={task.completed_at ? "false" : "true"} />
-                                  <Button variant="outline" size="sm">{task.completed_at ? "Reopen" : "Complete"}</Button>
-                                </form>
-                                <ItemActionsMenu
-                                  editLabel="Edit task"
-                                  editForm={<TaskForm participants={tripParticipants} task={task} tripId={trip.id} />}
-                                  deleteAction={deleteTask}
-                                  deleteHiddenFields={{ tripId: trip.id, taskId: task.id }}
-                                  deleteTitle="Remove this preparation task?"
-                                  deleteDescription={`This will permanently remove "${task.title}" from your preparation checklist.`}
-                                  deleteLabel="Remove"
-                                />
-                              </div>
-                            </div>
-                            <CommentThread comments={commentsFor("task", task.id)} currentUserId={user.id} itemId={task.id} itemType="task" participantNames={participantNames} tripId={trip.id} />
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  </section>
-                ))}
-              </div>
-            ) : (
-              <p className="mt-5 rounded-2xl border border-dashed border-slate-300 p-6 text-sm text-slate-600">No preparation tasks match these filters. Add the England checklist or create a custom task.</p>
-            )}
-          </CardContent>
-        </Card>
-
-        {isCreator ? (
+          <TabsContent value="itinerary">
           <Card className="[--card-spacing:--spacing(6)]">
             <CardHeader>
-              <CardTitle className="text-xl">Travel organizer</CardTitle>
+              <CardTitle className="text-2xl">Itinerary</CardTitle>
               <CardDescription>
-                Invite an organizer by email. They can accept after signing in with the same address.
+                Keep activities, reservations, and meeting points in chronological order.
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <InviteForm tripId={trip.id} />
+              <details className="mt-5 rounded-2xl bg-sky-50 p-5" open={!itineraryItems?.length}>
+                <summary className="cursor-pointer font-semibold text-sky-900">
+                  Add itinerary item
+                </summary>
+                <div className="mt-5">
+                  <ItineraryForm tripId={trip.id} />
+                </div>
+              </details>
 
-              {invitations?.length ? (
-                <ul className="mt-6 divide-y divide-slate-200 border-t border-slate-200">
-                  {invitations.map((invitation) => (
-                    <li
-                      key={invitation.id}
-                      className="flex flex-col gap-1 py-4 sm:flex-row sm:items-center sm:justify-between"
-                    >
-                      <span className="text-sm font-medium text-slate-800">
-                        {invitation.email}
-                      </span>
-                      <Badge
-                        variant="outline"
-                        className={`capitalize ${
-                          invitation.status === "accepted"
-                            ? "border-emerald-200 bg-emerald-100 text-emerald-800"
-                            : invitation.status === "declined"
-                              ? "border-red-200 bg-red-100 text-red-800"
-                              : ""
-                        }`}
-                      >
-                        {invitation.status}
-                      </Badge>
+              {itineraryError ? (
+                <p role="alert" className="mt-5 rounded-xl bg-red-50 p-4 text-sm text-red-800">
+                  We could not load the itinerary. Try refreshing the page.
+                </p>
+              ) : itineraryItems?.length ? (
+                <ol className="mt-6 space-y-4">
+                  {itineraryItems.map((item) => (
+                    <li key={item.id} className="rounded-2xl border border-slate-200 p-5">
+                      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                        <div>
+                          <p className="text-sm font-semibold text-sky-700">
+                            {formatDate(item.item_date)} · {formatTime(item.start_time)}
+                          </p>
+                          <h3 className="mt-2 text-lg font-semibold text-slate-950">{item.title}</h3>
+                          {item.location ? <p className="mt-1 text-sm text-slate-600">{item.location}</p> : null}
+                          {item.notes ? <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-slate-600">{item.notes}</p> : null}
+                        </div>
+                        <ItemActionsMenu
+                          editLabel="Edit item"
+                          editForm={<ItineraryForm item={item} tripId={trip.id} />}
+                          deleteAction={deleteItineraryItem}
+                          deleteHiddenFields={{ tripId: trip.id, itemId: item.id }}
+                          deleteTitle="Delete itinerary item?"
+                          deleteDescription={`This will permanently remove "${item.title}" from the itinerary.`}
+                        />
+                      </div>
+                      <CommentThread
+                        comments={commentsFor("itinerary", item.id)}
+                        currentUserId={user.id}
+                        itemId={item.id}
+                        itemType="itinerary"
+                        participantNames={participantNames}
+                        tripId={trip.id}
+                      />
+                    </li>
+                  ))}
+                </ol>
+              ) : (
+                <p className="mt-5 rounded-2xl border border-dashed border-slate-300 p-6 text-sm text-slate-600">
+                  No itinerary items yet. Add the first activity above.
+                </p>
+              )}
+            </CardContent>
+          </Card>
+          </TabsContent>
+
+          <TabsContent value="expenses">
+          <Card className="[--card-spacing:--spacing(6)]">
+            <CardHeader>
+              <CardTitle className="text-2xl">Expenses</CardTitle>
+              <CardDescription>
+                Record shared costs and review totals separately for each currency.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {totalsByCurrency.length ? (
+                <dl className="grid gap-3 sm:grid-cols-3">
+                  {totalsByCurrency.map(([currency, total]) => (
+                    <div key={currency} className="rounded-2xl bg-emerald-50 p-4">
+                      <dt className="text-xs font-semibold uppercase tracking-wide text-emerald-700">Total {currency}</dt>
+                      <dd className="mt-1 text-xl font-semibold text-emerald-950">{formatMoney(total, currency)}</dd>
+                    </div>
+                  ))}
+                </dl>
+              ) : null}
+
+              <details className="mt-5 rounded-2xl bg-sky-50 p-5" open={!tripExpenses.length}>
+                <summary className="cursor-pointer font-semibold text-sky-900">Add expense</summary>
+                <div className="mt-5">
+                  <ExpenseForm participants={tripParticipants} tripId={trip.id} />
+                </div>
+              </details>
+
+              {expensesError ? (
+                <p role="alert" className="mt-5 rounded-xl bg-red-50 p-4 text-sm text-red-800">
+                  We could not load the expenses. Try refreshing the page.
+                </p>
+              ) : tripExpenses.length ? (
+                <ul className="mt-6 space-y-4">
+                  {tripExpenses.map((expense) => (
+                    <li key={expense.id} className="rounded-2xl border border-slate-200 p-5">
+                      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                        <div>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <h3 className="font-semibold text-slate-950">{expense.description}</h3>
+                            <Badge variant="secondary" className="capitalize">{expense.category}</Badge>
+                          </div>
+                          <p className="mt-2 text-lg font-semibold text-emerald-800">{formatMoney(expense.amount, expense.currency)}</p>
+                          <p className="mt-1 text-sm text-slate-600">
+                            Paid by {participantNames.get(expense.payer_id) ?? "Traveler"} · {formatDate(expense.expense_date)}
+                          </p>
+                        </div>
+                        <ItemActionsMenu
+                          editLabel="Edit expense"
+                          editForm={<ExpenseForm expense={expense} participants={tripParticipants} tripId={trip.id} />}
+                          deleteAction={deleteExpense}
+                          deleteHiddenFields={{ tripId: trip.id, expenseId: expense.id }}
+                          deleteTitle="Delete expense?"
+                          deleteDescription={`This will permanently remove "${expense.description}" and its total from your currency breakdown.`}
+                        />
+                      </div>
                     </li>
                   ))}
                 </ul>
-              ) : null}
+              ) : (
+                <p className="mt-5 rounded-2xl border border-dashed border-slate-300 p-6 text-sm text-slate-600">
+                  No expenses yet. Add the first shared cost above.
+                </p>
+              )}
             </CardContent>
           </Card>
-        ) : null}
+          </TabsContent>
+
+          <TabsContent value="preparation">
+          <Card className="[--card-spacing:--spacing(6)]">
+            <CardContent>
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">Before the itinerary</p>
+                  <h2 className="mt-2 text-2xl font-semibold text-slate-950">Pre-trip preparation</h2>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                    Complete documents, bookings, money, health, connectivity, and packing before departure.
+                  </p>
+                </div>
+                <form action={addEnglandPreparationChecklist}>
+                  <input type="hidden" name="tripId" value={trip.id} />
+                  <Button size="lg">Add England checklist</Button>
+                </form>
+              </div>
+
+              <div className="mt-6 overflow-hidden rounded-2xl border border-sky-100 bg-sky-50 p-5">
+                <div className="flex items-end justify-between gap-4">
+                  <div>
+                    <p className="text-sm font-medium text-sky-800">Travel readiness</p>
+                    <p className="mt-1 text-3xl font-semibold text-sky-950">{readiness}%</p>
+                  </div>
+                  <p className="text-right text-sm text-sky-800">{completedTaskCount} of {allTasks.length} completed</p>
+                </div>
+                <div className="mt-4 h-3 overflow-hidden rounded-full bg-white" aria-label={`${readiness}% ready`} role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={readiness}>
+                  <div className="h-full rounded-full bg-sky-600" style={{ width: `${readiness}%` }} />
+                </div>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <Badge variant="outline" className="bg-white">{criticalOpenCount} critical open</Badge>
+                  <Badge variant="outline" className={overdueTaskCount ? "border-red-200 bg-red-100 text-red-800" : "bg-white"}>{overdueTaskCount} overdue</Badge>
+                </div>
+              </div>
+
+              <details className="mt-5 rounded-2xl bg-slate-50 p-5" open={!allTasks.length}>
+                <summary className="cursor-pointer font-semibold text-slate-900">Add a custom preparation task</summary>
+                <div className="mt-5">
+                  <TaskForm participants={tripParticipants} tripId={trip.id} />
+                </div>
+              </details>
+
+              <form className="mt-6 grid gap-3 rounded-2xl bg-slate-50 p-4 sm:grid-cols-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="status-filter" className="text-slate-700">Status</Label>
+                  <Select name="status" defaultValue={statusFilter}>
+                    <SelectTrigger id="status-filter" className="w-full bg-white">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All statuses</SelectItem>
+                      <SelectItem value="open">Open</SelectItem>
+                      <SelectItem value="completed">Completed</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="owner-filter" className="text-slate-700">Owner</Label>
+                  <Select name="owner" defaultValue={ownerFilter}>
+                    <SelectTrigger id="owner-filter" className="w-full bg-white">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All owners</SelectItem>
+                      <SelectItem value="unassigned">Unassigned</SelectItem>
+                      {tripParticipants.map((participant) => (
+                        <SelectItem key={participant.user_id} value={participant.user_id}>{participant.display_name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="category-filter" className="text-slate-700">Category</Label>
+                  <Select name="category" defaultValue={categoryFilter}>
+                    <SelectTrigger id="category-filter" className="w-full bg-white">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All categories</SelectItem>
+                      {taskCategories.map((category) => (
+                        <SelectItem key={category} value={category}>{taskCategoryLabels[category]}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button type="submit" variant="outline" className="sm:col-span-3 sm:justify-self-start">Apply filters</Button>
+              </form>
+
+              {tasksError ? (
+                <p role="alert" className="mt-5 rounded-xl bg-red-50 p-4 text-sm text-red-800">We could not load preparation tasks. Try refreshing the page.</p>
+              ) : tasksByCategory.length ? (
+                <div className="mt-7 space-y-8">
+                  {tasksByCategory.map((group) => (
+                    <section key={group.category}>
+                      <h3 className="text-sm font-semibold uppercase tracking-[0.12em] text-slate-500">{taskCategoryLabels[group.category]}</h3>
+                      <ul className="mt-3 space-y-4">
+                        {group.tasks.map((task) => {
+                          const overdue = !task.completed_at && task.due_date && task.due_date < today;
+                          const upcoming = !task.completed_at && task.due_date && task.due_date >= today;
+                          return (
+                            <li key={task.id} className={`rounded-2xl border p-5 ${task.completed_at ? "border-slate-200 bg-slate-50" : overdue ? "border-red-200 bg-red-50" : upcoming ? "border-sky-200 bg-sky-50" : "border-slate-200"}`}>
+                              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                                <div>
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <h4 className={`font-semibold ${task.completed_at ? "text-slate-500 line-through" : "text-slate-950"}`}>{task.title}</h4>
+                                    {task.is_critical && !task.completed_at ? <Badge className="bg-amber-100 text-amber-900">Critical</Badge> : null}
+                                    {overdue ? <Badge className="bg-red-100 text-red-800">Overdue</Badge> : null}
+                                    {upcoming ? <Badge className="bg-sky-100 text-sky-800">Upcoming</Badge> : null}
+                                    {task.completed_at ? <Badge className="bg-emerald-100 text-emerald-800">Completed</Badge> : null}
+                                  </div>
+                                  <p className="mt-2 text-sm text-slate-600">
+                                    {participantNames.get(task.owner_id ?? "") ?? "Unassigned"}
+                                    {task.due_date ? ` · Due ${formatDate(task.due_date)}` : " · No deadline"}
+                                    {task.due_offset_days !== null ? ` · ${task.due_offset_days} days before departure` : ""}
+                                  </p>
+                                  {task.reference_url ? (
+                                    <a href={task.reference_url} target="_blank" rel="noreferrer noopener" className="mt-3 inline-flex text-sm font-semibold text-sky-700 hover:text-sky-800">
+                                      {task.reference_label ?? "Open supporting reference"} ↗
+                                    </a>
+                                  ) : null}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <form action={setTaskCompletion}>
+                                    <input type="hidden" name="tripId" value={trip.id} />
+                                    <input type="hidden" name="taskId" value={task.id} />
+                                    <input type="hidden" name="completed" value={task.completed_at ? "false" : "true"} />
+                                    <Button variant="outline" size="sm">{task.completed_at ? "Reopen" : "Complete"}</Button>
+                                  </form>
+                                  <ItemActionsMenu
+                                    editLabel="Edit task"
+                                    editForm={<TaskForm participants={tripParticipants} task={task} tripId={trip.id} />}
+                                    deleteAction={deleteTask}
+                                    deleteHiddenFields={{ tripId: trip.id, taskId: task.id }}
+                                    deleteTitle="Remove this preparation task?"
+                                    deleteDescription={`This will permanently remove "${task.title}" from your preparation checklist.`}
+                                    deleteLabel="Remove"
+                                  />
+                                </div>
+                              </div>
+                              <CommentThread comments={commentsFor("task", task.id)} currentUserId={user.id} itemId={task.id} itemType="task" participantNames={participantNames} tripId={trip.id} />
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </section>
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-5 rounded-2xl border border-dashed border-slate-300 p-6 text-sm text-slate-600">No preparation tasks match these filters. Add the England checklist or create a custom task.</p>
+              )}
+            </CardContent>
+          </Card>
+          </TabsContent>
+
+          {isCreator ? (
+            <TabsContent value="organizer">
+              <Card className="[--card-spacing:--spacing(6)]">
+                <CardHeader>
+                  <CardTitle className="text-xl">Travel organizer</CardTitle>
+                  <CardDescription>
+                    Invite an organizer by email. They can accept after signing in with the same address.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <InviteForm tripId={trip.id} />
+
+                  {invitations?.length ? (
+                    <ul className="mt-6 divide-y divide-slate-200 border-t border-slate-200">
+                      {invitations.map((invitation) => (
+                        <li
+                          key={invitation.id}
+                          className="flex flex-col gap-1 py-4 sm:flex-row sm:items-center sm:justify-between"
+                        >
+                          <span className="text-sm font-medium text-slate-800">
+                            {invitation.email}
+                          </span>
+                          <Badge
+                            variant="outline"
+                            className={`capitalize ${
+                              invitation.status === "accepted"
+                                ? "border-emerald-200 bg-emerald-100 text-emerald-800"
+                                : invitation.status === "declined"
+                                  ? "border-red-200 bg-red-100 text-red-800"
+                                  : ""
+                            }`}
+                          >
+                            {invitation.status}
+                          </Badge>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
+                </CardContent>
+              </Card>
+            </TabsContent>
+          ) : null}
+        </Tabs>
       </div>
     </main>
   );
