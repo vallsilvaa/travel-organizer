@@ -40,6 +40,10 @@ const buttonVariants = cva(
   }
 )
 
+// Unlike a native <button>, Base UI's Button always defaults to type="button"
+// (see useButton's getButtonProps), even inside a <form>. Every Button meant to
+// submit a Server Action form must pass type="submit" explicitly — omitting it
+// silently turns the button into a no-op click handler with no visible error.
 function Button({
   className,
   variant = "default",
