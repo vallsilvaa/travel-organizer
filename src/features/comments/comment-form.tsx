@@ -2,6 +2,10 @@
 
 import { useActionState, useEffect, useRef } from "react";
 
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+
 import {
   createComment,
   updateComment,
@@ -24,6 +28,7 @@ export function CommentForm({ comment, itemId, itemType, tripId }: CommentFormPr
     initialState,
   );
   const formRef = useRef<HTMLFormElement>(null);
+  const fieldId = `comment-${comment?.id ?? itemType + itemId}`;
 
   useEffect(() => {
     if (state.success && !comment) {
@@ -36,31 +41,39 @@ export function CommentForm({ comment, itemId, itemType, tripId }: CommentFormPr
       <input type="hidden" name="tripId" value={tripId} />
       <input type="hidden" name="itemId" value={itemId} />
       <input type="hidden" name="itemType" value={itemType} />
-      {comment ? <input type="hidden" name="commentId" value={comment.id} /> : null}
-      <label className="sr-only" htmlFor={`comment-${comment?.id ?? itemType + itemId}`}>
+      {comment ? (
+        <input type="hidden" name="commentId" value={comment.id} />
+      ) : null}
+      <Label className="sr-only" htmlFor={fieldId}>
         {comment ? "Edit comment" : "Add comment"}
-      </label>
-      <textarea
-        id={`comment-${comment?.id ?? itemType + itemId}`}
+      </Label>
+      <Textarea
         required
+        aria-invalid={Boolean(state.error)}
+        className="bg-card text-sm"
+        defaultValue={comment?.body}
+        id={fieldId}
         maxLength={2000}
         name="body"
-        defaultValue={comment?.body}
         placeholder="Add context or a decision..."
         rows={comment ? 2 : 3}
-        className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-sky-600 focus:ring-2 focus:ring-sky-100"
       />
       <div className="mt-2 flex items-center justify-between gap-3">
         <div>
-          {state.error ? <p role="alert" className="text-xs text-red-700">{state.error}</p> : null}
-          {state.success ? <p className="text-xs text-emerald-700">{comment ? "Comment updated." : "Comment added."}</p> : null}
+          {state.error ? (
+            <p role="alert" className="text-xs text-destructive">
+              {state.error}
+            </p>
+          ) : null}
+          {state.success ? (
+            <p className="text-xs text-success">
+              {comment ? "Comment updated." : "Comment added."}
+            </p>
+          ) : null}
         </div>
-        <button
-          disabled={pending}
-          className="rounded-lg bg-sky-700 px-3 py-2 text-xs font-semibold text-white hover:bg-sky-800 disabled:opacity-60"
-        >
+        <Button disabled={pending} size="sm" className="font-semibold">
           {pending ? "Saving..." : comment ? "Save" : "Comment"}
-        </button>
+        </Button>
       </div>
     </form>
   );

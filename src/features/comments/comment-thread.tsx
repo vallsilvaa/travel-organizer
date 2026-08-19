@@ -1,3 +1,7 @@
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+
 import { deleteComment } from "./actions";
 import { CommentForm } from "./comment-form";
 import type { CommentItemType } from "./validation";
@@ -35,40 +39,69 @@ export function CommentThread({
   tripId,
 }: CommentThreadProps) {
   return (
-    <section className="mt-4 border-t border-slate-200 pt-4">
-      <h4 className="text-sm font-semibold text-slate-800">
+    <section className="mt-4">
+      <Separator className="mb-4" />
+      <h4 className="text-sm font-semibold text-foreground">
         Comments {comments.length ? `(${comments.length})` : ""}
       </h4>
       {comments.length ? (
         <ol className="mt-3 space-y-3">
           {comments.map((comment) => (
-            <li key={comment.id} className="rounded-xl bg-white p-3 text-sm shadow-sm ring-1 ring-slate-200">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <p className="font-semibold text-slate-800">
-                  {participantNames.get(comment.author_id) ?? "Traveler"}
-                </p>
-                <time className="text-xs text-slate-500" dateTime={comment.created_at}>
-                  {formatCommentTime(comment.created_at)}
-                  {comment.updated_at !== comment.created_at ? " · edited" : ""}
-                </time>
-              </div>
-              <p className="mt-2 whitespace-pre-wrap leading-6 text-slate-700">{comment.body}</p>
-              {comment.author_id === currentUserId ? (
-                <details className="mt-3">
-                  <summary className="cursor-pointer text-xs font-semibold text-sky-700">Edit</summary>
-                  <CommentForm comment={comment} itemId={itemId} itemType={itemType} tripId={tripId} />
-                  <form action={deleteComment} className="mt-2 text-right">
-                    <input type="hidden" name="tripId" value={tripId} />
-                    <input type="hidden" name="commentId" value={comment.id} />
-                    <button className="text-xs font-semibold text-red-700 hover:text-red-800">Delete comment</button>
-                  </form>
-                </details>
-              ) : null}
+            <li key={comment.id}>
+              <Card size="sm" className="rounded-xl shadow-sm">
+                <CardContent>
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="font-semibold text-foreground">
+                      {participantNames.get(comment.author_id) ?? "Traveler"}
+                    </p>
+                    <time
+                      className="text-xs text-muted-foreground"
+                      dateTime={comment.created_at}
+                    >
+                      {formatCommentTime(comment.created_at)}
+                      {comment.updated_at !== comment.created_at
+                        ? " · edited"
+                        : ""}
+                    </time>
+                  </div>
+                  <p className="mt-2 leading-6 whitespace-pre-wrap text-foreground/80">
+                    {comment.body}
+                  </p>
+                  {comment.author_id === currentUserId ? (
+                    <details className="mt-3">
+                      <summary className="cursor-pointer text-xs font-semibold text-primary">
+                        Edit
+                      </summary>
+                      <CommentForm
+                        comment={comment}
+                        itemId={itemId}
+                        itemType={itemType}
+                        tripId={tripId}
+                      />
+                      <form action={deleteComment} className="mt-2 text-right">
+                        <input type="hidden" name="tripId" value={tripId} />
+                        <input
+                          type="hidden"
+                          name="commentId"
+                          value={comment.id}
+                        />
+                        <Button
+                          size="xs"
+                          variant="link"
+                          className="font-semibold text-destructive"
+                        >
+                          Delete comment
+                        </Button>
+                      </form>
+                    </details>
+                  ) : null}
+                </CardContent>
+              </Card>
             </li>
           ))}
         </ol>
       ) : (
-        <p className="mt-2 text-xs text-slate-500">No comments yet.</p>
+        <p className="mt-2 text-xs text-muted-foreground">No comments yet.</p>
       )}
       <CommentForm itemId={itemId} itemType={itemType} tripId={tripId} />
     </section>
