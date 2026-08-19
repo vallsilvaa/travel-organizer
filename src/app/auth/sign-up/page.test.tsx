@@ -10,6 +10,6 @@ describe("SignUpPage", () => {
     render(await SignUpPage({ searchParams: Promise.resolve({}) }));
 
     const button = screen.getByRole("button", { name: /criar conta/i });
-    expect(button).toHaveAttribute("type", "submit");
+    expect(button.getAttribute("type")).toBe("submit");
   });
 });

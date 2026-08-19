@@ -77,7 +77,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
             </CardDescription>
             <CardAction>
               <form action={signOut}>
-                <Button variant="outline">Sair</Button>
+                <Button type="submit" variant="outline">Sair</Button>
               </form>
             </CardAction>
           </CardHeader>
@@ -104,7 +104,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                 />
                 Enviar lembretes de prazos de tarefas
               </label>
-              <Button variant="outline">Salvar preferência</Button>
+              <Button type="submit" variant="outline">Salvar preferência</Button>
             </form>
           </CardContent>
         </Card>
@@ -139,10 +139,10 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                           name="invitationId"
                           value={invitation.id}
                         />
-                        <Button name="response" value="accepted">
+                        <Button type="submit" name="response" value="accepted">
                           Aceitar
                         </Button>
-                        <Button name="response" value="declined" variant="outline">
+                        <Button type="submit" name="response" value="declined" variant="outline">
                           Recusar
                         </Button>
                       </form>

@@ -10,6 +10,6 @@ describe("SignInPage", () => {
     render(await SignInPage({ searchParams: Promise.resolve({}) }));
 
     const button = screen.getByRole("button", { name: /entrar/i });
-    expect(button).toHaveAttribute("type", "submit");
+    expect(button.getAttribute("type")).toBe("submit");
   });
 });
