@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
@@ -105,5 +105,29 @@ describe("TripPage", () => {
 
     const completeButton = screen.getByRole("button", { name: /concluir/i });
     expect(completeButton.getAttribute("type")).toBe("submit");
+  });
+
+  it("shows edit and confirmed deletion controls to the creator", async () => {
+    render(await TripPage({
+      params: Promise.resolve({ tripId }),
+      searchParams: Promise.resolve({}),
+    }));
+
+    expect(screen.getByText("Editar dados da viagem")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Excluir viagem" }));
+    expect(screen.getByRole("heading", { name: "Excluir esta viagem?" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Excluir viagem" }).getAttribute("type")).toBe("submit");
+  });
+
+  it("does not show trip management controls to another participant", async () => {
+    mocks.getUser.mockResolvedValue({ data: { user: { id: "22222222-2222-2222-2222-222222222222" } } });
+
+    render(await TripPage({
+      params: Promise.resolve({ tripId }),
+      searchParams: Promise.resolve({}),
+    }));
+
+    expect(screen.queryByText("Editar dados da viagem")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Excluir viagem" })).toBeNull();
   });
 });

@@ -22,7 +22,10 @@ import {
 import { createClient } from "@/lib/supabase/server";
 import { Badge } from "@/components/ui/badge";
 import { ItemActionsMenu } from "@/components/item-actions-menu";
+import { ConfirmDeleteForm } from "@/components/confirm-delete-form";
 import { SubmitButton } from "@/components/submit-button";
+import { deleteTrip } from "@/features/trips/actions";
+import { TripForm } from "@/features/trips/trip-form";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -43,7 +46,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 type TripPageProps = {
   params: Promise<{ tripId: string }>;
-  searchParams: Promise<{ category?: string; owner?: string; status?: string }>;
+  searchParams: Promise<{ category?: string; owner?: string; status?: string; tripError?: string }>;
 };
 
 type TripParticipant = {
@@ -264,6 +267,33 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                 </dd>
               </div>
             </dl>
+
+            {filters.tripError === "delete_not_allowed" ? (
+              <p role="alert" className="mt-6 rounded-xl bg-red-50 p-4 text-sm text-red-800">
+                Somente quem criou a viagem pode excluí-la.
+              </p>
+            ) : null}
+
+            {isCreator ? (
+              <div className="mt-8 border-t border-slate-200 pt-6">
+                <details className="rounded-2xl bg-slate-50 p-5">
+                  <summary className="cursor-pointer font-semibold text-slate-900">
+                    Editar dados da viagem
+                  </summary>
+                  <TripForm trip={trip} />
+                </details>
+                <div className="mt-4 flex justify-end">
+                  <ConfirmDeleteForm
+                    action={deleteTrip}
+                    hiddenFields={{ tripId: trip.id }}
+                    title="Excluir esta viagem?"
+                    description={`Essa ação removerá permanentemente ${trip.destination} e todos os seus itens, tarefas, despesas, comentários e convites.`}
+                    triggerLabel="Excluir viagem"
+                    triggerClassName="h-auto p-0 text-destructive"
+                  />
+                </div>
+              </div>
+            ) : null}
 
             {commentsError ? (
               <p role="alert" className="mt-8 rounded-xl bg-red-50 p-4 text-sm text-red-800">
