@@ -172,6 +172,30 @@ with check (
   )
 );
 
+drop policy "Authors can update their item comments" on public.item_comments;
+create policy "Authors can update their item comments"
+on public.item_comments
+for update
+to authenticated
+using (
+  author_id = (select auth.uid())
+  and public.is_current_user_trip_participant(trip_id)
+)
+with check (
+  author_id = (select auth.uid())
+  and public.is_current_user_trip_participant(trip_id)
+);
+
+drop policy "Authors can delete their item comments" on public.item_comments;
+create policy "Authors can delete their item comments"
+on public.item_comments
+for delete
+to authenticated
+using (
+  author_id = (select auth.uid())
+  and public.is_current_user_trip_participant(trip_id)
+);
+
 drop policy "Participants can view trip expenses" on public.trip_expenses;
 create policy "Participants can view trip expenses"
 on public.trip_expenses
