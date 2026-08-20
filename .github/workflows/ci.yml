@@ -36,6 +36,8 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - name: Start local Supabase
         run: npm run supabase:start
+      - name: Run database authorization tests
+        run: npm run test:db
       - name: Export local Supabase environment
         shell: bash
         run: |
