@@ -74,7 +74,7 @@ describe("invitation actions", () => {
       invited_by: "user-123",
       role: "organizer",
     });
-    expect(result.message).toBe("Invitation sent to organizer@example.com.");
+    expect(result.message).toBe("Convite enviado para organizer@example.com.");
   });
 
   it("accepts a pending invitation and opens the shared trip", async () => {
