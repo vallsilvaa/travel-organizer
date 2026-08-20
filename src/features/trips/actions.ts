@@ -5,12 +5,13 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
-import { validateTripInput, type TripFieldErrors } from "./validation";
+import { isValidTripId, validateTripInput, type TripFieldErrors } from "./validation";
 import { buildEnglandPreparationTasks, isEnglandDestination } from "@/features/tasks/templates";
 
 export type CreateTripState = {
   errors?: TripFieldErrors;
   message?: string;
+  success?: boolean;
 };
 
 export async function createTrip(
@@ -53,4 +54,80 @@ export async function createTrip(
 
   revalidatePath("/dashboard");
   redirect(`/trips/${tripId}`);
+}
+
+export async function updateTrip(
+  _previousState: CreateTripState,
+  formData: FormData,
+): Promise<CreateTripState> {
+  const tripId = String(formData.get("tripId") ?? "");
+  if (!isValidTripId(tripId)) {
+    return { message: "Não foi possível identificar a viagem." };
+  }
+
+  const validation = validateTripInput(formData);
+  if (!validation.success) {
+    return { errors: validation.errors };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/auth/sign-in?error=authentication_required");
+  }
+
+  const { data: updatedTrip, error } = await supabase
+    .from("trips")
+    .update({
+      destination: validation.data.destination,
+      start_date: validation.data.startDate,
+      end_date: validation.data.endDate,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", tripId)
+    .eq("created_by", user.id)
+    .select("id")
+    .maybeSingle();
+
+  if (error || !updatedTrip) {
+    return { message: "Somente quem criou a viagem pode editar esses dados." };
+  }
+
+  revalidatePath("/dashboard");
+  revalidatePath(`/trips/${tripId}`);
+  return { success: true, message: "Viagem atualizada com sucesso." };
+}
+
+export async function deleteTrip(formData: FormData): Promise<void> {
+  const tripId = String(formData.get("tripId") ?? "");
+  if (!isValidTripId(tripId)) {
+    redirect("/dashboard?tripError=invalid_trip");
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/auth/sign-in?error=authentication_required");
+  }
+
+  const { data: deletedTrip, error } = await supabase
+    .from("trips")
+    .delete()
+    .eq("id", tripId)
+    .eq("created_by", user.id)
+    .select("id")
+    .maybeSingle();
+
+  if (error || !deletedTrip) {
+    redirect(`/trips/${tripId}?tripError=delete_not_allowed`);
+  }
+
+  revalidatePath("/dashboard");
+  redirect("/dashboard");
 }
