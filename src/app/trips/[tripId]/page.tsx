@@ -22,6 +22,7 @@ import {
 import { createClient } from "@/lib/supabase/server";
 import { Badge } from "@/components/ui/badge";
 import { ItemActionsMenu } from "@/components/item-actions-menu";
+import { SubmitButton } from "@/components/submit-button";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -426,7 +427,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                 </div>
                 <form action={addEnglandPreparationChecklist}>
                   <input type="hidden" name="tripId" value={trip.id} />
-                  <Button type="submit" size="lg">Adicionar checklist da Inglaterra</Button>
+                  <SubmitButton pendingLabel="Adicionando checklist..." size="lg">Adicionar checklist da Inglaterra</SubmitButton>
                 </form>
               </div>
 
@@ -538,7 +539,13 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                                     <input type="hidden" name="tripId" value={trip.id} />
                                     <input type="hidden" name="taskId" value={task.id} />
                                     <input type="hidden" name="completed" value={task.completed_at ? "false" : "true"} />
-                                    <Button type="submit" variant="outline" size="sm">{task.completed_at ? "Reabrir" : "Concluir"}</Button>
+                                    <SubmitButton
+                                      pendingLabel={task.completed_at ? "Reabrindo..." : "Concluindo..."}
+                                      variant="outline"
+                                      size="sm"
+                                    >
+                                      {task.completed_at ? "Reabrir" : "Concluir"}
+                                    </SubmitButton>
                                   </form>
                                   <ItemActionsMenu
                                     editLabel="Editar tarefa"

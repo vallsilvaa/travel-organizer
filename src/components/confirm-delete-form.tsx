@@ -2,6 +2,7 @@
 
 import { useId, useState } from "react";
 
+import { SubmitButton } from "@/components/submit-button";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -35,12 +36,10 @@ export function ConfirmDeleteForm({
   const [open, setOpen] = useState(false);
 
   return (
-    <>
-      <form id={formId} action={action} className="hidden">
-        {Object.entries(hiddenFields).map(([name, value]) => (
-          <input key={name} type="hidden" name={name} value={value} />
-        ))}
-      </form>
+    <form id={formId} action={action}>
+      {Object.entries(hiddenFields).map(([name, value]) => (
+        <input key={name} type="hidden" name={name} value={value} />
+      ))}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger
           render={<Button type="button" variant="link" className={triggerClassName} />}
@@ -56,12 +55,16 @@ export function ConfirmDeleteForm({
             <DialogClose render={<Button type="button" variant="outline" />}>
               Cancelar
             </DialogClose>
-            <Button type="submit" form={formId} variant="destructive">
+            <SubmitButton
+              pendingLabel="Excluindo..."
+              form={formId}
+              variant="destructive"
+            >
               {triggerLabel}
-            </Button>
+            </SubmitButton>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </>
+    </form>
   );
 }

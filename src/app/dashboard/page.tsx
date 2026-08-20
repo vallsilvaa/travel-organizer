@@ -6,7 +6,7 @@ import { respondToInvitation } from "@/features/invitations/actions";
 import { updateReminderPreference } from "@/features/reminders/actions";
 import { TripForm } from "@/features/trips/trip-form";
 import { createClient } from "@/lib/supabase/server";
-import { Button } from "@/components/ui/button";
+import { SubmitButton } from "@/components/submit-button";
 import {
   Card,
   CardAction,
@@ -77,7 +77,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
             </CardDescription>
             <CardAction>
               <form action={signOut}>
-                <Button type="submit" variant="outline">Sair</Button>
+                <SubmitButton pendingLabel="Saindo..." variant="outline">Sair</SubmitButton>
               </form>
             </CardAction>
           </CardHeader>
@@ -104,7 +104,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                 />
                 Enviar lembretes de prazos de tarefas
               </label>
-              <Button type="submit" variant="outline">Salvar preferência</Button>
+              <SubmitButton pendingLabel="Salvando..." variant="outline">Salvar preferência</SubmitButton>
             </form>
           </CardContent>
         </Card>
@@ -139,12 +139,12 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                           name="invitationId"
                           value={invitation.id}
                         />
-                        <Button type="submit" name="response" value="accepted">
+                        <SubmitButton pendingLabel="Respondendo..." name="response" value="accepted">
                           Aceitar
-                        </Button>
-                        <Button type="submit" name="response" value="declined" variant="outline">
+                        </SubmitButton>
+                        <SubmitButton pendingLabel="Respondendo..." name="response" value="declined" variant="outline">
                           Recusar
-                        </Button>
+                        </SubmitButton>
                       </form>
                     </li>
                   ))}
