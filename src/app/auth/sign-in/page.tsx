@@ -1,7 +1,7 @@
 import { AuthShell } from "@/components/auth/auth-shell";
 import { signIn } from "@/features/auth/actions";
 import { getAuthMessage } from "@/features/auth/messages";
-import { Button } from "@/components/ui/button";
+import { SubmitButton } from "@/components/submit-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -37,9 +37,9 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
             type="password"
           />
         </div>
-        <Button type="submit" className="w-full" size="lg">
+        <SubmitButton pendingLabel="Entrando..." className="w-full" size="lg">
           Entrar
-        </Button>
+        </SubmitButton>
       </form>
     </AuthShell>
   );
