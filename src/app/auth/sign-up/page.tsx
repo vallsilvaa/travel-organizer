@@ -1,7 +1,7 @@
 import { AuthShell } from "@/components/auth/auth-shell";
 import { signUp } from "@/features/auth/actions";
 import { getAuthMessage } from "@/features/auth/messages";
-import { Button } from "@/components/ui/button";
+import { SubmitButton } from "@/components/submit-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -53,9 +53,9 @@ export default async function SignUpPage({ searchParams }: SignUpPageProps) {
             type="password"
           />
         </div>
-        <Button type="submit" className="w-full" size="lg">
+        <SubmitButton pendingLabel="Criando conta..." className="w-full" size="lg">
           Criar conta
-        </Button>
+        </SubmitButton>
       </form>
     </AuthShell>
   );
