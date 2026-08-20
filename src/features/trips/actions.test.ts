@@ -70,7 +70,7 @@ describe("createTrip", () => {
     const result = await createTrip({}, formData);
 
     expect(result.errors?.endDate).toBe(
-      "End date cannot be earlier than start date.",
+      "A data de término não pode ser anterior à data de início.",
     );
     expect(mocks.createClient).not.toHaveBeenCalled();
   });
