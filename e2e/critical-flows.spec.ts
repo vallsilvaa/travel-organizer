@@ -115,7 +115,7 @@ test("traveler completes the critical collaborative planning journey", async ({
     await expect(item).toBeVisible();
     await item.getByPlaceholder("Adicione um contexto ou uma decisão...").fill(commentBody);
     await item.getByRole("button", { name: "Comentar" }).click();
-    await expect(item.getByText(commentBody)).toBeVisible();
+    await expect(item.locator("p").filter({ hasText: commentBody })).toBeVisible();
   });
 
   await test.step("create an expense", async () => {
