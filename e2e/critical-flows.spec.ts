@@ -165,8 +165,7 @@ test("traveler completes the critical collaborative planning journey", async ({
     await signIn(page, organizerEmail);
     const invitation = page.locator("li").filter({ hasText: destination });
     await invitation.getByRole("button", { name: "Aceitar" }).click();
-    await expect(page.getByRole("link", { name: destination })).toBeVisible();
-    await page.getByRole("link", { name: destination }).click();
+    await expect(page).toHaveURL(/\\/trips\\/[0-9a-f-]+$/);
     await expect(page.getByRole("heading", { level: 1, name: destination })).toBeVisible();
   });
 
