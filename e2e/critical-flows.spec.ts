@@ -159,7 +159,7 @@ test("traveler completes the critical collaborative planning journey", async ({
     await page.getByLabel("E-mail do organizador").fill(organizerEmail);
     await page.getByRole("button", { name: "Convidar organizador" }).click();
     await page.getByRole("tab", { name: "Organizador" }).click();
-    await expect(page.getByText(organizerEmail)).toBeVisible();
+    await expect(page.getByText(organizerEmail, { exact: true })).toBeVisible();
 
     await signOut(page);
     await signIn(page, organizerEmail);
