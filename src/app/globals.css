@@ -4,6 +4,61 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Design tokens from the product wireframes: petroleum green for primary
+   actions/progress, terracotta for critical/error items, ochre for pending
+   invitations, warm off-white/khaki neutrals instead of cool blue/gray.
+   Overriding the built-in Tailwind scales here, rather than editing every
+   individual class site, reskins the whole app in one place. */
+@theme {
+  --color-sky-50: #eaf2ee;
+  --color-sky-100: #d7e8e0;
+  --color-sky-200: #bcd8cc;
+  --color-sky-300: #9cc4b3;
+  --color-sky-400: #6fa290;
+  --color-sky-500: #4a8272;
+  --color-sky-600: #2f6f62;
+  --color-sky-700: #255a50;
+  --color-sky-800: #1e4740;
+  --color-sky-900: #193a35;
+  --color-sky-950: #0d211d;
+
+  --color-slate-50: #f3f1ec;
+  --color-slate-100: #ece8e0;
+  --color-slate-200: #cdc8ba;
+  --color-slate-300: #b3ac9a;
+  --color-slate-400: #a09a89;
+  --color-slate-500: #6b6f66;
+  --color-slate-600: #52564e;
+  --color-slate-700: #3a3d37;
+  --color-slate-800: #2a2d27;
+  --color-slate-900: #23261f;
+  --color-slate-950: #16180f;
+
+  --color-red-50: #fdf3ef;
+  --color-red-100: #f8e2d8;
+  --color-red-200: #e2b8a3;
+  --color-red-300: #d29a7d;
+  --color-red-400: #c17854;
+  --color-red-500: #bd6540;
+  --color-red-600: #b5562f;
+  --color-red-700: #954726;
+  --color-red-800: #78391f;
+  --color-red-900: #5f2e1a;
+  --color-red-950: #33170d;
+
+  --color-amber-50: #fbf3e6;
+  --color-amber-100: #f5e3c2;
+  --color-amber-200: #ecca8f;
+  --color-amber-300: #e0af5e;
+  --color-amber-400: #cc9a49;
+  --color-amber-500: #c1913e;
+  --color-amber-600: #b8863a;
+  --color-amber-700: #966c2c;
+  --color-amber-800: #785624;
+  --color-amber-900: #61451e;
+  --color-amber-950: #362610;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -59,7 +114,7 @@ body {
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.4 0.12 240);
+  --primary: #2f6f62;
   --primary-foreground: oklch(0.985 0 0);
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
@@ -67,10 +122,10 @@ body {
   --muted-foreground: oklch(0.556 0 0);
   --accent: oklch(0.97 0 0);
   --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
+  --destructive: #b5562f;
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
-  --ring: oklch(0.6 0.1 240);
+  --ring: #2f6f62;
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -94,7 +149,7 @@ body {
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.75 0.13 240);
+  --primary: #6fa290;
   --primary-foreground: oklch(0.145 0 0);
   --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);
@@ -102,10 +157,10 @@ body {
   --muted-foreground: oklch(0.708 0 0);
   --accent: oklch(0.269 0 0);
   --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
+  --destructive: #c17854;
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.65 0.11 240);
+  --ring: #6fa290;
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);

@@ -150,3 +150,5 @@ blob-report/
 # Supabase local runtime state
 supabase/.branches/
 supabase/.temp/
+.vercel
+.env*
