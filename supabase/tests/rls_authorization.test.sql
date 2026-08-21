@@ -168,8 +168,8 @@ select results_eq(
 
 select is(
   (select count(*) from public.trip_participants),
-  1::bigint,
-  'direct participant access exposes only the creator own membership row'
+  2::bigint,
+  'the creator can directly read all participants of their own trip'
 );
 
 select is(
