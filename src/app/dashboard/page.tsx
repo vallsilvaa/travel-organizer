@@ -1,11 +1,14 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { signOut } from "@/features/auth/actions";
+import { changePassword, signOut } from "@/features/auth/actions";
 import { respondToInvitation } from "@/features/invitations/actions";
+import { getAuthMessage } from "@/features/auth/messages";
 import { updateReminderPreference } from "@/features/reminders/actions";
 import { TripForm } from "@/features/trips/trip-form";
 import { createClient } from "@/lib/supabase/server";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { SubmitButton } from "@/components/submit-button";
 import {
   Card,
@@ -17,7 +20,11 @@ import {
 } from "@/components/ui/card";
 
 type DashboardPageProps = {
-  searchParams: Promise<{ invitationError?: string }>;
+  searchParams: Promise<{
+    invitationError?: string;
+    passwordError?: string;
+    passwordMessage?: string;
+  }>;
 };
 
 function formatDate(value: string) {
@@ -105,6 +112,40 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                 Enviar lembretes de prazos de tarefas
               </label>
               <SubmitButton pendingLabel="Salvando..." variant="outline">Salvar preferência</SubmitButton>
+            </form>
+          </CardContent>
+        </Card>
+
+        <Card className="[--card-spacing:--spacing(8)]">
+          <CardHeader>
+            <CardTitle className="text-xl">Alterar senha</CardTitle>
+            <CardDescription>
+              Escolha uma nova senha para sua conta.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {getAuthMessage(params.passwordError) ? (
+              <p role="alert" className="mb-4 rounded-xl bg-red-50 p-3 text-sm text-red-800">
+                {getAuthMessage(params.passwordError)}
+              </p>
+            ) : null}
+            {getAuthMessage(params.passwordMessage) ? (
+              <p className="mb-4 rounded-xl bg-sky-50 p-3 text-sm text-sky-900">
+                {getAuthMessage(params.passwordMessage)}
+              </p>
+            ) : null}
+            <form action={changePassword} className="grid gap-4 sm:grid-cols-2 sm:items-end">
+              <div className="space-y-2">
+                <Label htmlFor="password">Nova senha</Label>
+                <Input required autoComplete="new-password" id="password" name="password" type="password" minLength={8} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="passwordConfirmation">Confirmar nova senha</Label>
+                <Input required autoComplete="new-password" id="passwordConfirmation" name="passwordConfirmation" type="password" minLength={8} />
+              </div>
+              <SubmitButton pendingLabel="Salvando..." variant="outline" className="sm:col-span-2 sm:justify-self-start">
+                Atualizar senha
+              </SubmitButton>
             </form>
           </CardContent>
         </Card>
