@@ -7,6 +7,7 @@ import { ExpenseForm } from "@/features/expenses/expense-form";
 import { expenseCategoryLabels } from "@/features/expenses/validation";
 import { InviteForm } from "@/features/invitations/invite-form";
 import { deleteItineraryItem } from "@/features/itinerary/actions";
+import { removeParticipant } from "@/features/participants/actions";
 import { ItineraryForm } from "@/features/itinerary/itinerary-form";
 import {
   addEnglandPreparationChecklist,
@@ -271,6 +272,18 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
             {filters.tripError === "delete_not_allowed" ? (
               <p role="alert" className="mt-6 rounded-xl bg-red-50 p-4 text-sm text-red-800">
                 Somente quem criou a viagem pode excluí-la.
+              </p>
+            ) : null}
+
+            {filters.tripError === "cannot_remove_self" ? (
+              <p role="alert" className="mt-6 rounded-xl bg-red-50 p-4 text-sm text-red-800">
+                Você não pode remover o seu próprio acesso a esta viagem.
+              </p>
+            ) : null}
+
+            {filters.tripError === "remove_participant_not_allowed" ? (
+              <p role="alert" className="mt-6 rounded-xl bg-red-50 p-4 text-sm text-red-800">
+                Não foi possível remover esse participante.
               </p>
             ) : null}
 
@@ -613,6 +626,43 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
+                  <div className="border-b border-slate-200 pb-8">
+                    <h3 className="text-lg font-semibold text-slate-950">Participantes</h3>
+                    <p className="mt-1 text-sm text-slate-600">
+                      Veja quem tem acesso a esta viagem e remova organizadores quando necessário.
+                    </p>
+                    <ul className="mt-5 divide-y divide-slate-200 border-t border-slate-200">
+                      {tripParticipants.map((participant) => {
+                        const isTripCreator = participant.user_id === trip.created_by;
+                        return (
+                          <li
+                            key={participant.user_id}
+                            className="flex flex-col gap-2 py-4 sm:flex-row sm:items-center sm:justify-between"
+                          >
+                            <div>
+                              <p className="text-sm font-medium text-slate-800">
+                                {participant.display_name}
+                              </p>
+                              <Badge variant="outline" className="mt-1">
+                                {isTripCreator ? "Criador(a) da viagem" : "Organizador(a)"}
+                              </Badge>
+                            </div>
+                            {!isTripCreator ? (
+                              <ConfirmDeleteForm
+                                action={removeParticipant}
+                                hiddenFields={{ tripId: trip.id, userId: participant.user_id }}
+                                title="Remover este organizador?"
+                                description={`${participant.display_name} perderá acesso imediato a esta viagem.`}
+                                triggerLabel="Remover acesso"
+                              />
+                            ) : null}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+
+                  <div className="mt-8">
                   <InviteForm tripId={trip.id} />
 
                   {invitations?.length ? (
@@ -641,6 +691,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                       ))}
                     </ul>
                   ) : null}
+                  </div>
                 </CardContent>
               </Card>
             </TabsContent>
