@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 
 import { CommentThread, type ItemComment } from "@/features/comments/comment-thread";
 import { deleteExpense } from "@/features/expenses/actions";
+import { computeSettlements } from "@/features/expenses/balances";
 import { ExpenseForm } from "@/features/expenses/expense-form";
 import { expenseCategoryLabels } from "@/features/expenses/validation";
 import {
@@ -81,6 +82,15 @@ type ExpenseShare = {
   expense_id: string;
   user_id: string;
   share_amount: string;
+};
+
+type ExpenseBalanceRow = {
+  user_id: string;
+  display_name: string;
+  currency: string;
+  total_paid: string;
+  total_owed: string;
+  net_balance: string;
 };
 
 type TripTask = {
@@ -164,6 +174,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
     { data: comments, error: commentsError },
     { data: expenses, error: expensesError },
     { data: expenseShares },
+    { data: expenseBalances },
     invitationResult,
   ] =
     await Promise.all([
@@ -195,6 +206,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
         .from("trip_expense_shares")
         .select("expense_id, user_id, share_amount")
         .eq("trip_id", trip.id),
+      supabase.rpc("get_trip_expense_balances", { requested_trip_id: trip.id }),
       isCreator
         ? supabase
             .from("trip_invitations")
@@ -250,6 +262,38 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
       return totals;
     }, new Map<string, number>()),
   ).sort(([currencyA], [currencyB]) => currencyA.localeCompare(currencyB));
+  const balanceRows = (expenseBalances ?? []) as ExpenseBalanceRow[];
+  // Balances come from every historical payer/ower, including participants
+  // later removed from the trip, so this is a strictly richer name lookup
+  // than the current-participants-only map above.
+  const namesIncludingRemoved = new Map(participantNames);
+  for (const row of balanceRows) {
+    if (!namesIncludingRemoved.has(row.user_id)) {
+      namesIncludingRemoved.set(row.user_id, row.display_name);
+    }
+  }
+  const balancesByCurrency = new Map<string, ExpenseBalanceRow[]>();
+  for (const row of balanceRows) {
+    const rows = balancesByCurrency.get(row.currency) ?? [];
+    rows.push(row);
+    balancesByCurrency.set(row.currency, rows);
+  }
+  const settlements = computeSettlements(
+    balanceRows.map((row) => ({
+      userId: row.user_id,
+      displayName: row.display_name,
+      currency: row.currency,
+      totalPaid: row.total_paid,
+      totalOwed: row.total_owed,
+      netBalance: row.net_balance,
+    })),
+  );
+  const settlementsByCurrency = new Map<string, typeof settlements>();
+  for (const settlement of settlements) {
+    const list = settlementsByCurrency.get(settlement.currency) ?? [];
+    list.push(settlement);
+    settlementsByCurrency.set(settlement.currency, list);
+  }
   const commentsFor = (itemType: "itinerary" | "task", itemId: string) =>
     tripComments.filter((comment) =>
       itemType === "itinerary"
@@ -440,6 +484,56 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                 </dl>
               ) : null}
 
+              {balancesByCurrency.size ? (
+                <div className="mt-6 space-y-4">
+                  <h3 className="text-lg font-semibold text-slate-950">Saldos</h3>
+                  {Array.from(balancesByCurrency.entries()).map(([currency, rows]) => (
+                    <div key={currency} className="rounded-2xl border border-slate-200 p-4">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{currency}</p>
+                      <ul className="mt-3 space-y-2">
+                        {rows.map((row) => {
+                          const netCents = Math.round(Number(row.net_balance) * 100);
+                          return (
+                            <li key={row.user_id} className="flex items-center justify-between text-sm">
+                              <span className="text-slate-700">{row.display_name}</span>
+                              <span
+                                className={
+                                  netCents > 0
+                                    ? "font-semibold text-emerald-700"
+                                    : netCents < 0
+                                      ? "font-semibold text-red-700"
+                                      : "text-slate-500"
+                                }
+                              >
+                                {netCents > 0
+                                  ? `recebe ${formatMoney(row.net_balance, currency)}`
+                                  : netCents < 0
+                                    ? `deve ${formatMoney((-Number(row.net_balance)).toFixed(2), currency)}`
+                                    : "quitado"}
+                              </span>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                      {(settlementsByCurrency.get(currency) ?? []).length ? (
+                        <div className="mt-4 border-t border-slate-100 pt-3">
+                          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Sugestão de acerto</p>
+                          <ul className="mt-2 space-y-1 text-sm text-slate-700">
+                            {(settlementsByCurrency.get(currency) ?? []).map((settlement) => (
+                              <li key={`${settlement.fromUserId}-${settlement.toUserId}`}>
+                                {settlement.fromDisplayName} paga {formatMoney(settlement.amount, currency)} para {settlement.toDisplayName}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      ) : (
+                        <p className="mt-4 text-sm text-slate-500">Todo mundo está quitado.</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+
               <details className="mt-5 rounded-2xl bg-sky-50 p-5" open={!tripExpenses.length}>
                 <summary className="cursor-pointer font-semibold text-sky-900">Adicionar despesa</summary>
                 <div className="mt-5">
@@ -465,12 +559,12 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                           </div>
                           <p className="mt-2 text-lg font-semibold text-emerald-800">{formatMoney(expense.amount, expense.currency)}</p>
                           <p className="mt-1 text-sm text-slate-600">
-                            Pago por {participantNames.get(expense.payer_id) ?? "Viajante"} · {formatDate(expense.expense_date)}
+                            Pago por {namesIncludingRemoved.get(expense.payer_id) ?? "Viajante"} · {formatDate(expense.expense_date)}
                           </p>
                           {sharesByExpense.get(expense.id)?.length ? (
                             <p className="mt-2 text-sm text-slate-600">
                               Dividido: {sharesByExpense.get(expense.id)!
-                                .map((share) => `${participantNames.get(share.user_id) ?? "Viajante"} ${formatMoney(share.share_amount, expense.currency)}`)
+                                .map((share) => `${namesIncludingRemoved.get(share.user_id) ?? "Viajante"} ${formatMoney(share.share_amount, expense.currency)}`)
                                 .join(" · ")}
                             </p>
                           ) : null}
