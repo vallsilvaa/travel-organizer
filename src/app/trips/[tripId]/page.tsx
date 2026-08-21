@@ -5,10 +5,14 @@ import { CommentThread, type ItemComment } from "@/features/comments/comment-thr
 import { deleteExpense } from "@/features/expenses/actions";
 import { ExpenseForm } from "@/features/expenses/expense-form";
 import { expenseCategoryLabels } from "@/features/expenses/validation";
+import {
+  cancelInvitation,
+  resendInvitation,
+} from "@/features/invitations/actions";
 import { InviteForm } from "@/features/invitations/invite-form";
 import { deleteItineraryItem } from "@/features/itinerary/actions";
-import { removeParticipant } from "@/features/participants/actions";
 import { ItineraryForm } from "@/features/itinerary/itinerary-form";
+import { removeParticipant } from "@/features/participants/actions";
 import {
   addEnglandPreparationChecklist,
   deleteTask,
@@ -91,6 +95,7 @@ const invitationStatusLabels: Record<string, string> = {
   pending: "Pendente",
   accepted: "Aceito",
   declined: "Recusado",
+  cancelled: "Cancelado",
 };
 
 function formatDate(value: string) {
@@ -181,7 +186,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
       isCreator
         ? supabase
             .from("trip_invitations")
-            .select("id, email, status, created_at")
+            .select("id, email, status, created_at, expires_at")
             .eq("trip_id", trip.id)
             .order("created_at", { ascending: false })
         : Promise.resolve({ data: [] }),
@@ -284,6 +289,12 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
             {filters.tripError === "remove_participant_not_allowed" ? (
               <p role="alert" className="mt-6 rounded-xl bg-red-50 p-4 text-sm text-red-800">
                 Não foi possível remover esse participante.
+              </p>
+            ) : null}
+
+            {filters.tripError === "resend_invitation_not_allowed" || filters.tripError === "cancel_invitation_not_allowed" ? (
+              <p role="alert" className="mt-6 rounded-xl bg-red-50 p-4 text-sm text-red-800">
+                Não foi possível atualizar esse convite. Ele pode já ter sido respondido ou cancelado.
               </p>
             ) : null}
 
@@ -670,23 +681,57 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                       {invitations.map((invitation) => (
                         <li
                           key={invitation.id}
-                          className="flex flex-col gap-1 py-4 sm:flex-row sm:items-center sm:justify-between"
+                          className="flex flex-col gap-2 py-4 sm:flex-row sm:items-center sm:justify-between"
                         >
-                          <span className="text-sm font-medium text-slate-800">
-                            {invitation.email}
-                          </span>
-                          <Badge
-                            variant="outline"
-                            className={
-                              invitation.status === "accepted"
-                                ? "border-emerald-200 bg-emerald-100 text-emerald-800"
-                                : invitation.status === "declined"
-                                  ? "border-red-200 bg-red-100 text-red-800"
-                                  : ""
-                            }
-                          >
-                            {invitationStatusLabels[invitation.status] ?? invitation.status}
-                          </Badge>
+                          <div>
+                            <span className="text-sm font-medium text-slate-800">
+                              {invitation.email}
+                            </span>
+                            {invitation.status === "pending" ? (
+                              <p className="text-xs text-slate-500">
+                                Expira em {formatDate(invitation.expires_at.slice(0, 10))}
+                              </p>
+                            ) : null}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Badge
+                              variant="outline"
+                              className={
+                                invitation.status === "accepted"
+                                  ? "border-emerald-200 bg-emerald-100 text-emerald-800"
+                                  : invitation.status === "declined"
+                                    ? "border-red-200 bg-red-100 text-red-800"
+                                    : invitation.status === "cancelled"
+                                      ? "border-slate-200 bg-slate-100 text-slate-600"
+                                      : ""
+                              }
+                            >
+                              {invitationStatusLabels[invitation.status] ?? invitation.status}
+                            </Badge>
+                            {invitation.status === "pending" ? (
+                              <>
+                                <form action={resendInvitation}>
+                                  <input type="hidden" name="tripId" value={trip.id} />
+                                  <input type="hidden" name="invitationId" value={invitation.id} />
+                                  <SubmitButton
+                                    pendingLabel="Reenviando..."
+                                    variant="outline"
+                                    size="sm"
+                                  >
+                                    Reenviar
+                                  </SubmitButton>
+                                </form>
+                                <ConfirmDeleteForm
+                                  action={cancelInvitation}
+                                  hiddenFields={{ tripId: trip.id, invitationId: invitation.id }}
+                                  title="Cancelar este convite?"
+                                  description={`O convite para ${invitation.email} não poderá mais ser aceito.`}
+                                  triggerLabel="Cancelar"
+                                  triggerClassName="h-auto p-0 text-destructive text-sm"
+                                />
+                              </>
+                            ) : null}
+                          </div>
                         </li>
                       ))}
                     </ul>
