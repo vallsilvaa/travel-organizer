@@ -33,7 +33,7 @@ import { ConfirmDeleteForm } from "@/components/confirm-delete-form";
 import { SubmitButton } from "@/components/submit-button";
 import { deleteTrip } from "@/features/trips/actions";
 import { TripForm } from "@/features/trips/trip-form";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -403,10 +403,23 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
           <TabsContent value="itinerary">
           <Card className="[--card-spacing:--spacing(6)]">
             <CardHeader>
-              <CardTitle className="text-2xl">Itinerário</CardTitle>
-              <CardDescription>
-                Mantenha atividades, reservas e pontos de encontro em ordem cronológica.
-              </CardDescription>
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <CardTitle className="text-2xl">Itinerário</CardTitle>
+                  <CardDescription>
+                    Mantenha atividades, reservas e pontos de encontro em ordem cronológica.
+                  </CardDescription>
+                </div>
+                {itineraryItems?.length ? (
+                  <a
+                    href={`/api/trips/${trip.id}/itinerary.ics`}
+                    download
+                    className={buttonVariants({ variant: "outline", size: "sm" })}
+                  >
+                    Exportar .ics
+                  </a>
+                ) : null}
+              </div>
             </CardHeader>
             <CardContent>
               <details className="mt-5 rounded-2xl bg-sky-50 p-5" open={!itineraryItems?.length}>
