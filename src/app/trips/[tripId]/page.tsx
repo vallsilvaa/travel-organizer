@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
+import { AttachmentForm } from "@/features/attachments/attachment-form";
+import { deleteAttachment } from "@/features/attachments/actions";
+import { formatFileSize } from "@/features/attachments/validation";
 import { CommentThread, type ItemComment } from "@/features/comments/comment-thread";
 import { deleteExpense } from "@/features/expenses/actions";
 import { computeSettlements } from "@/features/expenses/balances";
@@ -96,6 +99,36 @@ type ExpenseBalanceRow = {
   total_owed: string;
   net_balance: string;
 };
+
+type TripAttachment = {
+  id: string;
+  item_type: "itinerary" | "task" | "reservation" | null;
+  item_id: string | null;
+  storage_path: string;
+  file_name: string;
+  content_type: string;
+  size_bytes: number;
+  downloadUrl?: string | null;
+};
+
+function attachmentItemLabel(
+  attachment: TripAttachment,
+  itineraryTitles: Map<string, string>,
+  taskTitles: Map<string, string>,
+  reservationTitles: Map<string, string>,
+) {
+  if (!attachment.item_type || !attachment.item_id) {
+    return "";
+  }
+  const labels: Record<string, string> = { itinerary: "Itinerário", task: "Tarefa", reservation: "Reserva" };
+  const titlesByType: Record<string, Map<string, string>> = {
+    itinerary: itineraryTitles,
+    task: taskTitles,
+    reservation: reservationTitles,
+  };
+  const title = titlesByType[attachment.item_type]?.get(attachment.item_id) ?? "item removido";
+  return `${labels[attachment.item_type]}: ${title}`;
+}
 
 type TripReservation = {
   id: string;
@@ -213,6 +246,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
   const [
     { data: itineraryItems, error: itineraryError },
     { data: reservations, error: reservationsError },
+    { data: attachments, error: attachmentsError },
     { data: tasks, error: tasksError },
     { data: participants },
     { data: comments, error: commentsError },
@@ -234,6 +268,11 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
         .eq("trip_id", trip.id)
         .order("start_date", { ascending: true })
         .order("start_time", { ascending: true, nullsFirst: false }),
+      supabase
+        .from("trip_attachments")
+        .select("id, item_type, item_id, storage_path, file_name, content_type, size_bytes")
+        .eq("trip_id", trip.id)
+        .order("created_at", { ascending: false }),
       supabase
         .from("trip_tasks")
         .select("id, title, owner_id, due_date, due_offset_days, completed_at, created_at, category, is_critical, template_key, reference_label, reference_url")
@@ -297,6 +336,25 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
     .filter((group) => group.tasks.length);
   const tripComments = (comments ?? []) as TripComment[];
   const tripReservations = (reservations ?? []) as TripReservation[];
+  const rawAttachments = (attachments ?? []) as TripAttachment[];
+  const signedUrlsByPath = new Map<string, string>();
+  if (rawAttachments.length) {
+    const { data: signedUrls } = await supabase.storage
+      .from("trip-attachments")
+      .createSignedUrls(rawAttachments.map((attachment) => attachment.storage_path), 300);
+    for (const signed of signedUrls ?? []) {
+      if (signed.signedUrl && signed.path) {
+        signedUrlsByPath.set(signed.path, signed.signedUrl);
+      }
+    }
+  }
+  const tripAttachments: TripAttachment[] = rawAttachments.map((attachment) => ({
+    ...attachment,
+    downloadUrl: signedUrlsByPath.get(attachment.storage_path) ?? null,
+  }));
+  const itineraryTitles = new Map((itineraryItems ?? []).map((item) => [item.id, item.title]));
+  const taskTitles = new Map((tasks ?? []).map((task) => [task.id, task.title]));
+  const reservationTitles = new Map(tripReservations.map((reservation) => [reservation.id, reservation.title]));
   const tripExpenses = (expenses ?? []) as TripExpense[];
   const sharesByExpense = new Map<string, ExpenseShare[]>();
   for (const share of (expenseShares ?? []) as ExpenseShare[]) {
@@ -477,6 +535,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
             <TabsTrigger value="itinerary" className="shrink-0 sm:flex-1 sm:shrink">Itinerário</TabsTrigger>
             <TabsTrigger value="expenses" className="shrink-0 sm:flex-1 sm:shrink">Despesas</TabsTrigger>
             <TabsTrigger value="preparation" className="shrink-0 sm:flex-1 sm:shrink">Preparação</TabsTrigger>
+            <TabsTrigger value="documents" className="shrink-0 sm:flex-1 sm:shrink">Documentos</TabsTrigger>
             {isCreator ? <TabsTrigger value="organizer" className="shrink-0 sm:flex-1 sm:shrink">Organizador</TabsTrigger> : null}
           </TabsList>
 
@@ -937,6 +996,80 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                 </div>
               ) : (
                 <p className="mt-5 rounded-2xl border border-dashed border-slate-300 p-6 text-sm text-slate-600">Nenhuma tarefa de preparação corresponde a esses filtros. Adicione o checklist da Inglaterra ou crie uma tarefa personalizada.</p>
+              )}
+            </CardContent>
+          </Card>
+          </TabsContent>
+
+          <TabsContent value="documents">
+          <Card className="[--card-spacing:--spacing(6)]">
+            <CardHeader>
+              <CardTitle className="text-2xl">Documentos</CardTitle>
+              <CardDescription>
+                Passaportes, vouchers e outros arquivos da viagem, com até 10 MB cada.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {!isArchived ? (
+                <details className="mt-5 rounded-2xl bg-sky-50 p-5" open={!tripAttachments.length}>
+                  <summary className="cursor-pointer font-semibold text-sky-900">
+                    Enviar anexo
+                  </summary>
+                  <div className="mt-5">
+                    <AttachmentForm
+                      tripId={trip.id}
+                      itineraryItems={(itineraryItems ?? []).map((item) => ({ id: item.id, title: item.title }))}
+                      tasks={allTasks.map((task) => ({ id: task.id, title: task.title }))}
+                      reservations={tripReservations.map((reservation) => ({ id: reservation.id, title: reservation.title }))}
+                    />
+                  </div>
+                </details>
+              ) : null}
+
+              {attachmentsError ? (
+                <p role="alert" className="mt-5 rounded-xl bg-red-50 p-4 text-sm text-red-800">
+                  Não foi possível carregar os documentos. Tente atualizar a página.
+                </p>
+              ) : tripAttachments.length ? (
+                <ol className="mt-6 space-y-4">
+                  {tripAttachments.map((attachment) => (
+                    <li key={attachment.id} className="flex flex-col gap-4 rounded-2xl border border-slate-200 p-5 sm:flex-row sm:items-center sm:justify-between">
+                      <div>
+                        <h3 className="text-lg font-semibold text-slate-950">{attachment.file_name}</h3>
+                        <p className="mt-1 text-sm text-slate-600">
+                          {formatFileSize(attachment.size_bytes)}
+                          {attachment.item_type ? ` · ${attachmentItemLabel(attachment, itineraryTitles, taskTitles, reservationTitles)}` : ""}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        {attachment.downloadUrl ? (
+                          <a
+                            href={attachment.downloadUrl}
+                            className={buttonVariants({ variant: "outline", size: "sm" })}
+                          >
+                            Baixar
+                          </a>
+                        ) : (
+                          <span className="text-sm text-red-800">Link indisponível</span>
+                        )}
+                        {!isArchived ? (
+                          <ConfirmDeleteForm
+                            action={deleteAttachment}
+                            hiddenFields={{ tripId: trip.id, attachmentId: attachment.id, storagePath: attachment.storage_path }}
+                            title="Excluir este anexo?"
+                            description={`Isso vai remover permanentemente "${attachment.file_name}" dos documentos da viagem.`}
+                            triggerLabel="Excluir"
+                            triggerClassName="h-auto p-0 text-destructive"
+                          />
+                        ) : null}
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+              ) : (
+                <p className="mt-5 rounded-2xl border border-dashed border-slate-300 p-6 text-sm text-slate-600">
+                  Nenhum documento enviado ainda. Envie passaportes, vouchers ou outros arquivos acima.
+                </p>
               )}
             </CardContent>
           </Card>
