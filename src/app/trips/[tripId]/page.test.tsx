@@ -9,6 +9,9 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock("@/lib/supabase/server", () => ({ createClient: mocks.createClient }));
+vi.mock("@/features/realtime/realtime-status", () => ({
+  RealtimeStatus: () => null,
+}));
 
 import TripPage from "./page";
 
