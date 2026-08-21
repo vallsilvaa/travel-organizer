@@ -43,6 +43,8 @@ function expenseErrorMessage(error: { message?: string }) {
       return "Só é possível dividir a despesa entre participantes da viagem.";
     case "not_authorized":
       return "Você não tem acesso a esta viagem.";
+    case "trip_archived":
+      return "Esta viagem está arquivada. Reative-a para alterar despesas.";
     default:
       return "Não foi possível salvar esta despesa. Verifique o pagador, a divisão e seu acesso à viagem.";
   }

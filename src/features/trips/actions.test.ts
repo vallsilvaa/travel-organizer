@@ -31,7 +31,7 @@ vi.mock("next/navigation", () => ({
   redirect: mocks.redirect,
 }));
 
-import { createTrip, deleteTrip, updateTrip } from "./actions";
+import { archiveTrip, createTrip, deleteTrip, restoreTrip, updateTrip } from "./actions";
 
 function validTripForm() {
   const formData = new FormData();
@@ -210,6 +210,63 @@ describe("deleteTrip", () => {
 
     await expect(deleteTrip(formData)).rejects.toThrow(
       "NEXT_REDIRECT:/trips/27823996-ec50-4cc2-8506-a29d07b86f94?tripError=delete_not_allowed",
+    );
+  });
+});
+
+describe("archiveTrip and restoreTrip", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.getUser.mockResolvedValue({ data: { user: { id: "user-123" } } });
+    const chain = {
+      eq: mocks.updateEq,
+      select: mocks.updateSelect,
+      maybeSingle: mocks.updateMaybeSingle,
+    };
+    mocks.updateEq.mockReturnValue(chain);
+    mocks.updateSelect.mockReturnValue(chain);
+    mocks.update.mockReturnValue(chain);
+    mocks.updateMaybeSingle.mockResolvedValue({
+      data: { id: "27823996-ec50-4cc2-8506-a29d07b86f94" },
+      error: null,
+    });
+    mocks.from.mockReturnValue({ update: mocks.update });
+    mocks.createClient.mockResolvedValue({
+      auth: { getUser: mocks.getUser },
+      from: mocks.from,
+    });
+  });
+
+  it("archives the creator's trip", async () => {
+    const formData = new FormData();
+    formData.set("tripId", "27823996-ec50-4cc2-8506-a29d07b86f94");
+
+    await archiveTrip(formData);
+
+    expect(mocks.update).toHaveBeenCalledWith(
+      expect.objectContaining({ archived_at: expect.any(String) }),
+    );
+    expect(mocks.updateEq).toHaveBeenCalledWith("created_by", "user-123");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/dashboard");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/trips/27823996-ec50-4cc2-8506-a29d07b86f94");
+  });
+
+  it("restores an archived trip by clearing archived_at", async () => {
+    const formData = new FormData();
+    formData.set("tripId", "27823996-ec50-4cc2-8506-a29d07b86f94");
+
+    await restoreTrip(formData);
+
+    expect(mocks.update).toHaveBeenCalledWith({ archived_at: null });
+  });
+
+  it("redirects with an error when authorization denies archiving", async () => {
+    mocks.updateMaybeSingle.mockResolvedValue({ data: null, error: null });
+    const formData = new FormData();
+    formData.set("tripId", "27823996-ec50-4cc2-8506-a29d07b86f94");
+
+    await expect(archiveTrip(formData)).rejects.toThrow(
+      "NEXT_REDIRECT:/trips/27823996-ec50-4cc2-8506-a29d07b86f94?tripError=archive_not_allowed",
     );
   });
 });
