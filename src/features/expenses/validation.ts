@@ -24,8 +24,88 @@ export const expenseCategoryLabels: Record<ExpenseCategory, string> = {
   other: "Outro",
 };
 export type ExpenseFieldErrors = Partial<
-  Record<"description" | "amount" | "currency" | "category" | "date" | "payer", string>
+  Record<"description" | "amount" | "currency" | "category" | "date" | "payer" | "split", string>
 >;
+
+export type ExpenseShare = { userId: string; shareAmount: string };
+
+function toCents(amount: string) {
+  return Math.round(Number(amount) * 100);
+}
+
+function fromCents(cents: number) {
+  return (cents / 100).toFixed(2);
+}
+
+/** Splits a total into whole cents across participants, handing any
+ * leftover pennies to the first few so the shares always sum exactly. */
+export function computeEqualShares(
+  totalAmount: string,
+  participantIds: string[],
+): Record<string, string> {
+  const totalCents = toCents(totalAmount);
+  if (!Number.isFinite(totalCents) || participantIds.length === 0) {
+    return {};
+  }
+
+  const base = Math.floor(totalCents / participantIds.length);
+  const remainder = totalCents - base * participantIds.length;
+
+  return Object.fromEntries(
+    participantIds.map((id, index) => [
+      id,
+      fromCents(base + (index < remainder ? 1 : 0)),
+    ]),
+  );
+}
+
+export function parseExpenseShares(
+  formData: FormData,
+  participantIds: string[],
+  totalAmount: string,
+): { shares: ExpenseShare[]; error?: string } {
+  const shares: ExpenseShare[] = [];
+  let sawAnyField = false;
+
+  for (const participantId of participantIds) {
+    const raw = formData.get(`share_${participantId}`);
+    if (raw === null) {
+      continue;
+    }
+
+    const value = String(raw).trim();
+    if (!value) {
+      continue;
+    }
+
+    sawAnyField = true;
+    if (!amountPattern.test(value)) {
+      return {
+        shares: [],
+        error: "Os valores da divisão devem ser números válidos com até duas casas decimais.",
+      };
+    }
+
+    const cents = toCents(value);
+    if (cents > 0) {
+      shares.push({ userId: participantId, shareAmount: fromCents(cents) });
+    }
+  }
+
+  if (!sawAnyField) {
+    return { shares: [] };
+  }
+
+  const sharesCents = shares.reduce((sum, share) => sum + toCents(share.shareAmount), 0);
+  if (sharesCents !== toCents(totalAmount)) {
+    return {
+      shares: [],
+      error: "A soma da divisão deve ser igual ao valor total da despesa.",
+    };
+  }
+
+  return { shares };
+}
 
 export function isValidExpenseId(value: string) {
   return uuidPattern.test(value);

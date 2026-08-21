@@ -206,18 +206,9 @@ select results_eq(
   'the creator can assign a task to another participant'
 );
 
-select results_eq(
+select lives_ok(
   $$
-    insert into public.trip_expenses (
-      trip_id,
-      description,
-      amount,
-      currency,
-      category,
-      expense_date,
-      payer_id,
-      created_by
-    ) values (
+    select public.create_expense_with_shares(
       'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
       'Transporte',
       20,
@@ -225,11 +216,16 @@ select results_eq(
       'transport',
       '2027-04-02',
       '22222222-2222-2222-2222-222222222222',
-      '11111111-1111-1111-1111-111111111111'
-    ) returning payer_id
+      '[]'::jsonb
+    )
   $$,
-  $$values ('22222222-2222-2222-2222-222222222222'::uuid)$$,
   'the creator can assign an expense to another participant'
+);
+
+select is(
+  (select payer_id from public.trip_expenses where description = 'Transporte'),
+  '22222222-2222-2222-2222-222222222222'::uuid,
+  'the new expense is assigned to the intended payer'
 );
 
 select throws_ok(
