@@ -19,6 +19,14 @@ export default defineConfig({
     {
       name: "chromium",
       use: { ...devices["Desktop Chrome"] },
+      testIgnore: /mobile-viewport\.spec\.ts/,
+    },
+    {
+      // An Android preset, not an iPhone one: iPhone devices default
+      // Playwright to WebKit, and CI only installs the Chromium browser.
+      name: "mobile-chromium",
+      use: { ...devices["Pixel 5"] },
+      testMatch: /mobile-viewport\.spec\.ts/,
     },
   ],
   webServer: {
