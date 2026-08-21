@@ -13,6 +13,7 @@ import { InviteForm } from "@/features/invitations/invite-form";
 import { deleteItineraryItem } from "@/features/itinerary/actions";
 import { ItineraryForm } from "@/features/itinerary/itinerary-form";
 import { removeParticipant } from "@/features/participants/actions";
+import { RealtimeStatus } from "@/features/realtime/realtime-status";
 import {
   addEnglandPreparationChecklist,
   deleteTask,
@@ -252,9 +253,12 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
               ← Voltar ao painel
             </Link>
 
-            <p className="mt-8 text-sm font-semibold uppercase tracking-[0.18em] text-primary">
-              Visão geral da viagem
-            </p>
+            <div className="mt-8 flex flex-wrap items-center justify-between gap-3">
+              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">
+                Visão geral da viagem
+              </p>
+              <RealtimeStatus tripId={trip.id} />
+            </div>
             <h1 className="mt-3 text-4xl font-semibold tracking-tight text-slate-950">
               {trip.destination}
             </h1>
