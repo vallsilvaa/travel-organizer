@@ -78,6 +78,9 @@ describe("TripPage", () => {
       if (table === "trip_expenses") {
         return queryBuilder({ data: [], error: null });
       }
+      if (table === "trip_expense_shares") {
+        return queryBuilder({ data: [], error: null });
+      }
       if (table === "trip_invitations") {
         return queryBuilder({ data: [], error: null });
       }

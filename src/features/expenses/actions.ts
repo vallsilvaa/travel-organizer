@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import {
   isValidExpenseId,
+  parseExpenseShares,
   validateExpenseInput,
   type ExpenseFieldErrors,
 } from "./validation";
@@ -27,6 +28,26 @@ async function authenticatedClient() {
   return { supabase, user };
 }
 
+function participantIdsFrom(formData: FormData) {
+  return String(formData.get("participantIds") ?? "")
+    .split(",")
+    .filter(Boolean);
+}
+
+function expenseErrorMessage(error: { message?: string }) {
+  switch (error.message) {
+    case "shares_do_not_match_total":
+      return "A soma da divisão deve ser igual ao valor total da despesa.";
+    case "invalid_participant":
+    case "invalid_payer":
+      return "Só é possível dividir a despesa entre participantes da viagem.";
+    case "not_authorized":
+      return "Você não tem acesso a esta viagem.";
+    default:
+      return "Não foi possível salvar esta despesa. Verifique o pagador, a divisão e seu acesso à viagem.";
+  }
+}
+
 export async function createExpense(
   _previousState: ExpenseActionState,
   formData: FormData,
@@ -41,20 +62,32 @@ export async function createExpense(
     return { errors: validation.errors };
   }
 
-  const { supabase, user } = await authenticatedClient();
-  const { error } = await supabase.from("trip_expenses").insert({
-    trip_id: tripId,
-    description: validation.data.description,
-    amount: validation.data.amount,
-    currency: validation.data.currency,
-    category: validation.data.category,
-    expense_date: validation.data.date,
-    payer_id: validation.data.payerId,
-    created_by: user.id,
+  const { shares, error: sharesError } = parseExpenseShares(
+    formData,
+    participantIdsFrom(formData),
+    validation.data.amount,
+  );
+  if (sharesError) {
+    return { errors: { split: sharesError } };
+  }
+
+  const { supabase } = await authenticatedClient();
+  const { error } = await supabase.rpc("create_expense_with_shares", {
+    p_trip_id: tripId,
+    p_description: validation.data.description,
+    p_amount: validation.data.amount,
+    p_currency: validation.data.currency,
+    p_category: validation.data.category,
+    p_expense_date: validation.data.date,
+    p_payer_id: validation.data.payerId,
+    p_shares: shares.map((share) => ({
+      user_id: share.userId,
+      share_amount: share.shareAmount,
+    })),
   });
 
   if (error) {
-    return { message: "Não foi possível adicionar esta despesa. Verifique o pagador e seu acesso à viagem." };
+    return { message: expenseErrorMessage(error) };
   }
 
   revalidatePath(`/trips/${tripId}`);
@@ -76,23 +109,33 @@ export async function updateExpense(
     return { errors: validation.errors };
   }
 
+  const { shares, error: sharesError } = parseExpenseShares(
+    formData,
+    participantIdsFrom(formData),
+    validation.data.amount,
+  );
+  if (sharesError) {
+    return { errors: { split: sharesError } };
+  }
+
   const { supabase } = await authenticatedClient();
-  const { error } = await supabase
-    .from("trip_expenses")
-    .update({
-      description: validation.data.description,
-      amount: validation.data.amount,
-      currency: validation.data.currency,
-      category: validation.data.category,
-      expense_date: validation.data.date,
-      payer_id: validation.data.payerId,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", expenseId)
-    .eq("trip_id", tripId);
+  const { error } = await supabase.rpc("update_expense_with_shares", {
+    p_expense_id: expenseId,
+    p_trip_id: tripId,
+    p_description: validation.data.description,
+    p_amount: validation.data.amount,
+    p_currency: validation.data.currency,
+    p_category: validation.data.category,
+    p_expense_date: validation.data.date,
+    p_payer_id: validation.data.payerId,
+    p_shares: shares.map((share) => ({
+      user_id: share.userId,
+      share_amount: share.shareAmount,
+    })),
+  });
 
   if (error) {
-    return { message: "Não foi possível atualizar esta despesa. Tente novamente." };
+    return { message: expenseErrorMessage(error) };
   }
 
   revalidatePath(`/trips/${tripId}`);

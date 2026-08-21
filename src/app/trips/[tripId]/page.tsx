@@ -76,6 +76,12 @@ type TripExpense = {
   payer_id: string;
 };
 
+type ExpenseShare = {
+  expense_id: string;
+  user_id: string;
+  share_amount: string;
+};
+
 type TripTask = {
   id: string;
   title: string;
@@ -156,6 +162,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
     { data: participants },
     { data: comments, error: commentsError },
     { data: expenses, error: expensesError },
+    { data: expenseShares },
     invitationResult,
   ] =
     await Promise.all([
@@ -183,6 +190,10 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
         .eq("trip_id", trip.id)
         .order("expense_date", { ascending: false })
         .order("created_at", { ascending: false }),
+      supabase
+        .from("trip_expense_shares")
+        .select("expense_id, user_id, share_amount")
+        .eq("trip_id", trip.id),
       isCreator
         ? supabase
             .from("trip_invitations")
@@ -223,6 +234,12 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
     .filter((group) => group.tasks.length);
   const tripComments = (comments ?? []) as TripComment[];
   const tripExpenses = (expenses ?? []) as TripExpense[];
+  const sharesByExpense = new Map<string, ExpenseShare[]>();
+  for (const share of (expenseShares ?? []) as ExpenseShare[]) {
+    const shares = sharesByExpense.get(share.expense_id) ?? [];
+    shares.push(share);
+    sharesByExpense.set(share.expense_id, shares);
+  }
   const totalsByCurrency = Array.from(
     tripExpenses.reduce((totals, expense) => {
       totals.set(
@@ -446,10 +463,24 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                           <p className="mt-1 text-sm text-slate-600">
                             Pago por {participantNames.get(expense.payer_id) ?? "Viajante"} · {formatDate(expense.expense_date)}
                           </p>
+                          {sharesByExpense.get(expense.id)?.length ? (
+                            <p className="mt-2 text-sm text-slate-600">
+                              Dividido: {sharesByExpense.get(expense.id)!
+                                .map((share) => `${participantNames.get(share.user_id) ?? "Viajante"} ${formatMoney(share.share_amount, expense.currency)}`)
+                                .join(" · ")}
+                            </p>
+                          ) : null}
                         </div>
                         <ItemActionsMenu
                           editLabel="Editar despesa"
-                          editForm={<ExpenseForm expense={expense} participants={tripParticipants} tripId={trip.id} />}
+                          editForm={
+                            <ExpenseForm
+                              expense={expense}
+                              existingShares={sharesByExpense.get(expense.id) ?? []}
+                              participants={tripParticipants}
+                              tripId={trip.id}
+                            />
+                          }
                           deleteAction={deleteExpense}
                           deleteHiddenFields={{ tripId: trip.id, expenseId: expense.id }}
                           deleteTitle="Excluir despesa?"
