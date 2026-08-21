@@ -416,11 +416,18 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
         </Card>
 
         <Tabs defaultValue={defaultTab}>
-          <TabsList className="w-full sm:w-auto">
-            <TabsTrigger value="itinerary">Itinerário</TabsTrigger>
-            <TabsTrigger value="expenses">Despesas</TabsTrigger>
-            <TabsTrigger value="preparation">Preparação</TabsTrigger>
-            {isCreator ? <TabsTrigger value="organizer">Organizador</TabsTrigger> : null}
+          {/* Equal-width flex-1 tabs (the shared component's default) have a
+              default min-width of auto, so they won't shrink below their
+              label's natural width. That's fine at today's label lengths on
+              a 393px viewport (verified below), but scroll-instead-of-clip
+              is one line of defense against a longer label (a 5th tab, or a
+              future English translation) quietly pushing the bar - and by
+              extension the page - wider than the screen. */}
+          <TabsList className="w-full overflow-x-auto sm:w-auto sm:overflow-visible">
+            <TabsTrigger value="itinerary" className="shrink-0 sm:flex-1 sm:shrink">Itinerário</TabsTrigger>
+            <TabsTrigger value="expenses" className="shrink-0 sm:flex-1 sm:shrink">Despesas</TabsTrigger>
+            <TabsTrigger value="preparation" className="shrink-0 sm:flex-1 sm:shrink">Preparação</TabsTrigger>
+            {isCreator ? <TabsTrigger value="organizer" className="shrink-0 sm:flex-1 sm:shrink">Organizador</TabsTrigger> : null}
           </TabsList>
 
           <TabsContent value="itinerary">
