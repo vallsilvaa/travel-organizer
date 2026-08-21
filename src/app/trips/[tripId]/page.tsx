@@ -31,7 +31,7 @@ import { Badge } from "@/components/ui/badge";
 import { ItemActionsMenu } from "@/components/item-actions-menu";
 import { ConfirmDeleteForm } from "@/components/confirm-delete-form";
 import { SubmitButton } from "@/components/submit-button";
-import { deleteTrip } from "@/features/trips/actions";
+import { archiveTrip, deleteTrip, restoreTrip } from "@/features/trips/actions";
 import { TripForm } from "@/features/trips/trip-form";
 import { Button } from "@/components/ui/button";
 import {
@@ -150,7 +150,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
 
   const { data: trip, error } = await supabase
     .from("trips")
-    .select("id, destination, start_date, end_date, created_at, created_by")
+    .select("id, destination, start_date, end_date, created_at, created_by, archived_at")
     .eq("id", tripId)
     .single();
 
@@ -159,6 +159,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
   }
 
   const isCreator = trip.created_by === user.id;
+  const isArchived = Boolean(trip.archived_at);
   const statusFilter = filters.status === "completed" || filters.status === "open"
     ? filters.status
     : "all";
@@ -363,6 +364,18 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
               </p>
             ) : null}
 
+            {filters.tripError === "archive_not_allowed" ? (
+              <p role="alert" className="mt-6 rounded-xl bg-red-50 p-4 text-sm text-red-800">
+                Somente quem criou a viagem pode arquivá-la ou reativá-la.
+              </p>
+            ) : null}
+
+            {isArchived ? (
+              <p className="mt-6 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+                Esta viagem está arquivada. Itinerário, tarefas e despesas ficam somente leitura até que seja reativada.
+              </p>
+            ) : null}
+
             {isCreator ? (
               <div className="mt-8 border-t border-slate-200 pt-6">
                 <details className="rounded-2xl bg-slate-50 p-5">
@@ -371,7 +384,17 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                   </summary>
                   <TripForm trip={trip} />
                 </details>
-                <div className="mt-4 flex justify-end">
+                <div className="mt-4 flex justify-end gap-4">
+                  <form action={isArchived ? restoreTrip : archiveTrip}>
+                    <input type="hidden" name="tripId" value={trip.id} />
+                    <SubmitButton
+                      pendingLabel={isArchived ? "Reativando..." : "Arquivando..."}
+                      variant="outline"
+                      size="sm"
+                    >
+                      {isArchived ? "Reativar viagem" : "Arquivar viagem"}
+                    </SubmitButton>
+                  </form>
                   <ConfirmDeleteForm
                     action={deleteTrip}
                     hiddenFields={{ tripId: trip.id }}
@@ -409,14 +432,16 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <details className="mt-5 rounded-2xl bg-sky-50 p-5" open={!itineraryItems?.length}>
-                <summary className="cursor-pointer font-semibold text-sky-900">
-                  Adicionar item ao itinerário
-                </summary>
-                <div className="mt-5">
-                  <ItineraryForm tripId={trip.id} />
-                </div>
-              </details>
+              {!isArchived ? (
+                <details className="mt-5 rounded-2xl bg-sky-50 p-5" open={!itineraryItems?.length}>
+                  <summary className="cursor-pointer font-semibold text-sky-900">
+                    Adicionar item ao itinerário
+                  </summary>
+                  <div className="mt-5">
+                    <ItineraryForm tripId={trip.id} />
+                  </div>
+                </details>
+              ) : null}
 
               {itineraryError ? (
                 <p role="alert" className="mt-5 rounded-xl bg-red-50 p-4 text-sm text-red-800">
@@ -435,14 +460,16 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                           {item.location ? <p className="mt-1 text-sm text-slate-600">{item.location}</p> : null}
                           {item.notes ? <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-slate-600">{item.notes}</p> : null}
                         </div>
-                        <ItemActionsMenu
-                          editLabel="Editar item"
-                          editForm={<ItineraryForm item={item} tripId={trip.id} />}
-                          deleteAction={deleteItineraryItem}
-                          deleteHiddenFields={{ tripId: trip.id, itemId: item.id }}
-                          deleteTitle="Excluir item do itinerário?"
-                          deleteDescription={`Isso vai remover permanentemente "${item.title}" do itinerário.`}
-                        />
+                        {!isArchived ? (
+                          <ItemActionsMenu
+                            editLabel="Editar item"
+                            editForm={<ItineraryForm item={item} tripId={trip.id} />}
+                            deleteAction={deleteItineraryItem}
+                            deleteHiddenFields={{ tripId: trip.id, itemId: item.id }}
+                            deleteTitle="Excluir item do itinerário?"
+                            deleteDescription={`Isso vai remover permanentemente "${item.title}" do itinerário.`}
+                          />
+                        ) : null}
                       </div>
                       <CommentThread
                         comments={commentsFor("itinerary", item.id)}
@@ -534,12 +561,14 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                 </div>
               ) : null}
 
-              <details className="mt-5 rounded-2xl bg-sky-50 p-5" open={!tripExpenses.length}>
-                <summary className="cursor-pointer font-semibold text-sky-900">Adicionar despesa</summary>
-                <div className="mt-5">
-                  <ExpenseForm participants={tripParticipants} tripId={trip.id} />
-                </div>
-              </details>
+              {!isArchived ? (
+                <details className="mt-5 rounded-2xl bg-sky-50 p-5" open={!tripExpenses.length}>
+                  <summary className="cursor-pointer font-semibold text-sky-900">Adicionar despesa</summary>
+                  <div className="mt-5">
+                    <ExpenseForm participants={tripParticipants} tripId={trip.id} />
+                  </div>
+                </details>
+              ) : null}
 
               {expensesError ? (
                 <p role="alert" className="mt-5 rounded-xl bg-red-50 p-4 text-sm text-red-800">
@@ -569,21 +598,23 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                             </p>
                           ) : null}
                         </div>
-                        <ItemActionsMenu
-                          editLabel="Editar despesa"
-                          editForm={
-                            <ExpenseForm
-                              expense={expense}
-                              existingShares={sharesByExpense.get(expense.id) ?? []}
-                              participants={tripParticipants}
-                              tripId={trip.id}
-                            />
-                          }
-                          deleteAction={deleteExpense}
-                          deleteHiddenFields={{ tripId: trip.id, expenseId: expense.id }}
-                          deleteTitle="Excluir despesa?"
-                          deleteDescription={`Isso vai remover permanentemente "${expense.description}" e seu valor do resumo por moeda.`}
-                        />
+                        {!isArchived ? (
+                          <ItemActionsMenu
+                            editLabel="Editar despesa"
+                            editForm={
+                              <ExpenseForm
+                                expense={expense}
+                                existingShares={sharesByExpense.get(expense.id) ?? []}
+                                participants={tripParticipants}
+                                tripId={trip.id}
+                              />
+                            }
+                            deleteAction={deleteExpense}
+                            deleteHiddenFields={{ tripId: trip.id, expenseId: expense.id }}
+                            deleteTitle="Excluir despesa?"
+                            deleteDescription={`Isso vai remover permanentemente "${expense.description}" e seu valor do resumo por moeda.`}
+                          />
+                        ) : null}
                       </div>
                     </li>
                   ))}
@@ -608,10 +639,12 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                     Complete documentos, reservas, dinheiro, saúde, conectividade e bagagem antes da partida.
                   </p>
                 </div>
-                <form action={addEnglandPreparationChecklist}>
-                  <input type="hidden" name="tripId" value={trip.id} />
-                  <SubmitButton pendingLabel="Adicionando checklist..." size="lg">Adicionar checklist da Inglaterra</SubmitButton>
-                </form>
+                {!isArchived ? (
+                  <form action={addEnglandPreparationChecklist}>
+                    <input type="hidden" name="tripId" value={trip.id} />
+                    <SubmitButton pendingLabel="Adicionando checklist..." size="lg">Adicionar checklist da Inglaterra</SubmitButton>
+                  </form>
+                ) : null}
               </div>
 
               <div className="mt-6 overflow-hidden rounded-2xl border border-sky-100 bg-sky-50 p-5">
@@ -631,12 +664,14 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                 </div>
               </div>
 
-              <details className="mt-5 rounded-2xl bg-slate-50 p-5" open={!allTasks.length}>
-                <summary className="cursor-pointer font-semibold text-slate-900">Adicionar tarefa personalizada</summary>
-                <div className="mt-5">
-                  <TaskForm participants={tripParticipants} tripId={trip.id} />
-                </div>
-              </details>
+              {!isArchived ? (
+                <details className="mt-5 rounded-2xl bg-slate-50 p-5" open={!allTasks.length}>
+                  <summary className="cursor-pointer font-semibold text-slate-900">Adicionar tarefa personalizada</summary>
+                  <div className="mt-5">
+                    <TaskForm participants={tripParticipants} tripId={trip.id} />
+                  </div>
+                </details>
+              ) : null}
 
               <form className="mt-6 grid gap-3 rounded-2xl bg-slate-50 p-4 sm:grid-cols-3">
                 <div className="space-y-1.5">
@@ -717,29 +752,31 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                                     </a>
                                   ) : null}
                                 </div>
-                                <div className="flex items-center gap-2">
-                                  <form action={setTaskCompletion}>
-                                    <input type="hidden" name="tripId" value={trip.id} />
-                                    <input type="hidden" name="taskId" value={task.id} />
-                                    <input type="hidden" name="completed" value={task.completed_at ? "false" : "true"} />
-                                    <SubmitButton
-                                      pendingLabel={task.completed_at ? "Reabrindo..." : "Concluindo..."}
-                                      variant="outline"
-                                      size="sm"
-                                    >
-                                      {task.completed_at ? "Reabrir" : "Concluir"}
-                                    </SubmitButton>
-                                  </form>
-                                  <ItemActionsMenu
-                                    editLabel="Editar tarefa"
-                                    editForm={<TaskForm participants={tripParticipants} task={task} tripId={trip.id} />}
-                                    deleteAction={deleteTask}
-                                    deleteHiddenFields={{ tripId: trip.id, taskId: task.id }}
-                                    deleteTitle="Remover esta tarefa de preparação?"
-                                    deleteDescription={`Isso vai remover permanentemente "${task.title}" da sua lista de preparação.`}
-                                    deleteLabel="Remover"
-                                  />
-                                </div>
+                                {!isArchived ? (
+                                  <div className="flex items-center gap-2">
+                                    <form action={setTaskCompletion}>
+                                      <input type="hidden" name="tripId" value={trip.id} />
+                                      <input type="hidden" name="taskId" value={task.id} />
+                                      <input type="hidden" name="completed" value={task.completed_at ? "false" : "true"} />
+                                      <SubmitButton
+                                        pendingLabel={task.completed_at ? "Reabrindo..." : "Concluindo..."}
+                                        variant="outline"
+                                        size="sm"
+                                      >
+                                        {task.completed_at ? "Reabrir" : "Concluir"}
+                                      </SubmitButton>
+                                    </form>
+                                    <ItemActionsMenu
+                                      editLabel="Editar tarefa"
+                                      editForm={<TaskForm participants={tripParticipants} task={task} tripId={trip.id} />}
+                                      deleteAction={deleteTask}
+                                      deleteHiddenFields={{ tripId: trip.id, taskId: task.id }}
+                                      deleteTitle="Remover esta tarefa de preparação?"
+                                      deleteDescription={`Isso vai remover permanentemente "${task.title}" da sua lista de preparação.`}
+                                      deleteLabel="Remover"
+                                    />
+                                  </div>
+                                ) : null}
                               </div>
                               <CommentThread comments={commentsFor("task", task.id)} currentUserId={user.id} itemId={task.id} itemType="task" participantNames={participantNames} tripId={trip.id} />
                             </li>

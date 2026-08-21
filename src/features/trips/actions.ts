@@ -101,6 +101,45 @@ export async function updateTrip(
   return { success: true, message: "Viagem atualizada com sucesso." };
 }
 
+async function setTripArchived(formData: FormData, archived: boolean): Promise<void> {
+  const tripId = String(formData.get("tripId") ?? "");
+  if (!isValidTripId(tripId)) {
+    redirect("/dashboard?tripError=invalid_trip");
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/auth/sign-in?error=authentication_required");
+  }
+
+  const { data: updatedTrip, error } = await supabase
+    .from("trips")
+    .update({ archived_at: archived ? new Date().toISOString() : null })
+    .eq("id", tripId)
+    .eq("created_by", user.id)
+    .select("id")
+    .maybeSingle();
+
+  if (error || !updatedTrip) {
+    redirect(`/trips/${tripId}?tripError=archive_not_allowed`);
+  }
+
+  revalidatePath("/dashboard");
+  revalidatePath(`/trips/${tripId}`);
+}
+
+export async function archiveTrip(formData: FormData): Promise<void> {
+  await setTripArchived(formData, true);
+}
+
+export async function restoreTrip(formData: FormData): Promise<void> {
+  await setTripArchived(formData, false);
+}
+
 export async function deleteTrip(formData: FormData): Promise<void> {
   const tripId = String(formData.get("tripId") ?? "");
   if (!isValidTripId(tripId)) {
