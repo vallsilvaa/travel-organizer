@@ -15,6 +15,10 @@ import { deleteItineraryItem } from "@/features/itinerary/actions";
 import { ItineraryForm } from "@/features/itinerary/itinerary-form";
 import { removeParticipant } from "@/features/participants/actions";
 import { RealtimeStatus } from "@/features/realtime/realtime-status";
+import { ConfirmationCode } from "@/features/reservations/confirmation-code";
+import { deleteReservation } from "@/features/reservations/actions";
+import { ReservationForm } from "@/features/reservations/reservation-form";
+import { reservationTypeLabels, type ReservationType } from "@/features/reservations/validation";
 import {
   addEnglandPreparationChecklist,
   deleteTask,
@@ -93,6 +97,21 @@ type ExpenseBalanceRow = {
   net_balance: string;
 };
 
+type TripReservation = {
+  id: string;
+  reservation_type: ReservationType;
+  title: string;
+  provider: string | null;
+  confirmation_code: string | null;
+  start_date: string;
+  start_time: string | null;
+  end_date: string | null;
+  end_time: string | null;
+  location: string | null;
+  destination_location: string | null;
+  notes: string | null;
+};
+
 type TripTask = {
   id: string;
   title: string;
@@ -125,6 +144,29 @@ function formatDate(value: string) {
 function formatTime(value: string | null) {
   return value ? value.slice(0, 5) : "Horário não definido";
 }
+
+function formatReservationWhen(reservation: {
+  start_date: string;
+  start_time: string | null;
+  end_date: string | null;
+  end_time: string | null;
+}) {
+  const start = `${formatDate(reservation.start_date)} · ${formatTime(reservation.start_time)}`;
+  if (!reservation.end_date) {
+    return start;
+  }
+  const sameDay = reservation.end_date === reservation.start_date;
+  const end = sameDay
+    ? formatTime(reservation.end_time)
+    : `${formatDate(reservation.end_date)} · ${formatTime(reservation.end_time)}`;
+  return `${start} → ${end}`;
+}
+
+const reservationBadgeVariant: Record<ReservationType, "default" | "secondary" | "outline"> = {
+  flight: "default",
+  lodging: "secondary",
+  transport: "outline",
+};
 
 function formatMoney(amount: number | string, currency: string) {
   try {
@@ -170,6 +212,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
 
   const [
     { data: itineraryItems, error: itineraryError },
+    { data: reservations, error: reservationsError },
     { data: tasks, error: tasksError },
     { data: participants },
     { data: comments, error: commentsError },
@@ -184,6 +227,12 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
         .select("id, item_date, start_time, title, location, notes")
         .eq("trip_id", trip.id)
         .order("item_date", { ascending: true })
+        .order("start_time", { ascending: true, nullsFirst: false }),
+      supabase
+        .from("trip_reservations")
+        .select("id, reservation_type, title, provider, confirmation_code, start_date, start_time, end_date, end_time, location, destination_location, notes")
+        .eq("trip_id", trip.id)
+        .order("start_date", { ascending: true })
         .order("start_time", { ascending: true, nullsFirst: false }),
       supabase
         .from("trip_tasks")
@@ -247,6 +296,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
     }))
     .filter((group) => group.tasks.length);
   const tripComments = (comments ?? []) as TripComment[];
+  const tripReservations = (reservations ?? []) as TripReservation[];
   const tripExpenses = (expenses ?? []) as TripExpense[];
   const sharesByExpense = new Map<string, ExpenseShare[]>();
   for (const share of (expenseShares ?? []) as ExpenseShare[]) {
@@ -505,6 +555,85 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
               ) : (
                 <p className="mt-5 rounded-2xl border border-dashed border-slate-300 p-6 text-sm text-slate-600">
                   Nenhum item no itinerário ainda. Adicione a primeira atividade acima.
+                </p>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="mt-8 [--card-spacing:--spacing(6)]">
+            <CardHeader>
+              <CardTitle className="text-2xl">Reservas</CardTitle>
+              <CardDescription>
+                Voos, hospedagens e transportes confirmados para esta viagem.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {!isArchived ? (
+                <details className="mt-5 rounded-2xl bg-sky-50 p-5" open={!tripReservations.length}>
+                  <summary className="cursor-pointer font-semibold text-sky-900">
+                    Adicionar reserva
+                  </summary>
+                  <div className="mt-5">
+                    <ReservationForm tripId={trip.id} />
+                  </div>
+                </details>
+              ) : null}
+
+              {reservationsError ? (
+                <p role="alert" className="mt-5 rounded-xl bg-red-50 p-4 text-sm text-red-800">
+                  Não foi possível carregar as reservas. Tente atualizar a página.
+                </p>
+              ) : tripReservations.length ? (
+                <ol className="mt-6 space-y-4">
+                  {tripReservations.map((reservation) => (
+                    <li key={reservation.id} className="rounded-2xl border border-slate-200 p-5">
+                      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                        <div>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <Badge variant={reservationBadgeVariant[reservation.reservation_type]}>
+                              {reservationTypeLabels[reservation.reservation_type]}
+                            </Badge>
+                            <p className="text-sm font-semibold text-sky-700">
+                              {formatReservationWhen(reservation)}
+                            </p>
+                          </div>
+                          <h3 className="mt-2 text-lg font-semibold text-slate-950">{reservation.title}</h3>
+                          {reservation.provider ? (
+                            <p className="mt-1 text-sm text-slate-600">{reservation.provider}</p>
+                          ) : null}
+                          {reservation.location || reservation.destination_location ? (
+                            <p className="mt-1 text-sm text-slate-600">
+                              {[reservation.location, reservation.destination_location]
+                                .filter(Boolean)
+                                .join(" → ")}
+                            </p>
+                          ) : null}
+                          {reservation.confirmation_code ? (
+                            <p className="mt-2 text-sm text-slate-600">
+                              Confirmação: <ConfirmationCode code={reservation.confirmation_code} />
+                            </p>
+                          ) : null}
+                          {reservation.notes ? (
+                            <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-slate-600">{reservation.notes}</p>
+                          ) : null}
+                        </div>
+                        {!isArchived ? (
+                          <ItemActionsMenu
+                            editLabel="Editar reserva"
+                            editForm={<ReservationForm reservation={reservation} tripId={trip.id} />}
+                            deleteAction={deleteReservation}
+                            deleteHiddenFields={{ tripId: trip.id, reservationId: reservation.id }}
+                            deleteTitle="Excluir esta reserva?"
+                            deleteDescription={`Isso vai remover permanentemente "${reservation.title}" das reservas da viagem.`}
+                          />
+                        ) : null}
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+              ) : (
+                <p className="mt-5 rounded-2xl border border-dashed border-slate-300 p-6 text-sm text-slate-600">
+                  Nenhuma reserva registrada ainda. Adicione voos, hospedagens ou transportes acima.
                 </p>
               )}
             </CardContent>
