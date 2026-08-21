@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { AuthShell } from "@/components/auth/auth-shell";
 import { signIn } from "@/features/auth/actions";
 import { getAuthMessage } from "@/features/auth/messages";
@@ -28,7 +30,15 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
           <Input required autoComplete="email" id="email" name="email" type="email" />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="password">Senha</Label>
+          <div className="flex items-center justify-between">
+            <Label htmlFor="password">Senha</Label>
+            <Link
+              href="/auth/forgot-password"
+              className="text-sm font-semibold text-sky-700 hover:text-sky-800"
+            >
+              Esqueci minha senha
+            </Link>
+          </div>
           <Input
             required
             autoComplete="current-password"

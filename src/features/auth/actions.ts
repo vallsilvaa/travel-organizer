@@ -9,7 +9,7 @@ function formValue(formData: FormData, name: string) {
   return String(formData.get(name) ?? "").trim();
 }
 
-function authRedirect(path: string, kind: "error" | "message", code: string) {
+function authRedirect(path: string, kind: string, code: string) {
   redirect(`${path}?${kind}=${encodeURIComponent(code)}`);
 }
 
@@ -84,4 +84,86 @@ export async function signOut() {
   const supabase = await createClient();
   await supabase.auth.signOut();
   redirect("/auth/sign-in");
+}
+
+export async function requestPasswordReset(formData: FormData) {
+  const email = formValue(formData, "email").toLowerCase();
+
+  if (!/^\S+@\S+\.\S+$/.test(email)) {
+    authRedirect("/auth/forgot-password", "error", "invalid_email");
+  }
+
+  const supabase = await createClient();
+  const origin = (await headers()).get("origin") ?? "http://localhost:3000";
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${origin}/auth/callback?next=/auth/reset-password`,
+  });
+
+  // Supabase does not reveal whether the email is registered, and neither
+  // do we: the same "check your email" message shows whether or not the
+  // account exists. Only a rate-limit response gets a distinct message,
+  // since "you're sending too many requests" doesn't leak account existence.
+  if (error?.status === 429) {
+    authRedirect("/auth/forgot-password", "error", "rate_limited");
+  }
+
+  authRedirect("/auth/forgot-password", "message", "check_email_reset");
+}
+
+async function applyNewPassword(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  formData: FormData,
+): Promise<string | null> {
+  const password = formValue(formData, "password");
+  const passwordConfirmation = formValue(formData, "passwordConfirmation");
+
+  if (password.length < 8) {
+    return "invalid_password";
+  }
+  if (password !== passwordConfirmation) {
+    return "password_mismatch";
+  }
+
+  const { error } = await supabase.auth.updateUser({ password });
+  return error ? "password_update_failed" : null;
+}
+
+export async function resetPassword(formData: FormData) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    authRedirect("/auth/forgot-password", "error", "reset_link_invalid");
+  }
+
+  const errorCode = await applyNewPassword(supabase, formData);
+  if (errorCode) {
+    authRedirect("/auth/reset-password", "error", errorCode);
+  }
+
+  // End the one-time recovery session so the reset link truly can't be
+  // reused after this point, and have the user sign in fresh with the new
+  // password.
+  await supabase.auth.signOut();
+  authRedirect("/auth/sign-in", "message", "password_updated");
+}
+
+export async function changePassword(formData: FormData) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/auth/sign-in?error=authentication_required");
+  }
+
+  const errorCode = await applyNewPassword(supabase, formData);
+  if (errorCode) {
+    authRedirect("/dashboard", "passwordError", errorCode);
+  }
+
+  authRedirect("/dashboard", "passwordMessage", "password_updated");
 }

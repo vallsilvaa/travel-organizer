@@ -8,6 +8,9 @@ const mocks = vi.hoisted(() => ({
   signInWithPassword: vi.fn(),
   signOut: vi.fn(),
   signUp: vi.fn(),
+  resetPasswordForEmail: vi.fn(),
+  updateUser: vi.fn(),
+  getUser: vi.fn(),
 }));
 
 vi.mock("@/lib/supabase/server", () => ({
@@ -22,7 +25,14 @@ vi.mock("next/navigation", () => ({
   redirect: mocks.redirect,
 }));
 
-import { signIn, signOut, signUp } from "./actions";
+import {
+  changePassword,
+  requestPasswordReset,
+  resetPassword,
+  signIn,
+  signOut,
+  signUp,
+} from "./actions";
 
 describe("authentication actions", () => {
   beforeEach(() => {
@@ -32,6 +42,9 @@ describe("authentication actions", () => {
         signInWithPassword: mocks.signInWithPassword,
         signOut: mocks.signOut,
         signUp: mocks.signUp,
+        resetPasswordForEmail: mocks.resetPasswordForEmail,
+        updateUser: mocks.updateUser,
+        getUser: mocks.getUser,
       },
     });
   });
@@ -73,5 +86,103 @@ describe("authentication actions", () => {
 
     await expect(signOut()).rejects.toThrow("NEXT_REDIRECT:/auth/sign-in");
     expect(mocks.signOut).toHaveBeenCalledOnce();
+  });
+
+  it("requests a password reset email with a redirect to the reset page", async () => {
+    mocks.resetPasswordForEmail.mockResolvedValue({ error: null });
+    const formData = new FormData();
+    formData.set("email", "VALERIA@example.com");
+
+    await expect(requestPasswordReset(formData)).rejects.toThrow(
+      "NEXT_REDIRECT:/auth/forgot-password?message=check_email_reset",
+    );
+    expect(mocks.resetPasswordForEmail).toHaveBeenCalledWith("valeria@example.com", {
+      redirectTo: "http://localhost:3000/auth/callback?next=/auth/reset-password",
+    });
+  });
+
+  it("shows the same generic message even when the account does not exist", async () => {
+    mocks.resetPasswordForEmail.mockResolvedValue({
+      error: { status: 400, message: "User not found" },
+    });
+    const formData = new FormData();
+    formData.set("email", "nobody@example.com");
+
+    await expect(requestPasswordReset(formData)).rejects.toThrow(
+      "NEXT_REDIRECT:/auth/forgot-password?message=check_email_reset",
+    );
+  });
+
+  it("shows a distinct message when the reset request is rate limited", async () => {
+    mocks.resetPasswordForEmail.mockResolvedValue({ error: { status: 429 } });
+    const formData = new FormData();
+    formData.set("email", "valeria@example.com");
+
+    await expect(requestPasswordReset(formData)).rejects.toThrow(
+      "NEXT_REDIRECT:/auth/forgot-password?error=rate_limited",
+    );
+  });
+
+  it("resets the password, ends the recovery session, and redirects to sign in", async () => {
+    mocks.getUser.mockResolvedValue({ data: { user: { id: "user-1" } } });
+    mocks.updateUser.mockResolvedValue({ error: null });
+    mocks.signOut.mockResolvedValue({ error: null });
+    const formData = new FormData();
+    formData.set("password", "new-safe-pass");
+    formData.set("passwordConfirmation", "new-safe-pass");
+
+    await expect(resetPassword(formData)).rejects.toThrow(
+      "NEXT_REDIRECT:/auth/sign-in?message=password_updated",
+    );
+    expect(mocks.updateUser).toHaveBeenCalledWith({ password: "new-safe-pass" });
+    expect(mocks.signOut).toHaveBeenCalledOnce();
+  });
+
+  it("rejects an expired or missing recovery session", async () => {
+    mocks.getUser.mockResolvedValue({ data: { user: null } });
+    const formData = new FormData();
+    formData.set("password", "new-safe-pass");
+    formData.set("passwordConfirmation", "new-safe-pass");
+
+    await expect(resetPassword(formData)).rejects.toThrow(
+      "NEXT_REDIRECT:/auth/forgot-password?error=reset_link_invalid",
+    );
+    expect(mocks.updateUser).not.toHaveBeenCalled();
+  });
+
+  it("rejects mismatched passwords before calling Supabase", async () => {
+    mocks.getUser.mockResolvedValue({ data: { user: { id: "user-1" } } });
+    const formData = new FormData();
+    formData.set("password", "new-safe-pass");
+    formData.set("passwordConfirmation", "different-pass");
+
+    await expect(resetPassword(formData)).rejects.toThrow(
+      "NEXT_REDIRECT:/auth/reset-password?error=password_mismatch",
+    );
+    expect(mocks.updateUser).not.toHaveBeenCalled();
+  });
+
+  it("lets a signed-in user change their password from the dashboard", async () => {
+    mocks.getUser.mockResolvedValue({ data: { user: { id: "user-1" } } });
+    mocks.updateUser.mockResolvedValue({ error: null });
+    const formData = new FormData();
+    formData.set("password", "new-safe-pass");
+    formData.set("passwordConfirmation", "new-safe-pass");
+
+    await expect(changePassword(formData)).rejects.toThrow(
+      "NEXT_REDIRECT:/dashboard?passwordMessage=password_updated",
+    );
+    expect(mocks.signOut).not.toHaveBeenCalled();
+  });
+
+  it("requires authentication to change the password", async () => {
+    mocks.getUser.mockResolvedValue({ data: { user: null } });
+    const formData = new FormData();
+    formData.set("password", "new-safe-pass");
+    formData.set("passwordConfirmation", "new-safe-pass");
+
+    await expect(changePassword(formData)).rejects.toThrow(
+      "NEXT_REDIRECT:/auth/sign-in?error=authentication_required",
+    );
   });
 });

@@ -9,6 +9,10 @@ const messages = {
   rate_limited: "Muitas tentativas. Aguarde um instante e tente novamente.",
   signup_failed: "Não foi possível criar sua conta. Tente novamente.",
   callback_failed: "O link de confirmação é inválido ou expirou.",
+  check_email_reset: "Se esse e-mail existir, enviamos um link para redefinir sua senha.",
+  reset_link_invalid: "O link de redefinição é inválido ou expirou. Solicite um novo.",
+  password_update_failed: "Não foi possível atualizar sua senha. Tente novamente.",
+  password_updated: "Senha atualizada com sucesso.",
 } as const;
 
 export type AuthMessageCode = keyof typeof messages;
