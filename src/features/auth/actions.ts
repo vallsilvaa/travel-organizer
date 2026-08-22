@@ -167,3 +167,30 @@ export async function changePassword(formData: FormData) {
 
   authRedirect("/dashboard", "passwordMessage", "password_updated");
 }
+
+export async function updateDisplayName(formData: FormData) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/auth/sign-in?error=authentication_required");
+  }
+
+  const displayName = formValue(formData, "displayName");
+  if (displayName.length < 2 || displayName.length > 100) {
+    authRedirect("/dashboard", "profileError", "invalid_display_name");
+  }
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({ display_name: displayName, updated_at: new Date().toISOString() })
+    .eq("id", user.id);
+
+  if (error) {
+    authRedirect("/dashboard", "profileError", "profile_update_failed");
+  }
+
+  authRedirect("/dashboard", "profileMessage", "profile_updated");
+}

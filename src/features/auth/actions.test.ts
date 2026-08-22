@@ -2,6 +2,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   createClient: vi.fn(),
+  eq: vi.fn(),
+  from: vi.fn(),
   redirect: vi.fn((url: string) => {
     throw new Error(`NEXT_REDIRECT:${url}`);
   }),
@@ -9,6 +11,7 @@ const mocks = vi.hoisted(() => ({
   signOut: vi.fn(),
   signUp: vi.fn(),
   resetPasswordForEmail: vi.fn(),
+  update: vi.fn(),
   updateUser: vi.fn(),
   getUser: vi.fn(),
 }));
@@ -32,11 +35,15 @@ import {
   signIn,
   signOut,
   signUp,
+  updateDisplayName,
 } from "./actions";
 
 describe("authentication actions", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.eq.mockResolvedValue({ error: null });
+    mocks.update.mockReturnValue({ eq: mocks.eq });
+    mocks.from.mockReturnValue({ update: mocks.update });
     mocks.createClient.mockResolvedValue({
       auth: {
         signInWithPassword: mocks.signInWithPassword,
@@ -46,6 +53,7 @@ describe("authentication actions", () => {
         updateUser: mocks.updateUser,
         getUser: mocks.getUser,
       },
+      from: mocks.from,
     });
   });
 
@@ -184,5 +192,53 @@ describe("authentication actions", () => {
     await expect(changePassword(formData)).rejects.toThrow(
       "NEXT_REDIRECT:/auth/sign-in?error=authentication_required",
     );
+  });
+
+  it("lets a signed-in user update their display name", async () => {
+    mocks.getUser.mockResolvedValue({ data: { user: { id: "user-1" } } });
+    const formData = new FormData();
+    formData.set("displayName", "  Nova Viajante  ");
+
+    await expect(updateDisplayName(formData)).rejects.toThrow(
+      "NEXT_REDIRECT:/dashboard?profileMessage=profile_updated",
+    );
+    expect(mocks.from).toHaveBeenCalledWith("profiles");
+    expect(mocks.update).toHaveBeenCalledWith(
+      expect.objectContaining({ display_name: "Nova Viajante" }),
+    );
+    expect(mocks.eq).toHaveBeenCalledWith("id", "user-1");
+  });
+
+  it("rejects a display name that is too short", async () => {
+    mocks.getUser.mockResolvedValue({ data: { user: { id: "user-1" } } });
+    const formData = new FormData();
+    formData.set("displayName", "A");
+
+    await expect(updateDisplayName(formData)).rejects.toThrow(
+      "NEXT_REDIRECT:/dashboard?profileError=invalid_display_name",
+    );
+    expect(mocks.from).not.toHaveBeenCalled();
+  });
+
+  it("shows an error when the profile update fails", async () => {
+    mocks.getUser.mockResolvedValue({ data: { user: { id: "user-1" } } });
+    mocks.eq.mockResolvedValue({ error: { message: "boom" } });
+    const formData = new FormData();
+    formData.set("displayName", "Valeria");
+
+    await expect(updateDisplayName(formData)).rejects.toThrow(
+      "NEXT_REDIRECT:/dashboard?profileError=profile_update_failed",
+    );
+  });
+
+  it("requires authentication to update the display name", async () => {
+    mocks.getUser.mockResolvedValue({ data: { user: null } });
+    const formData = new FormData();
+    formData.set("displayName", "Valeria");
+
+    await expect(updateDisplayName(formData)).rejects.toThrow(
+      "NEXT_REDIRECT:/auth/sign-in?error=authentication_required",
+    );
+    expect(mocks.from).not.toHaveBeenCalled();
   });
 });
