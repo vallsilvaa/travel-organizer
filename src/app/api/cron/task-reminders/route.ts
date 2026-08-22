@@ -97,6 +97,18 @@ export async function GET(request: NextRequest) {
       continue;
     }
 
+    // In-app notification, gated by the same task_reminders_enabled
+    // preference and task_reminder_deliveries dedup as the email channel
+    // above, so a task's deadline is only ever announced once per day.
+    await supabase.from("notifications").insert({
+      user_id: task.owner_id,
+      trip_id: task.trip_id,
+      notification_type: "deadline",
+      title: "Prazo se aproximando",
+      body: task.title,
+      link_path: `/trips/${task.trip_id}?tab=preparation`,
+    });
+
     const { data: ownerData, error: ownerError } =
       await supabase.auth.admin.getUserById(task.owner_id);
     const email = ownerData.user?.email;
