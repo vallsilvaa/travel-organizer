@@ -25,8 +25,14 @@ export async function updateSession(request: NextRequest) {
     },
   );
 
-  const { data } = await supabase.auth.getClaims();
-  const isAuthenticated = Boolean(data?.claims?.sub);
+  // getUser() revalidates the token against the Auth server on every call,
+  // unlike getClaims()/getSession() which only check the JWT signature and
+  // expiry locally. A locally-valid JWT for a since-deleted (or otherwise
+  // revoked) user would pass the cheaper check, sending a stale session
+  // into a redirect loop between /dashboard and /auth/sign-in - each side
+  // disagreeing about whether the user is really authenticated.
+  const { data } = await supabase.auth.getUser();
+  const isAuthenticated = Boolean(data?.user);
   const isProtectedRoute = request.nextUrl.pathname.startsWith("/dashboard");
   const isAuthRoute =
     request.nextUrl.pathname === "/auth/sign-in" ||
