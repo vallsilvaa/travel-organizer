@@ -60,7 +60,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 type TripPageProps = {
   params: Promise<{ tripId: string }>;
-  searchParams: Promise<{ category?: string; owner?: string; status?: string; tripError?: string }>;
+  searchParams: Promise<{ category?: string; owner?: string; status?: string; tripError?: string; tab?: string }>;
 };
 
 type TripParticipant = {
@@ -409,7 +409,12 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
         ? comment.itinerary_item_id === itemId
         : comment.task_id === itemId,
     );
-  const defaultTab = filters.status || filters.owner || filters.category ? "preparation" : "itinerary";
+  const validTabs = ["itinerary", "expenses", "preparation", "documents", "organizer"];
+  const defaultTab = validTabs.includes(filters.tab ?? "")
+    ? (filters.tab as string)
+    : filters.status || filters.owner || filters.category
+      ? "preparation"
+      : "itinerary";
 
   return (
     <main className="min-h-screen bg-slate-50 px-6 py-12">

@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { changePassword, signOut } from "@/features/auth/actions";
 import { respondToInvitation } from "@/features/invitations/actions";
 import { getAuthMessage } from "@/features/auth/messages";
+import { NotificationBell, type Notification } from "@/features/notifications/notification-bell";
 import { updateReminderPreference } from "@/features/reminders/actions";
 import { TripForm } from "@/features/trips/trip-form";
 import { createClient } from "@/lib/supabase/server";
@@ -108,7 +109,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     redirect("/auth/sign-in?error=authentication_required");
   }
 
-  const [{ data: profile }, { data: trips, error: tripsError }] =
+  const [{ data: profile }, { data: trips, error: tripsError }, { data: notifications }] =
     await Promise.all([
       supabase
         .from("profiles")
@@ -118,6 +119,11 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       supabase
         .from("trips")
         .select("id, destination, start_date, end_date, updated_at, archived_at"),
+      supabase
+        .from("notifications")
+        .select("id, notification_type, title, body, link_path, read_at, created_at")
+        .order("created_at", { ascending: false })
+        .limit(20),
     ]);
 
   const displayName = profile?.display_name ?? user.email ?? "Viajante";
@@ -166,7 +172,8 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
             <CardDescription className="mt-2 text-base">
               Crie uma viagem e mantenha os detalhes do planejamento em um espaço privado.
             </CardDescription>
-            <CardAction>
+            <CardAction className="flex items-center gap-3">
+              <NotificationBell notifications={(notifications ?? []) as Notification[]} />
               <form action={signOut}>
                 <SubmitButton pendingLabel="Saindo..." variant="outline">Sair</SubmitButton>
               </form>

@@ -16,6 +16,7 @@ type QueryResult = { data: unknown; error?: unknown };
 function queryBuilder(result: QueryResult) {
   const promise = Promise.resolve(result) as Promise<QueryResult> & {
     eq: () => typeof promise;
+    limit: () => typeof promise;
     order: () => typeof promise;
     select: () => typeof promise;
     single: () => Promise<QueryResult>;
@@ -23,6 +24,7 @@ function queryBuilder(result: QueryResult) {
   promise.select = () => promise;
   promise.eq = () => promise;
   promise.order = () => promise;
+  promise.limit = () => promise;
   promise.single = () => Promise.resolve(result);
   return promise;
 }
