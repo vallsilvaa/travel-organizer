@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { changePassword, signOut } from "@/features/auth/actions";
+import { changePassword, signOut, updateDisplayName } from "@/features/auth/actions";
 import { respondToInvitation } from "@/features/invitations/actions";
 import { getAuthMessage } from "@/features/auth/messages";
 import { NotificationBell, type Notification } from "@/features/notifications/notification-bell";
@@ -34,6 +34,8 @@ type DashboardPageProps = {
     invitationError?: string;
     passwordError?: string;
     passwordMessage?: string;
+    profileError?: string;
+    profileMessage?: string;
     q?: string;
     status?: string;
     sort?: string;
@@ -179,6 +181,41 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
               </form>
             </CardAction>
           </CardHeader>
+        </Card>
+
+        <Card className="[--card-spacing:--spacing(8)]">
+          <CardHeader>
+            <CardTitle className="text-xl">Editar perfil</CardTitle>
+            <CardDescription>
+              Esse é o nome exibido para outros participantes nas suas viagens.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {getAuthMessage(params.profileError) ? (
+              <p role="alert" className="mb-4 rounded-xl bg-red-50 p-3 text-sm text-red-800">
+                {getAuthMessage(params.profileError)}
+              </p>
+            ) : null}
+            {getAuthMessage(params.profileMessage) ? (
+              <p className="mb-4 rounded-xl bg-sky-50 p-3 text-sm text-sky-900">
+                {getAuthMessage(params.profileMessage)}
+              </p>
+            ) : null}
+            <form action={updateDisplayName} className="flex flex-col gap-4 sm:flex-row sm:items-end">
+              <div className="flex-1 space-y-2">
+                <Label htmlFor="displayName">Nome de exibição</Label>
+                <Input
+                  required
+                  minLength={2}
+                  maxLength={100}
+                  id="displayName"
+                  name="displayName"
+                  defaultValue={displayName}
+                />
+              </div>
+              <SubmitButton pendingLabel="Salvando..." variant="outline">Salvar nome</SubmitButton>
+            </form>
+          </CardContent>
         </Card>
 
         <Card className="[--card-spacing:--spacing(8)]">

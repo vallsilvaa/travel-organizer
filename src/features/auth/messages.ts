@@ -13,6 +13,9 @@ const messages = {
   reset_link_invalid: "O link de redefinição é inválido ou expirou. Solicite um novo.",
   password_update_failed: "Não foi possível atualizar sua senha. Tente novamente.",
   password_updated: "Senha atualizada com sucesso.",
+  invalid_display_name: "Informe um nome com pelo menos dois caracteres.",
+  profile_update_failed: "Não foi possível atualizar seu perfil. Tente novamente.",
+  profile_updated: "Perfil atualizado com sucesso.",
 } as const;
 
 export type AuthMessageCode = keyof typeof messages;
