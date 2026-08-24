@@ -1,6 +1,10 @@
 const SUPPORTED_TIME_ZONES = (() => {
   try {
-    return Intl.supportedValuesOf("timeZone");
+    const zones = Intl.supportedValuesOf("timeZone");
+    // Not guaranteed to be in the enumerated list depending on the ICU/CLDR
+    // data version, even though it's always a valid Intl timeZone value -
+    // keep it available since it's also the trips table's column default.
+    return zones.includes("UTC") ? zones : ["UTC", ...zones];
   } catch {
     return ["UTC"];
   }
@@ -9,7 +13,19 @@ const SUPPORTED_TIME_ZONES = (() => {
 export const IANA_TIME_ZONES = SUPPORTED_TIME_ZONES;
 
 export function isSupportedTimeZone(value: string) {
-  return SUPPORTED_TIME_ZONES.includes(value);
+  if (!value) {
+    return false;
+  }
+  try {
+    // More reliable than checking membership in supportedValuesOf('timeZone')
+    // (which can omit valid values like "UTC" depending on the ICU/CLDR
+    // data version) - this throws a RangeError for anything Intl itself
+    // wouldn't accept as a timeZone.
+    new Intl.DateTimeFormat(undefined, { timeZone: value });
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 /** Returns the current date (YYYY-MM-DD) as observed in `timeZone`, so a
