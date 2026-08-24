@@ -13,19 +13,12 @@ const SUPPORTED_TIME_ZONES = (() => {
 export const IANA_TIME_ZONES = SUPPORTED_TIME_ZONES;
 
 export function isSupportedTimeZone(value: string) {
-  if (!value) {
-    return false;
-  }
-  try {
-    // More reliable than checking membership in supportedValuesOf('timeZone')
-    // (which can omit valid values like "UTC" depending on the ICU/CLDR
-    // data version) - this throws a RangeError for anything Intl itself
-    // wouldn't accept as a timeZone.
-    new Intl.DateTimeFormat(undefined, { timeZone: value });
-    return true;
-  } catch {
-    return false;
-  }
+  // Constructing an Intl.DateTimeFormat isn't a reliable validity check on
+  // its own: some engines accept syntactically plausible but non-canonical
+  // strings (e.g. "PST") without erroring. List membership is the actual
+  // source of truth for "is this a real IANA zone" - "UTC" is special-cased
+  // since supportedValuesOf('timeZone') doesn't reliably include it.
+  return value === "UTC" || SUPPORTED_TIME_ZONES.includes(value);
 }
 
 /** Returns the current date (YYYY-MM-DD) as observed in `timeZone`, so a
