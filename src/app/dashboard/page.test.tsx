@@ -29,12 +29,30 @@ function queryBuilder(result: QueryResult) {
   return promise;
 }
 
+function filteringQueryBuilder(rows: Record<string, unknown>[]) {
+  let filtered = rows;
+  const builder = {
+    select: () => builder,
+    eq: (column: string, value: unknown) => {
+      filtered = filtered.filter((row) => row[column] === value);
+      return builder;
+    },
+    order: () => builder,
+    limit: () => builder,
+    single: () => Promise.resolve({ data: filtered[0] ?? null, error: null }),
+    then: (...args: Parameters<Promise<QueryResult>["then"]>) =>
+      Promise.resolve({ data: filtered, error: null }).then(...args),
+  };
+  return builder;
+}
+
 const invitation = {
   id: "trip-invitation-1",
   trip_id: "27823996-ec50-4cc2-8506-a29d07b86f94",
   trip_destination: "Lisbon",
   status: "pending",
   created_at: "2026-08-01T00:00:00Z",
+  email: "traveler@example.com",
 };
 
 const upcomingTrip = {
@@ -89,6 +107,33 @@ describe("DashboardPage", () => {
       const button = screen.getByRole("button", { name });
       expect(button.getAttribute("type")).toBe("submit");
     }
+  });
+
+  it("does not show an invitation the user sent to someone else's email as one addressed to them", async () => {
+    const ownInvitation = { ...invitation, id: "own-invitation", email: "traveler@example.com" };
+    const sentInvitation = {
+      ...invitation,
+      id: "sent-invitation",
+      trip_destination: "Porto",
+      email: "invitee@example.com",
+    };
+    mocks.from.mockImplementation((table: string) => {
+      if (table === "profiles") {
+        return queryBuilder({ data: { display_name: "Traveler", task_reminders_enabled: true } });
+      }
+      if (table === "trips") {
+        return queryBuilder({ data: [], error: null });
+      }
+      if (table === "trip_invitations") {
+        return filteringQueryBuilder([ownInvitation, sentInvitation]);
+      }
+      return queryBuilder({ data: null, error: null });
+    });
+
+    render(await DashboardPage({ searchParams: Promise.resolve({}) }));
+
+    expect(screen.getByText("Lisbon")).toBeTruthy();
+    expect(screen.queryByText("Porto")).toBeNull();
   });
 
   describe("with trips", () => {

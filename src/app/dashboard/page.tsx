@@ -134,6 +134,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         .from("trip_invitations")
         .select("id, trip_id, trip_destination, status, created_at")
         .eq("status", "pending")
+        .eq("email", user.email.toLowerCase())
         .order("created_at", { ascending: false })
     : { data: [], error: null };
   const invitationError = params.invitationError
