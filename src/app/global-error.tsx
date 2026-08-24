@@ -21,7 +21,7 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
   return (
     <html lang="pt-BR">
       <body className="flex min-h-screen items-center justify-center bg-slate-50 px-6 py-16 antialiased">
-        <section className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-sm sm:p-12">
+        <section className="w-full max-w-md rounded-3xl border border-slate-200 bg-card p-8 text-center shadow-sm sm:p-12">
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-sky-700">
             Travel Organizer
           </p>

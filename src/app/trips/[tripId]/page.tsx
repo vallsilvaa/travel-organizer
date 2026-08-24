@@ -38,6 +38,7 @@ import { Badge } from "@/components/ui/badge";
 import { ItemActionsMenu } from "@/components/item-actions-menu";
 import { ConfirmDeleteForm } from "@/components/confirm-delete-form";
 import { SubmitButton } from "@/components/submit-button";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { archiveTrip, deleteTrip, restoreTrip } from "@/features/trips/actions";
 import { TripForm } from "@/features/trips/trip-form";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -432,7 +433,10 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
               <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">
                 Visão geral da viagem
               </p>
-              <RealtimeStatus tripId={trip.id} />
+              <div className="flex items-center gap-3">
+                <RealtimeStatus tripId={trip.id} />
+                <ThemeToggle />
+              </div>
             </div>
             <h1 className="mt-3 text-4xl font-semibold tracking-tight text-slate-950">
               {trip.destination}
@@ -868,12 +872,12 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                   </div>
                   <p className="text-right text-sm text-sky-800">{completedTaskCount} de {allTasks.length} concluídas</p>
                 </div>
-                <div className="mt-4 h-3 overflow-hidden rounded-full bg-white" aria-label={`${readiness}% pronto`} role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={readiness}>
+                <div className="mt-4 h-3 overflow-hidden rounded-full bg-background" aria-label={`${readiness}% pronto`} role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={readiness}>
                   <div className="h-full rounded-full bg-sky-600" style={{ width: `${readiness}%` }} />
                 </div>
                 <div className="mt-4 flex flex-wrap gap-2">
-                  <Badge variant="outline" className="bg-white">{criticalOpenCount} críticas em aberto</Badge>
-                  <Badge variant="outline" className={overdueTaskCount ? "border-red-200 bg-red-100 text-red-800" : "bg-white"}>{overdueTaskCount} atrasadas</Badge>
+                  <Badge variant="outline" className="bg-card">{criticalOpenCount} críticas em aberto</Badge>
+                  <Badge variant="outline" className={overdueTaskCount ? "border-red-200 bg-red-100 text-red-800" : "bg-card"}>{overdueTaskCount} atrasadas</Badge>
                 </div>
               </div>
 

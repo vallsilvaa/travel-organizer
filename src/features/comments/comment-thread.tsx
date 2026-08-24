@@ -44,7 +44,7 @@ export function CommentThread({
       {comments.length ? (
         <ol className="mt-3 space-y-3">
           {comments.map((comment) => (
-            <li key={comment.id} className="rounded-xl bg-white p-3 text-sm shadow-sm ring-1 ring-slate-200">
+            <li key={comment.id} className="rounded-xl bg-card p-3 text-sm shadow-sm ring-1 ring-slate-200">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <p className="font-semibold text-slate-800">
                   {participantNames.get(comment.author_id) ?? "Viajante"}

@@ -174,6 +174,54 @@ body {
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+
+  /* Mirrors each custom scale from the light `@theme` block above (50<->950,
+     100<->900, ...), so every existing bg-/text-/border-sky|slate|red|amber-*
+     utility across the app repaints correctly in dark mode without touching
+     each call site individually - see issue #46. */
+  --color-sky-50: #0d211d;
+  --color-sky-100: #193a35;
+  --color-sky-200: #1e4740;
+  --color-sky-300: #255a50;
+  --color-sky-400: #2f6f62;
+  --color-sky-600: #6fa290;
+  --color-sky-700: #9cc4b3;
+  --color-sky-800: #bcd8cc;
+  --color-sky-900: #d7e8e0;
+  --color-sky-950: #eaf2ee;
+
+  --color-slate-50: #16180f;
+  --color-slate-100: #23261f;
+  --color-slate-200: #2a2d27;
+  --color-slate-300: #3a3d37;
+  --color-slate-400: #52564e;
+  --color-slate-600: #a09a89;
+  --color-slate-700: #b3ac9a;
+  --color-slate-800: #cdc8ba;
+  --color-slate-900: #ece8e0;
+  --color-slate-950: #f3f1ec;
+
+  --color-red-50: #33170d;
+  --color-red-100: #5f2e1a;
+  --color-red-200: #78391f;
+  --color-red-300: #954726;
+  --color-red-400: #b5562f;
+  --color-red-600: #c17854;
+  --color-red-700: #d29a7d;
+  --color-red-800: #e2b8a3;
+  --color-red-900: #f8e2d8;
+  --color-red-950: #fdf3ef;
+
+  --color-amber-50: #362610;
+  --color-amber-100: #61451e;
+  --color-amber-200: #785624;
+  --color-amber-300: #966c2c;
+  --color-amber-400: #b8863a;
+  --color-amber-600: #cc9a49;
+  --color-amber-700: #e0af5e;
+  --color-amber-800: #ecca8f;
+  --color-amber-900: #f5e3c2;
+  --color-amber-950: #fbf3e6;
 }
 
 @layer base {
