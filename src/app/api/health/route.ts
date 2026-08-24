@@ -4,16 +4,19 @@ type CheckResult = { status: "ok" | "error"; detail?: string };
 
 async function checkSupabase(): Promise<CheckResult> {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const apiKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
-  if (!supabaseUrl) {
+  if (!supabaseUrl || !apiKey) {
     return { status: "error", detail: "missing_config" };
   }
 
   try {
     // Supabase Auth's own health endpoint: reachable regardless of table
     // grants or RLS policies, so it can't false-positive on permission
-    // errors the way querying a real table would.
+    // errors the way querying a real table would. The gateway still
+    // requires the apikey header even for this endpoint.
     const response = await fetch(`${supabaseUrl}/auth/v1/health`, {
+      headers: { apikey: apiKey },
       signal: AbortSignal.timeout(5000),
     });
     return response.ok ? { status: "ok" } : { status: "error", detail: `http_${response.status}` };
