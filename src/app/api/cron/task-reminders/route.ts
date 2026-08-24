@@ -2,7 +2,9 @@ import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 import * as Sentry from "@sentry/nextjs";
 
-import { buildReminderEmail, getReminderWindow } from "@/features/reminders/email";
+import { buildReminderEmail, getReminderWindow, isWithinReminderWindow } from "@/features/reminders/email";
+
+type ReminderTrip = { destination: string; timezone: string };
 
 type ReminderTask = {
   id: string;
@@ -10,14 +12,12 @@ type ReminderTask = {
   due_date: string;
   owner_id: string;
   trip_id: string;
-  trips: { destination: string } | { destination: string }[];
+  trips: ReminderTrip | ReminderTrip[];
 };
 
-function tripDestination(task: ReminderTask) {
-  const destination = Array.isArray(task.trips)
-    ? task.trips[0]?.destination
-    : task.trips.destination;
-  return destination ?? "Sua viagem";
+function taskTrip(task: ReminderTask): ReminderTrip {
+  const trip = Array.isArray(task.trips) ? task.trips[0] : task.trips;
+  return trip ?? { destination: "Sua viagem", timezone: "UTC" };
 }
 
 export async function GET(request: NextRequest) {
@@ -61,7 +61,7 @@ export async function GET(request: NextRequest) {
   const window = getReminderWindow();
   const { data, error } = await supabase
     .from("trip_tasks")
-    .select("id, title, due_date, owner_id, trip_id, trips!inner(destination)")
+    .select("id, title, due_date, owner_id, trip_id, trips!inner(destination, timezone)")
     .is("completed_at", null)
     .not("owner_id", "is", null)
     .gte("due_date", window.start)
@@ -75,7 +75,11 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Could not select reminders" }, { status: 500 });
   }
 
-  const tasks = (data ?? []) as unknown as ReminderTask[];
+  // The SQL window above is a coarse UTC pre-filter; narrow to the exact
+  // 3-day window as observed in each trip's own timezone (issue #40).
+  const tasks = ((data ?? []) as unknown as ReminderTask[]).filter((task) =>
+    isWithinReminderWindow(task.due_date, taskTrip(task).timezone),
+  );
   const ownerIds = [...new Set(tasks.map((task) => task.owner_id))];
   const { data: enabledProfiles } = ownerIds.length
     ? await supabase
@@ -149,7 +153,7 @@ export async function GET(request: NextRequest) {
       continue;
     }
 
-    const destination = tripDestination(task);
+    const destination = taskTrip(task).destination;
     const message = buildReminderEmail({
       appUrl,
       deadline: task.due_date,

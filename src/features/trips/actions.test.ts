@@ -38,6 +38,7 @@ function validTripForm() {
   formData.set("destination", "London");
   formData.set("startDate", "2026-10-10");
   formData.set("endDate", "2026-10-18");
+  formData.set("timezone", "Europe/London");
   return formData;
 }
 
@@ -93,6 +94,7 @@ describe("createTrip", () => {
         destination: "London",
         start_date: "2026-10-10",
         end_date: "2026-10-18",
+        timezone: "Europe/London",
         created_by: "user-123",
       }),
     );
@@ -142,6 +144,7 @@ describe("updateTrip", () => {
       destination: "London",
       start_date: "2026-10-10",
       end_date: "2026-10-18",
+      timezone: "Europe/London",
     }));
     expect(mocks.updateEq).toHaveBeenCalledWith("id", "27823996-ec50-4cc2-8506-a29d07b86f94");
     expect(mocks.updateEq).toHaveBeenCalledWith("created_by", "user-123");

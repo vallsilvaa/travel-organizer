@@ -25,7 +25,7 @@ export async function GET(
 
   const { data: trip, error: tripError } = await supabase
     .from("trips")
-    .select("id, destination")
+    .select("id, destination, timezone")
     .eq("id", tripId)
     .single();
 
@@ -47,6 +47,7 @@ export async function GET(
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? new URL(request.url).origin;
   const ics = buildItineraryIcs({
     tripDestination: trip.destination,
+    tripTimezone: trip.timezone,
     tripUrl: `${appUrl.replace(/\/$/, "")}/trips/${trip.id}`,
     items: items ?? [],
   });

@@ -58,6 +58,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { todayInTimeZone } from "@/lib/timezone";
 
 type TripPageProps = {
   params: Promise<{ tripId: string }>;
@@ -226,7 +227,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
 
   const { data: trip, error } = await supabase
     .from("trips")
-    .select("id, destination, start_date, end_date, created_at, created_by, archived_at")
+    .select("id, destination, start_date, end_date, created_at, created_by, archived_at, timezone")
     .eq("id", tripId)
     .single();
 
@@ -313,7 +314,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
       participant.display_name,
     ]),
   );
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayInTimeZone(trip.timezone);
   const allTasks = (tasks ?? []) as TripTask[];
   const filteredTasks = allTasks.filter((task) => {
     const matchesStatus = statusFilter === "all"
@@ -442,7 +443,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
               {trip.destination}
             </h1>
 
-            <dl className="mt-8 grid gap-4 sm:grid-cols-2">
+            <dl className="mt-8 grid gap-4 sm:grid-cols-3">
               <div className="rounded-2xl bg-slate-50 p-5">
                 <dt className="text-sm font-medium text-slate-500">Data de início</dt>
                 <dd className="mt-2 text-lg font-semibold text-slate-950">
@@ -453,6 +454,12 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                 <dt className="text-sm font-medium text-slate-500">Data de término</dt>
                 <dd className="mt-2 text-lg font-semibold text-slate-950">
                   {trip.end_date ? formatDate(trip.end_date) : "Não definida"}
+                </dd>
+              </div>
+              <div className="rounded-2xl bg-slate-50 p-5">
+                <dt className="text-sm font-medium text-slate-500">Fuso horário</dt>
+                <dd className="mt-2 text-lg font-semibold text-slate-950">
+                  {trip.timezone}
                 </dd>
               </div>
             </dl>
