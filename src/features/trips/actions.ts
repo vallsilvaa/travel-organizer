@@ -39,6 +39,7 @@ export async function createTrip(
     destination: validation.data.destination,
     start_date: validation.data.startDate,
     end_date: validation.data.endDate,
+    timezone: validation.data.timezone,
     created_by: user.id,
   });
 
@@ -85,6 +86,7 @@ export async function updateTrip(
       destination: validation.data.destination,
       start_date: validation.data.startDate,
       end_date: validation.data.endDate,
+      timezone: validation.data.timezone,
       updated_at: new Date().toISOString(),
     })
     .eq("id", tripId)

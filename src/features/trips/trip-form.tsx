@@ -1,11 +1,12 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { IANA_TIME_ZONES } from "@/lib/timezone";
 
 import { createTrip, updateTrip, type CreateTripState } from "./actions";
 
@@ -17,6 +18,7 @@ type TripFormProps = {
     destination: string;
     start_date: string;
     end_date: string | null;
+    timezone: string;
   };
 };
 
@@ -25,6 +27,25 @@ export function TripForm({ trip }: TripFormProps = {}) {
     trip ? updateTrip : createTrip,
     initialState,
   );
+  const timezoneRef = useRef<HTMLSelectElement>(null);
+
+  // Pre-selects the visitor's own zone for a *new* trip, once the browser's
+  // timezone is known client-side. Server-rendered markup always defaults
+  // to UTC, so there's nothing to reconcile during hydration - this only
+  // patches the select after mount.
+  useEffect(() => {
+    if (trip || !timezoneRef.current) {
+      return;
+    }
+    try {
+      const detected = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      if (IANA_TIME_ZONES.includes(detected)) {
+        timezoneRef.current.value = detected;
+      }
+    } catch {
+      // Keep the UTC default.
+    }
+  }, [trip]);
 
   useEffect(() => {
     if (state.success && state.message) {
@@ -86,6 +107,33 @@ export function TripForm({ trip }: TripFormProps = {}) {
         {state.errors?.endDate ? (
           <p id="end-date-error" className="text-sm text-destructive">
             {state.errors.endDate}
+          </p>
+        ) : null}
+      </div>
+
+      <div className="space-y-2 sm:col-span-2">
+        <Label htmlFor="timezone">Fuso horário</Label>
+        <select
+          required
+          ref={timezoneRef}
+          id="timezone"
+          name="timezone"
+          defaultValue={trip?.timezone ?? "UTC"}
+          aria-describedby={state.errors?.timezone ? "timezone-error" : undefined}
+          className="h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 md:text-sm dark:bg-input/30"
+        >
+          {IANA_TIME_ZONES.map((zone) => (
+            <option key={zone} value={zone}>
+              {zone}
+            </option>
+          ))}
+        </select>
+        <p className="text-sm text-muted-foreground">
+          Usado para calcular prazos, status da viagem e a exportação do calendário.
+        </p>
+        {state.errors?.timezone ? (
+          <p id="timezone-error" className="text-sm text-destructive">
+            {state.errors.timezone}
           </p>
         ) : null}
       </div>

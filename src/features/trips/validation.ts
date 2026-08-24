@@ -1,7 +1,10 @@
+import { isSupportedTimeZone } from "@/lib/timezone";
+
 export type TripInput = {
   destination: string;
   startDate: string;
   endDate: string | null;
+  timezone: string;
 };
 
 export type TripFieldErrors = Partial<Record<keyof TripInput, string>>;
@@ -24,6 +27,7 @@ export function validateTripInput(formData: FormData) {
   const startDate = String(formData.get("startDate") ?? "").trim();
   const rawEndDate = String(formData.get("endDate") ?? "").trim();
   const endDate = rawEndDate || null;
+  const timezone = String(formData.get("timezone") ?? "").trim();
   const errors: TripFieldErrors = {};
 
   if (!destination) {
@@ -42,8 +46,12 @@ export function validateTripInput(formData: FormData) {
     errors.endDate = "A data de término não pode ser anterior à data de início.";
   }
 
+  if (!timezone || !isSupportedTimeZone(timezone)) {
+    errors.timezone = "Selecione um fuso horário válido.";
+  }
+
   return {
-    data: { destination, startDate, endDate } satisfies TripInput,
+    data: { destination, startDate, endDate, timezone } satisfies TripInput,
     errors,
     success: Object.keys(errors).length === 0,
   };

@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/select";
 import { SubmitButton } from "@/components/submit-button";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { todayInTimeZone } from "@/lib/timezone";
 import {
   Card,
   CardAction,
@@ -50,6 +51,7 @@ type Trip = {
   end_date: string | null;
   updated_at: string;
   archived_at: string | null;
+  timezone: string;
 };
 
 type TripStatus = "upcoming" | "active" | "completed" | "archived";
@@ -80,10 +82,11 @@ function formatDate(value: string) {
   }).format(new Date(`${value}T00:00:00Z`));
 }
 
-function tripStatus(trip: Trip, today: string): TripStatus {
+function tripStatus(trip: Trip): TripStatus {
   if (trip.archived_at) {
     return "archived";
   }
+  const today = todayInTimeZone(trip.timezone);
   const endDate = trip.end_date ?? trip.start_date;
   if (today < trip.start_date) {
     return "upcoming";
@@ -121,7 +124,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         .single(),
       supabase
         .from("trips")
-        .select("id, destination, start_date, end_date, updated_at, archived_at"),
+        .select("id, destination, start_date, end_date, updated_at, archived_at, timezone"),
       supabase
         .from("notifications")
         .select("id, notification_type, title, body, link_path, read_at, created_at")
@@ -149,12 +152,11 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const sortOption: SortOption = sortOptions.includes(params.sort as SortOption)
     ? (params.sort as SortOption)
     : "date";
-  const today = new Date().toISOString().slice(0, 10);
   const allTrips = (trips ?? []) as Trip[];
   const filteredTrips = allTrips
     .filter((trip) => trip.destination.toLowerCase().includes(searchTerm))
     .filter((trip) => {
-      const status = tripStatus(trip, today);
+      const status = tripStatus(trip);
       return statusFilter === "all" ? status !== "archived" : status === statusFilter;
     })
     .sort((a, b) =>
@@ -400,7 +402,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
             ) : filteredTrips.length ? (
               <ul className="mt-6 grid gap-4 sm:grid-cols-2">
                 {filteredTrips.map((trip) => {
-                  const status = tripStatus(trip, today);
+                  const status = tripStatus(trip);
                   return (
                     <li key={trip.id}>
                       <Link

@@ -53,9 +53,6 @@ function addOneDayCompact(isoDate: string) {
   return `${date.getUTCFullYear()}${pad(date.getUTCMonth() + 1)}${pad(date.getUTCDate())}`;
 }
 
-/** No trip timezone is tracked yet (#40), so timed events are exported as
- * "floating" local time (no TZID/Z suffix) - most calendar apps display
- * these in the viewer's own timezone rather than the trip destination's. */
 function timedEventBounds(itemDate: string, startTime: string) {
   const [hourText, minuteText] = startTime.split(":");
   const hour = Number(hourText);
@@ -75,6 +72,7 @@ function timedEventBounds(itemDate: string, startTime: string) {
 
 export function buildItineraryIcs(input: {
   tripDestination: string;
+  tripTimezone: string;
   tripUrl: string;
   items: IcsItineraryItem[];
 }) {
@@ -92,8 +90,11 @@ export function buildItineraryIcs(input: {
 
     if (item.start_time) {
       const { startStamp, endStamp } = timedEventBounds(item.item_date, item.start_time);
-      lines.push(`DTSTART:${startStamp}`);
-      lines.push(`DTEND:${endStamp}`);
+      // Named TZID instead of a floating time: every mainstream calendar
+      // app (Google, Apple, Outlook) resolves well-known IANA identifiers
+      // without requiring an embedded VTIMEZONE block.
+      lines.push(`DTSTART;TZID=${input.tripTimezone}:${startStamp}`);
+      lines.push(`DTEND;TZID=${input.tripTimezone}:${endStamp}`);
     } else {
       lines.push(`DTSTART;VALUE=DATE:${compactDate(item.item_date)}`);
       lines.push(`DTEND;VALUE=DATE:${addOneDayCompact(item.item_date)}`);
