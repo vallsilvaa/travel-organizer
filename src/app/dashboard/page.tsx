@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { SubmitButton } from "@/components/submit-button";
+import { ThemeToggle } from "@/components/theme-toggle";
 import {
   Card,
   CardAction,
@@ -176,6 +177,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
               Crie uma viagem e mantenha os detalhes do planejamento em um espaço privado.
             </CardDescription>
             <CardAction className="flex items-center gap-3">
+              <ThemeToggle />
               <NotificationBell notifications={(notifications ?? []) as Notification[]} />
               <form action={signOut}>
                 <SubmitButton pendingLabel="Saindo..." variant="outline">Sair</SubmitButton>
@@ -295,7 +297,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                   {pendingInvitations.map((invitation) => (
                     <li
                       key={invitation.id}
-                      className="rounded-2xl border border-sky-200 bg-white p-5"
+                      className="rounded-2xl border border-sky-200 bg-card p-5"
                     >
                       <p className="font-semibold text-slate-950">
                         {invitation.trip_destination}
