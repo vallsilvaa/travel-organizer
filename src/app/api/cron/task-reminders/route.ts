@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
+import * as Sentry from "@sentry/nextjs";
 
 import { buildReminderEmail, getReminderWindow } from "@/features/reminders/email";
 
@@ -36,6 +37,18 @@ export async function GET(request: NextRequest) {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL;
 
   if (!supabaseUrl || !serviceRoleKey || !resendApiKey || !emailFrom || !appUrl) {
+    const missing = [
+      !supabaseUrl && "NEXT_PUBLIC_SUPABASE_URL",
+      !serviceRoleKey && "SUPABASE_SERVICE_ROLE_KEY",
+      !resendApiKey && "RESEND_API_KEY",
+      !emailFrom && "REMINDER_EMAIL_FROM",
+      !appUrl && "NEXT_PUBLIC_APP_URL",
+    ].filter(Boolean);
+    Sentry.captureMessage("Task reminder cron is not configured", {
+      level: "error",
+      tags: { route: "cron/task-reminders" },
+      extra: { missing },
+    });
     return NextResponse.json(
       { error: "Reminder service is not configured" },
       { status: 503 },
@@ -56,6 +69,9 @@ export async function GET(request: NextRequest) {
 
   if (error) {
     console.error("Task reminder selection failed", { code: error.code });
+    Sentry.captureException(new Error(`Task reminder selection failed: ${error.code}`), {
+      tags: { route: "cron/task-reminders" },
+    });
     return NextResponse.json({ error: "Could not select reminders" }, { status: 500 });
   }
 
@@ -123,9 +139,12 @@ export async function GET(request: NextRequest) {
           attempted_at: new Date().toISOString(),
         })
         .eq("id", claimed.id);
-      console.error("Task reminder delivery failed", {
-        deliveryId: claimed.id,
-        code: ownerError ? "owner_lookup_failed" : "missing_email",
+      const code = ownerError ? "owner_lookup_failed" : "missing_email";
+      console.error("Task reminder delivery failed", { deliveryId: claimed.id, code });
+      Sentry.captureMessage("Task reminder delivery failed", {
+        level: "warning",
+        tags: { route: "cron/task-reminders", code },
+        extra: { deliveryId: claimed.id },
       });
       continue;
     }
@@ -188,6 +207,13 @@ export async function GET(request: NextRequest) {
         deliveryId: claimed.id,
         code,
       });
+      Sentry.captureException(
+        deliveryError instanceof Error ? deliveryError : new Error(code),
+        {
+          tags: { route: "cron/task-reminders", code },
+          extra: { deliveryId: claimed.id },
+        },
+      );
     }
   }
 

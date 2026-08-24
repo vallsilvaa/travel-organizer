@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { withSentryConfig } from "@sentry/nextjs";
 
 const nextConfig: NextConfig = {
   experimental: {
@@ -10,4 +11,13 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default withSentryConfig(nextConfig, {
+  silent: true,
+  widenClientFileUpload: true,
+  webpack: {
+    treeshake: { removeDebugLogging: true },
+    // Wraps the cron job declared in vercel.json with Sentry Cron Monitoring
+    // (issue #25: monitor cron executions and reminder delivery failures).
+    automaticVercelMonitors: true,
+  },
+});
