@@ -16,6 +16,9 @@ vi.mock("next-intl/server", async () => {
     getMessages: async () => ptMessages,
   };
 });
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ refresh: vi.fn() }),
+}));
 
 import ForgotPasswordPage from "./page";
 
