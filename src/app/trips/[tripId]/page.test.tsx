@@ -526,7 +526,7 @@ describe("TripPage", () => {
         searchParams: Promise.resolve({}),
       }));
 
-      expect(screen.getByText("Leve roupas leves.")).toBeTruthy();
+      expect(screen.getByText("Leve roupas leves.", { selector: "p" })).toBeTruthy();
       expect(screen.getByText(/Fonte: Guia da Aline/)).toBeTruthy();
       expect(screen.getByText(/Revisado em/)).toBeTruthy();
       expect(screen.getByText("Editar guia do destino")).toBeTruthy();
