@@ -62,7 +62,7 @@ import { daysUntil, todayInTimeZone } from "@/lib/timezone";
 
 type TripPageProps = {
   params: Promise<{ tripId: string }>;
-  searchParams: Promise<{ category?: string; critical?: string; overdue?: string; owner?: string; status?: string; tripError?: string; tab?: string }>;
+  searchParams: Promise<{ category?: string; critical?: string; expenseView?: string; overdue?: string; owner?: string; status?: string; tripError?: string; tab?: string }>;
 };
 
 type TripParticipant = {
@@ -246,6 +246,9 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
     : "all";
   const criticalOnlyFilter = filters.critical === "1";
   const overdueOnlyFilter = filters.overdue === "1";
+  const expenseView = filters.expenseView === "category" || filters.expenseView === "payer"
+    ? filters.expenseView
+    : "all";
 
   const [
     { data: itineraryItems, error: itineraryError },
@@ -422,6 +425,43 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
     list.push(settlement);
     settlementsByCurrency.set(settlement.currency, list);
   }
+  const buildExpenseGroups = (
+    keyOf: (expense: TripExpense) => string,
+    labelOf: (key: string) => string,
+  ) => {
+    const groups = new Map<string, TripExpense[]>();
+    for (const expense of tripExpenses) {
+      const key = keyOf(expense);
+      const list = groups.get(key) ?? [];
+      list.push(expense);
+      groups.set(key, list);
+    }
+    return Array.from(groups.entries())
+      .map(([key, groupExpenses]) => ({
+        key,
+        label: labelOf(key),
+        expenses: groupExpenses,
+        subtotalsByCurrency: Array.from(
+          groupExpenses.reduce((totals, expense) => {
+            totals.set(expense.currency, (totals.get(expense.currency) ?? 0) + Number(expense.amount));
+            return totals;
+          }, new Map<string, number>()),
+        ).sort(([currencyA], [currencyB]) => currencyA.localeCompare(currencyB)),
+      }))
+      .sort((a, b) => a.label.localeCompare(b.label, "pt-BR"));
+  };
+  const expensesByCategory = expenseView === "category"
+    ? buildExpenseGroups(
+        (expense) => expense.category,
+        (key) => expenseCategoryLabels[key as keyof typeof expenseCategoryLabels] ?? key,
+      )
+    : [];
+  const expensesByPayer = expenseView === "payer"
+    ? buildExpenseGroups(
+        (expense) => expense.payer_id,
+        (key) => namesIncludingRemoved.get(key) ?? "Viajante",
+      )
+    : [];
   const commentsFor = (itemType: "itinerary" | "task", itemId: string) =>
     tripComments.filter((comment) =>
       itemType === "itinerary"
@@ -438,12 +478,62 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
     params.set("tab", "preparation");
     return `/trips/${trip.id}?${params.toString()}`;
   };
+  const renderExpenseRow = (expense: TripExpense) => (
+    <li key={expense.id} className="rounded-2xl border border-slate-200 p-5">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="font-semibold text-slate-950">{expense.description}</h3>
+            <Badge variant="secondary" className="capitalize">
+              {expenseCategoryLabels[expense.category as keyof typeof expenseCategoryLabels] ?? expense.category}
+            </Badge>
+          </div>
+          <p className="mt-2 text-lg font-semibold text-emerald-800">{formatMoney(expense.amount, expense.currency)}</p>
+          <p className="mt-1 text-sm text-slate-600">
+            Pago por {namesIncludingRemoved.get(expense.payer_id) ?? "Viajante"} · {formatDate(expense.expense_date)}
+          </p>
+          {sharesByExpense.get(expense.id)?.length ? (
+            <p className="mt-2 text-sm text-slate-600">
+              Dividido: {sharesByExpense.get(expense.id)!
+                .map((share) => `${namesIncludingRemoved.get(share.user_id) ?? "Viajante"} ${formatMoney(share.share_amount, expense.currency)}`)
+                .join(" · ")}
+            </p>
+          ) : null}
+        </div>
+        {!isArchived ? (
+          <ItemActionsMenu
+            editLabel="Editar despesa"
+            editForm={
+              <ExpenseForm
+                expense={expense}
+                existingShares={sharesByExpense.get(expense.id) ?? []}
+                participants={tripParticipants}
+                tripId={trip.id}
+              />
+            }
+            deleteAction={deleteExpense}
+            deleteHiddenFields={{ tripId: trip.id, expenseId: expense.id }}
+            deleteTitle="Excluir despesa?"
+            deleteDescription={`Isso vai remover permanentemente "${expense.description}" e seu valor do resumo por moeda.`}
+          />
+        ) : null}
+      </div>
+    </li>
+  );
+  const buildExpenseViewHref = (view: "all" | "category" | "payer") => {
+    const params = new URLSearchParams();
+    if (view !== "all") params.set("expenseView", view);
+    params.set("tab", "expenses");
+    return `/trips/${trip.id}?${params.toString()}`;
+  };
   const validTabs = ["itinerary", "expenses", "preparation", "documents", "organizer"];
   const defaultTab = validTabs.includes(filters.tab ?? "")
     ? (filters.tab as string)
     : filters.status || filters.owner || filters.category || criticalOnlyFilter || overdueOnlyFilter
       ? "preparation"
-      : "itinerary";
+      : filters.expenseView
+        ? "expenses"
+        : "itinerary";
 
   return (
     <main className="min-h-screen bg-slate-50 px-6 py-12">
@@ -829,50 +919,52 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                   Não foi possível carregar as despesas. Tente atualizar a página.
                 </p>
               ) : tripExpenses.length ? (
-                <ul className="mt-6 space-y-4">
-                  {tripExpenses.map((expense) => (
-                    <li key={expense.id} className="rounded-2xl border border-slate-200 p-5">
-                      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                        <div>
-                          <div className="flex flex-wrap items-center gap-2">
-                            <h3 className="font-semibold text-slate-950">{expense.description}</h3>
-                            <Badge variant="secondary" className="capitalize">
-                              {expenseCategoryLabels[expense.category as keyof typeof expenseCategoryLabels] ?? expense.category}
-                            </Badge>
-                          </div>
-                          <p className="mt-2 text-lg font-semibold text-emerald-800">{formatMoney(expense.amount, expense.currency)}</p>
-                          <p className="mt-1 text-sm text-slate-600">
-                            Pago por {namesIncludingRemoved.get(expense.payer_id) ?? "Viajante"} · {formatDate(expense.expense_date)}
-                          </p>
-                          {sharesByExpense.get(expense.id)?.length ? (
-                            <p className="mt-2 text-sm text-slate-600">
-                              Dividido: {sharesByExpense.get(expense.id)!
-                                .map((share) => `${namesIncludingRemoved.get(share.user_id) ?? "Viajante"} ${formatMoney(share.share_amount, expense.currency)}`)
+                <>
+                  <div className="mt-6 flex flex-wrap gap-2">
+                    {([
+                      { view: "all", label: "Todos" },
+                      { view: "category", label: "Por categoria" },
+                      { view: "payer", label: "Por pagador" },
+                    ] as const).map((option) => (
+                      <Link
+                        key={option.view}
+                        href={buildExpenseViewHref(option.view)}
+                        aria-current={expenseView === option.view ? "true" : undefined}
+                        className={`rounded-full border px-3 py-1.5 text-sm font-medium transition ${
+                          expenseView === option.view
+                            ? "border-emerald-300 bg-emerald-100 text-emerald-900"
+                            : "border-slate-200 bg-white text-slate-700 hover:bg-slate-100"
+                        }`}
+                      >
+                        {option.label}
+                      </Link>
+                    ))}
+                  </div>
+
+                  {expenseView === "all" ? (
+                    <ul className="mt-4 space-y-4">
+                      {tripExpenses.map((expense) => renderExpenseRow(expense))}
+                    </ul>
+                  ) : (
+                    <div className="mt-4 space-y-6">
+                      {(expenseView === "category" ? expensesByCategory : expensesByPayer).map((group) => (
+                        <section key={group.key}>
+                          <div className="flex flex-wrap items-baseline justify-between gap-2">
+                            <h3 className="text-sm font-semibold uppercase tracking-[0.12em] text-slate-500">{group.label}</h3>
+                            <p className="text-xs font-medium text-slate-500">
+                              {group.subtotalsByCurrency
+                                .map(([currency, total]) => formatMoney(total, currency))
                                 .join(" · ")}
                             </p>
-                          ) : null}
-                        </div>
-                        {!isArchived ? (
-                          <ItemActionsMenu
-                            editLabel="Editar despesa"
-                            editForm={
-                              <ExpenseForm
-                                expense={expense}
-                                existingShares={sharesByExpense.get(expense.id) ?? []}
-                                participants={tripParticipants}
-                                tripId={trip.id}
-                              />
-                            }
-                            deleteAction={deleteExpense}
-                            deleteHiddenFields={{ tripId: trip.id, expenseId: expense.id }}
-                            deleteTitle="Excluir despesa?"
-                            deleteDescription={`Isso vai remover permanentemente "${expense.description}" e seu valor do resumo por moeda.`}
-                          />
-                        ) : null}
-                      </div>
-                    </li>
-                  ))}
-                </ul>
+                          </div>
+                          <ul className="mt-3 space-y-4">
+                            {group.expenses.map((expense) => renderExpenseRow(expense))}
+                          </ul>
+                        </section>
+                      ))}
+                    </div>
+                  )}
+                </>
               ) : (
                 <p className="mt-5 rounded-2xl border border-dashed border-slate-300 p-6 text-sm text-slate-600">
                   Nenhuma despesa ainda. Adicione o primeiro custo compartilhado acima.

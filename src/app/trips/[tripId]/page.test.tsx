@@ -269,4 +269,119 @@ describe("TripPage", () => {
       expect(overdueChip.getAttribute("href")).toContain("critical=1");
     });
   });
+
+  describe("expense grouping views", () => {
+    const participants = [
+      { user_id: "11111111-1111-1111-1111-111111111111", display_name: "Ana", role: "organizer" },
+      { user_id: "22222222-2222-2222-2222-222222222222", display_name: "Bruno", role: "traveler" },
+    ];
+    const lodgingExpense = {
+      id: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+      description: "Hotel",
+      amount: "500.00",
+      currency: "EUR",
+      category: "lodging",
+      expense_date: "2026-09-02",
+      payer_id: participants[0].user_id,
+    };
+    const foodExpense = {
+      id: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+      description: "Jantar",
+      amount: "80.00",
+      currency: "EUR",
+      category: "food",
+      expense_date: "2026-09-03",
+      payer_id: participants[1].user_id,
+    };
+
+    beforeEach(() => {
+      mocks.rpc.mockImplementation((fn: string) =>
+        Promise.resolve({ data: fn === "get_trip_participants" ? participants : [] }),
+      );
+      mocks.from.mockImplementation((table: string) => {
+        if (table === "trips") return queryBuilder({ data: trip, error: null });
+        if (table === "trip_tasks") return queryBuilder({ data: [], error: null });
+        if (table === "itinerary_items") return queryBuilder({ data: [], error: null });
+        if (table === "item_comments") return queryBuilder({ data: [], error: null });
+        if (table === "trip_expenses") {
+          return queryBuilder({ data: [lodgingExpense, foodExpense], error: null });
+        }
+        if (table === "trip_expense_shares") return queryBuilder({ data: [], error: null });
+        if (table === "trip_invitations") return queryBuilder({ data: [], error: null });
+        return queryBuilder({ data: null, error: null });
+      });
+    });
+
+    it("shows the flat expense list by default", async () => {
+      render(await TripPage({
+        params: Promise.resolve({ tripId }),
+        searchParams: Promise.resolve({ tab: "expenses" }),
+      }));
+
+      expect(screen.getByText("Hotel")).toBeTruthy();
+      expect(screen.getByText("Jantar")).toBeTruthy();
+      expect(screen.getByRole("link", { name: "Todos" }).getAttribute("aria-current")).toBe("true");
+    });
+
+    it("groups expenses by category with a per-currency subtotal", async () => {
+      render(await TripPage({
+        params: Promise.resolve({ tripId }),
+        searchParams: Promise.resolve({ expenseView: "category" }),
+      }));
+
+      expect(screen.getByRole("heading", { name: "Hospedagem" })).toBeTruthy();
+      expect(screen.getByRole("heading", { name: "Alimentação" })).toBeTruthy();
+      expect(screen.getByText("Hotel")).toBeTruthy();
+      expect(screen.getByText("Jantar")).toBeTruthy();
+      expect(screen.getByRole("link", { name: "Por categoria" }).getAttribute("aria-current")).toBe("true");
+    });
+
+    it("groups expenses by payer with a per-currency subtotal", async () => {
+      render(await TripPage({
+        params: Promise.resolve({ tripId }),
+        searchParams: Promise.resolve({ expenseView: "payer" }),
+      }));
+
+      expect(screen.getByText("Ana")).toBeTruthy();
+      expect(screen.getByText("Bruno")).toBeTruthy();
+      expect(screen.getByRole("link", { name: "Por pagador" }).getAttribute("aria-current")).toBe("true");
+    });
+
+    it("leaves the currency totals and balances panel unaffected by the selected view", async () => {
+      mocks.rpc.mockImplementation((fn: string) => {
+        if (fn === "get_trip_participants") return Promise.resolve({ data: participants });
+        if (fn === "get_trip_expense_balances") {
+          return Promise.resolve({
+            data: [
+              {
+                user_id: participants[0].user_id,
+                display_name: "Ana",
+                currency: "EUR",
+                total_paid: "500.00",
+                total_owed: "290.00",
+                net_balance: "210.00",
+              },
+              {
+                user_id: participants[1].user_id,
+                display_name: "Bruno",
+                currency: "EUR",
+                total_paid: "80.00",
+                total_owed: "290.00",
+                net_balance: "-210.00",
+              },
+            ],
+          });
+        }
+        return Promise.resolve({ data: [] });
+      });
+
+      render(await TripPage({
+        params: Promise.resolve({ tripId }),
+        searchParams: Promise.resolve({ expenseView: "payer" }),
+      }));
+
+      expect(screen.getByText("Total EUR")).toBeTruthy();
+      expect(screen.getByText("Saldos")).toBeTruthy();
+    });
+  });
 });
