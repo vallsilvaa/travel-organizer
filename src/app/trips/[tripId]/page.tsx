@@ -146,6 +146,7 @@ type TripReservation = {
   location: string | null;
   destination_location: string | null;
   notes: string | null;
+  itinerary_item_id: string | null;
 };
 
 type TripTask = {
@@ -272,7 +273,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
         .order("start_time", { ascending: true, nullsFirst: false }),
       supabase
         .from("trip_reservations")
-        .select("id, reservation_type, title, provider, confirmation_code, start_date, start_time, end_date, end_time, location, destination_location, notes")
+        .select("id, reservation_type, title, provider, confirmation_code, start_date, start_time, end_date, end_time, location, destination_location, notes, itinerary_item_id")
         .eq("trip_id", trip.id)
         .order("start_date", { ascending: true })
         .order("start_time", { ascending: true, nullsFirst: false }),
@@ -380,6 +381,20 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
   const itineraryTitles = new Map((itineraryItems ?? []).map((item) => [item.id, item.title]));
   const taskTitles = new Map((tasks ?? []).map((task) => [task.id, task.title]));
   const reservationTitles = new Map(tripReservations.map((reservation) => [reservation.id, reservation.title]));
+  const itineraryItemOptions = (itineraryItems ?? []).map((item) => ({
+    id: item.id,
+    title: item.title,
+    item_date: item.item_date,
+  }));
+  const reservationsByItineraryItemId = new Map<string, TripReservation[]>();
+  for (const reservation of tripReservations) {
+    if (!reservation.itinerary_item_id) {
+      continue;
+    }
+    const list = reservationsByItineraryItemId.get(reservation.itinerary_item_id) ?? [];
+    list.push(reservation);
+    reservationsByItineraryItemId.set(reservation.itinerary_item_id, list);
+  }
   const tripExpenses = (expenses ?? []) as TripExpense[];
   const sharesByExpense = new Map<string, ExpenseShare[]>();
   for (const share of (expenseShares ?? []) as ExpenseShare[]) {
@@ -870,6 +885,19 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                           <h3 className="mt-2 text-lg font-semibold text-slate-950">{item.title}</h3>
                           {item.location ? <p className="mt-1 text-sm text-slate-600">{item.location}</p> : null}
                           {item.notes ? <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-slate-600">{item.notes}</p> : null}
+                          {(reservationsByItineraryItemId.get(item.id) ?? []).length ? (
+                            <div className="mt-3 flex flex-wrap gap-2">
+                              {(reservationsByItineraryItemId.get(item.id) ?? []).map((reservation) => (
+                                <Link
+                                  key={reservation.id}
+                                  href={`/trips/${trip.id}?tab=itinerary#reservation-${reservation.id}`}
+                                  className="inline-flex items-center gap-1 rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-800 hover:bg-sky-100"
+                                >
+                                  Reserva vinculada: {reservation.title} ↓
+                                </Link>
+                              ))}
+                            </div>
+                          ) : null}
                         </div>
                         {!isArchived ? (
                           <ItemActionsMenu
@@ -915,7 +943,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                     Adicionar reserva
                   </summary>
                   <div className="mt-5">
-                    <ReservationForm tripId={trip.id} />
+                    <ReservationForm itineraryItems={itineraryItemOptions} tripId={trip.id} />
                   </div>
                 </details>
               ) : null}
@@ -927,7 +955,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
               ) : tripReservations.length ? (
                 <ol className="mt-6 space-y-4">
                   {tripReservations.map((reservation) => (
-                    <li key={reservation.id} className="rounded-2xl border border-slate-200 p-5">
+                    <li id={`reservation-${reservation.id}`} key={reservation.id} className="rounded-2xl border border-slate-200 p-5">
                       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                         <div>
                           <div className="flex flex-wrap items-center gap-2">
@@ -954,6 +982,18 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                               Confirmação: <ConfirmationCode code={reservation.confirmation_code} />
                             </p>
                           ) : null}
+                          {reservation.itinerary_item_id && itineraryTitles.get(reservation.itinerary_item_id) ? (
+                            <p className="mt-2 text-sm text-slate-600">
+                              Vinculada ao item{" "}
+                              <Link
+                                href={`/trips/${trip.id}?tab=itinerary#itinerary-${reservation.itinerary_item_id}`}
+                                className="font-semibold text-sky-700 hover:text-sky-800"
+                              >
+                                {itineraryTitles.get(reservation.itinerary_item_id)}
+                              </Link>{" "}
+                              do itinerário
+                            </p>
+                          ) : null}
                           {reservation.notes ? (
                             <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-slate-600">{reservation.notes}</p>
                           ) : null}
@@ -961,7 +1001,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                         {!isArchived ? (
                           <ItemActionsMenu
                             editLabel="Editar reserva"
-                            editForm={<ReservationForm reservation={reservation} tripId={trip.id} />}
+                            editForm={<ReservationForm itineraryItems={itineraryItemOptions} reservation={reservation} tripId={trip.id} />}
                             deleteAction={deleteReservation}
                             deleteHiddenFields={{ tripId: trip.id, reservationId: reservation.id }}
                             deleteTitle="Excluir esta reserva?"

@@ -57,6 +57,7 @@ export async function createReservation(
     location: validation.data.location,
     destination_location: validation.data.destinationLocation,
     notes: validation.data.notes,
+    itinerary_item_id: validation.data.itineraryItemId,
     created_by: user.id,
   });
 
@@ -98,6 +99,7 @@ export async function updateReservation(
       location: validation.data.location,
       destination_location: validation.data.destinationLocation,
       notes: validation.data.notes,
+      itinerary_item_id: validation.data.itineraryItemId,
       updated_at: new Date().toISOString(),
     })
     .eq("id", reservationId)

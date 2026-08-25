@@ -36,13 +36,21 @@ type ReservationFormProps = {
     location: string | null;
     destination_location: string | null;
     notes: string | null;
+    itinerary_item_id: string | null;
   };
+  itineraryItems?: { id: string; title: string; item_date: string }[];
   tripId: string;
 };
 
 const initialState: ReservationActionState = {};
 
-export function ReservationForm({ reservation, tripId }: ReservationFormProps) {
+function formatItemDate(value: string) {
+  return new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeZone: "UTC" }).format(
+    new Date(`${value}T00:00:00Z`),
+  );
+}
+
+export function ReservationForm({ reservation, itineraryItems = [], tripId }: ReservationFormProps) {
   const action = reservation ? updateReservation : createReservation;
   const [state, formAction, pending] = useActionState(action, initialState);
 
@@ -172,6 +180,26 @@ export function ReservationForm({ reservation, tripId }: ReservationFormProps) {
           placeholder="Aeroporto, endereço ou ponto de chegada"
         />
         {state.errors?.destinationLocation ? <p className="text-sm text-destructive">{state.errors.destinationLocation}</p> : null}
+      </div>
+
+      <div className="space-y-2 sm:col-span-2">
+        <Label htmlFor="reservation-itineraryItemId">
+          Vincular a um item do itinerário <span className="font-normal text-muted-foreground">(opcional)</span>
+        </Label>
+        <Select name="itineraryItemId" defaultValue={reservation?.itinerary_item_id ?? "none"}>
+          <SelectTrigger id="reservation-itineraryItemId" className="w-full">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="none">Nenhum</SelectItem>
+            {itineraryItems.map((item) => (
+              <SelectItem key={item.id} value={item.id}>
+                {formatItemDate(item.item_date)} · {item.title}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {state.errors?.itineraryItemId ? <p className="text-sm text-destructive">{state.errors.itineraryItemId}</p> : null}
       </div>
 
       <div className="space-y-2 sm:col-span-2">

@@ -571,4 +571,65 @@ describe("TripPage", () => {
       expect(screen.getByText("Adicionar guia do destino")).toBeTruthy();
     });
   });
+
+  describe("reservation ↔ itinerary item link", () => {
+    const itineraryItem = {
+      id: "11111111-1111-1111-1111-111111111111",
+      trip_id: tripId,
+      item_date: "2026-09-02",
+      start_time: "10:00",
+      title: "Museu do Louvre",
+      location: null,
+      notes: null,
+    };
+    const reservation = {
+      id: "22222222-2222-2222-2222-222222222222",
+      reservation_type: "transport" as const,
+      title: "Taxi ao museu",
+      provider: null,
+      confirmation_code: null,
+      start_date: "2026-09-02",
+      start_time: "09:30",
+      end_date: null,
+      end_time: null,
+      location: null,
+      destination_location: null,
+      notes: null,
+      itinerary_item_id: itineraryItem.id,
+    };
+
+    beforeEach(() => {
+      mocks.from.mockImplementation((table: string) => {
+        if (table === "trips") return queryBuilder({ data: trip, error: null });
+        if (table === "trip_tasks") return queryBuilder({ data: [], error: null });
+        if (table === "itinerary_items") return queryBuilder({ data: [itineraryItem], error: null });
+        if (table === "item_comments") return queryBuilder({ data: [], error: null });
+        if (table === "trip_reservations") return queryBuilder({ data: [reservation], error: null });
+        if (table === "trip_expenses") return queryBuilder({ data: [], error: null });
+        if (table === "trip_expense_shares") return queryBuilder({ data: [], error: null });
+        if (table === "trip_invitations") return queryBuilder({ data: [], error: null });
+        return queryBuilder({ data: null, error: null });
+      });
+    });
+
+    it("shows the linked reservation on the itinerary item with a link to it", async () => {
+      render(await TripPage({
+        params: Promise.resolve({ tripId }),
+        searchParams: Promise.resolve({ tab: "itinerary" }),
+      }));
+
+      const link = screen.getByRole("link", { name: /Reserva vinculada: Taxi ao museu/ });
+      expect(link.getAttribute("href")).toBe(`/trips/${tripId}?tab=itinerary#reservation-${reservation.id}`);
+    });
+
+    it("shows the linked itinerary item on the reservation with a link to it", async () => {
+      render(await TripPage({
+        params: Promise.resolve({ tripId }),
+        searchParams: Promise.resolve({ tab: "itinerary" }),
+      }));
+
+      const link = screen.getByRole("link", { name: "Museu do Louvre" });
+      expect(link.getAttribute("href")).toBe(`/trips/${tripId}?tab=itinerary#itinerary-${itineraryItem.id}`);
+    });
+  });
 });
