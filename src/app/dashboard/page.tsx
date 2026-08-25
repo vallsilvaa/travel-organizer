@@ -1,3 +1,4 @@
+import { getFormatter, getTranslations } from "next-intl/server";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
@@ -19,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { LanguageSwitcher } from "@/components/language-switcher";
 import { SubmitButton } from "@/components/submit-button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { todayInTimeZone } from "@/lib/timezone";
@@ -66,28 +68,8 @@ type TripStatus = "upcoming" | "active" | "completed" | "archived";
 const statusFilters = ["all", "upcoming", "active", "completed", "archived"] as const;
 type StatusFilter = (typeof statusFilters)[number];
 
-const statusFilterLabels: Record<StatusFilter, string> = {
-  all: "Ativas",
-  upcoming: "Futuras",
-  active: "Em andamento",
-  completed: "Concluídas",
-  archived: "Arquivadas",
-};
-
 const sortOptions = ["date", "recent"] as const;
 type SortOption = (typeof sortOptions)[number];
-
-const sortLabels: Record<SortOption, string> = {
-  date: "Data da viagem",
-  recent: "Atividade recente",
-};
-
-function formatDate(value: string) {
-  return new Intl.DateTimeFormat("pt-BR", {
-    dateStyle: "medium",
-    timeZone: "UTC",
-  }).format(new Date(`${value}T00:00:00Z`));
-}
 
 function tripStatus(trip: Trip): TripStatus {
   if (trip.archived_at) {
@@ -104,15 +86,29 @@ function tripStatus(trip: Trip): TripStatus {
   return "active";
 }
 
-const tripStatusLabels: Record<TripStatus, string> = {
-  upcoming: "futura",
-  active: "em andamento",
-  completed: "concluída",
-  archived: "arquivada",
-};
-
 export default async function DashboardPage({ searchParams }: DashboardPageProps) {
   const params = await searchParams;
+  const t = await getTranslations("dashboard");
+  const tCommon = await getTranslations("common");
+  const format = await getFormatter();
+  const formatDate = (value: string) => format.dateTime(new Date(`${value}T00:00:00Z`), "medium");
+  const statusFilterLabels: Record<StatusFilter, string> = {
+    all: t("statusFilters.all"),
+    upcoming: t("statusFilters.upcoming"),
+    active: t("statusFilters.active"),
+    completed: t("statusFilters.completed"),
+    archived: t("statusFilters.archived"),
+  };
+  const sortLabels: Record<SortOption, string> = {
+    date: t("sortOptions.date"),
+    recent: t("sortOptions.recent"),
+  };
+  const tripStatusLabels: Record<TripStatus, string> = {
+    upcoming: t("tripStatus.upcoming"),
+    active: t("tripStatus.active"),
+    completed: t("tripStatus.completed"),
+    archived: t("tripStatus.archived"),
+  };
   const [profileError, profileMessage, passwordError, passwordMessage] = await Promise.all([
     getAuthMessage(params.profileError),
     getAuthMessage(params.profileMessage),
@@ -149,7 +145,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     ((tripStats ?? []) as DashboardTripStats[]).map((stats) => [stats.trip_id, stats]),
   );
 
-  const displayName = profile?.display_name ?? user.email ?? "Viajante";
+  const displayName = profile?.display_name ?? user.email ?? tCommon("traveler");
   const { data: pendingInvitations, error: invitationsError } = user.email
     ? await supabase
         .from("trip_invitations")
@@ -158,9 +154,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         .eq("email", user.email.toLowerCase())
         .order("created_at", { ascending: false })
     : { data: [], error: null };
-  const invitationError = params.invitationError
-    ? "O convite não está mais disponível ou não pôde ser atualizado."
-    : null;
+  const invitationError = params.invitationError ? t("invitations.unavailable") : null;
 
   const searchTerm = (params.q ?? "").trim().toLowerCase();
   const statusFilter: StatusFilter = statusFilters.includes(params.status as StatusFilter)
@@ -189,17 +183,18 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         <Card className="[--card-spacing:--spacing(8)]">
           <CardHeader>
             <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">
-              Travel Organizer
+              {tCommon("appName")}
             </p>
-            <CardTitle className="mt-2 text-3xl">Bem-vindo, {displayName}</CardTitle>
+            <CardTitle className="mt-2 text-3xl">{t("welcome", { name: displayName })}</CardTitle>
             <CardDescription className="mt-2 text-base">
-              Crie uma viagem e mantenha os detalhes do planejamento em um espaço privado.
+              {t("welcomeDescription")}
             </CardDescription>
             <CardAction className="flex items-center gap-3">
+              <LanguageSwitcher />
               <ThemeToggle />
               <NotificationBell notifications={(notifications ?? []) as Notification[]} />
               <form action={signOut}>
-                <SubmitButton pendingLabel="Saindo..." variant="outline">Sair</SubmitButton>
+                <SubmitButton pendingLabel={t("signOutPending")} variant="outline">{t("signOut")}</SubmitButton>
               </form>
             </CardAction>
           </CardHeader>
@@ -207,9 +202,9 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
 
         <Card className="[--card-spacing:--spacing(8)]">
           <CardHeader>
-            <CardTitle className="text-xl">Editar perfil</CardTitle>
+            <CardTitle className="text-xl">{t("editProfile.title")}</CardTitle>
             <CardDescription>
-              Esse é o nome exibido para outros participantes nas suas viagens.
+              {t("editProfile.description")}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -225,7 +220,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
             ) : null}
             <form action={updateDisplayName} className="flex flex-col gap-4 sm:flex-row sm:items-end">
               <div className="flex-1 space-y-2">
-                <Label htmlFor="displayName">Nome de exibição</Label>
+                <Label htmlFor="displayName">{t("editProfile.displayNameLabel")}</Label>
                 <Input
                   required
                   minLength={2}
@@ -235,16 +230,16 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                   defaultValue={displayName}
                 />
               </div>
-              <SubmitButton pendingLabel="Salvando..." variant="outline">Salvar nome</SubmitButton>
+              <SubmitButton pendingLabel={t("editProfile.savePending")} variant="outline">{t("editProfile.save")}</SubmitButton>
             </form>
           </CardContent>
         </Card>
 
         <Card className="[--card-spacing:--spacing(8)]">
           <CardHeader>
-            <CardTitle className="text-xl">Lembretes por e-mail</CardTitle>
+            <CardTitle className="text-xl">{t("reminders.title")}</CardTitle>
             <CardDescription>
-              Receba um lembrete quando uma tarefa atribuída vencer nos próximos três dias.
+              {t("reminders.description")}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -259,18 +254,18 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                   defaultChecked={profile?.task_reminders_enabled ?? true}
                   className="h-5 w-5 rounded border-input accent-primary"
                 />
-                Enviar lembretes de prazos de tarefas
+                {t("reminders.checkboxLabel")}
               </label>
-              <SubmitButton pendingLabel="Salvando..." variant="outline">Salvar preferência</SubmitButton>
+              <SubmitButton pendingLabel={t("reminders.savePending")} variant="outline">{t("reminders.save")}</SubmitButton>
             </form>
           </CardContent>
         </Card>
 
         <Card className="[--card-spacing:--spacing(8)]">
           <CardHeader>
-            <CardTitle className="text-xl">Alterar senha</CardTitle>
+            <CardTitle className="text-xl">{t("changePassword.title")}</CardTitle>
             <CardDescription>
-              Escolha uma nova senha para sua conta.
+              {t("changePassword.description")}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -286,15 +281,15 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
             ) : null}
             <form action={changePassword} className="grid gap-4 sm:grid-cols-2 sm:items-end">
               <div className="space-y-2">
-                <Label htmlFor="password">Nova senha</Label>
+                <Label htmlFor="password">{t("changePassword.newPassword")}</Label>
                 <Input required autoComplete="new-password" id="password" name="password" type="password" minLength={8} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="passwordConfirmation">Confirmar nova senha</Label>
+                <Label htmlFor="passwordConfirmation">{t("changePassword.confirmPassword")}</Label>
                 <Input required autoComplete="new-password" id="passwordConfirmation" name="passwordConfirmation" type="password" minLength={8} />
               </div>
-              <SubmitButton pendingLabel="Salvando..." variant="outline" className="sm:col-span-2 sm:justify-self-start">
-                Atualizar senha
+              <SubmitButton pendingLabel={t("changePassword.savePending")} variant="outline" className="sm:col-span-2 sm:justify-self-start">
+                {t("changePassword.save")}
               </SubmitButton>
             </form>
           </CardContent>
@@ -303,12 +298,12 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         {pendingInvitations?.length || invitationError || invitationsError ? (
           <Card className="border-sky-200 bg-sky-50 [--card-spacing:--spacing(8)]">
             <CardHeader>
-              <CardTitle className="text-2xl">Convites de viagem</CardTitle>
+              <CardTitle className="text-2xl">{t("invitations.title")}</CardTitle>
             </CardHeader>
             <CardContent>
               {invitationError || invitationsError ? (
                 <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-800">
-                  {invitationError ?? "Não foi possível carregar seus convites."}
+                  {invitationError ?? t("invitations.loadError")}
                 </p>
               ) : null}
               {pendingInvitations?.length ? (
@@ -322,7 +317,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                         {invitation.trip_destination}
                       </p>
                       <p className="mt-1 text-sm text-slate-600">
-                        Você foi convidado para colaborar como organizador da viagem.
+                        {t("invitations.invitedAsOrganizer")}
                       </p>
                       <form action={respondToInvitation} className="mt-4 flex gap-3">
                         <input
@@ -330,11 +325,11 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                           name="invitationId"
                           value={invitation.id}
                         />
-                        <SubmitButton pendingLabel="Respondendo..." name="response" value="accepted">
-                          Aceitar
+                        <SubmitButton pendingLabel={t("invitations.respondPending")} name="response" value="accepted">
+                          {t("invitations.accept")}
                         </SubmitButton>
-                        <SubmitButton pendingLabel="Respondendo..." name="response" value="declined" variant="outline">
-                          Recusar
+                        <SubmitButton pendingLabel={t("invitations.respondPending")} name="response" value="declined" variant="outline">
+                          {t("invitations.decline")}
                         </SubmitButton>
                       </form>
                     </li>
@@ -347,9 +342,9 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
 
         <Card className="[--card-spacing:--spacing(8)]">
           <CardHeader>
-            <CardTitle className="text-2xl">Criar uma viagem</CardTitle>
+            <CardTitle className="text-2xl">{t("createTrip.title")}</CardTitle>
             <CardDescription>
-              Comece com o destino e as datas. Mais ferramentas de planejamento serão adicionadas dentro da viagem.
+              {t("createTrip.description")}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -359,23 +354,23 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
 
         <Card className="[--card-spacing:--spacing(8)]">
           <CardHeader>
-            <CardTitle className="text-2xl">Suas viagens</CardTitle>
+            <CardTitle className="text-2xl">{t("yourTrips.title")}</CardTitle>
           </CardHeader>
           <CardContent>
             {allTrips.length ? (
               <form className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
                 <div className="flex-1 space-y-1.5">
-                  <Label htmlFor="q" className="text-slate-700">Destino</Label>
+                  <Label htmlFor="q" className="text-slate-700">{t("yourTrips.destinationLabel")}</Label>
                   <Input
                     id="q"
                     name="q"
                     defaultValue={params.q}
-                    placeholder="Buscar por destino..."
+                    placeholder={t("yourTrips.destinationPlaceholder")}
                     className="bg-white"
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="status-filter" className="text-slate-700">Status</Label>
+                  <Label htmlFor="status-filter" className="text-slate-700">{t("yourTrips.statusLabel")}</Label>
                   <Select name="status" defaultValue={statusFilter}>
                     <SelectTrigger id="status-filter" className="w-full bg-white sm:w-44">
                       <SelectValue />
@@ -388,7 +383,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                   </Select>
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="sort-option" className="text-slate-700">Ordenar por</Label>
+                  <Label htmlFor="sort-option" className="text-slate-700">{t("yourTrips.sortLabel")}</Label>
                   <Select name="sort" defaultValue={sortOption}>
                     <SelectTrigger id="sort-option" className="w-full bg-white sm:w-48">
                       <SelectValue />
@@ -400,13 +395,13 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                     </SelectContent>
                   </Select>
                 </div>
-                <Button type="submit">Buscar</Button>
+                <Button type="submit">{t("yourTrips.search")}</Button>
                 {hasActiveFilters ? (
                   <Link
                     href="/dashboard"
                     className="text-sm font-semibold text-primary hover:text-primary/80"
                   >
-                    Limpar filtros
+                    {t("yourTrips.clearFilters")}
                   </Link>
                 ) : null}
               </form>
@@ -414,7 +409,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
 
             {tripsError ? (
               <p role="alert" className="mt-6 rounded-xl bg-red-50 p-4 text-sm text-red-800">
-                Não foi possível carregar suas viagens. Tente atualizar a página.
+                {t("yourTrips.loadError")}
               </p>
             ) : filteredTrips.length ? (
               <ul className="mt-6 grid gap-4 sm:grid-cols-2">
@@ -445,14 +440,14 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                         </p>
                         {stats ? (
                           <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-600">
-                            <span>{stats.readiness_percentage}% pronto</span>
+                            <span>{t("yourTrips.readiness", { percent: stats.readiness_percentage })}</span>
                             <span aria-hidden="true">·</span>
                             <span className={stats.critical_open_count ? "font-semibold text-amber-800" : undefined}>
-                              {stats.critical_open_count} crítica{stats.critical_open_count === 1 ? "" : "s"} em aberto
+                              {t("yourTrips.criticalOpen", { count: stats.critical_open_count })}
                             </span>
                             <span aria-hidden="true">·</span>
                             <span>
-                              {stats.participant_count} participante{stats.participant_count === 1 ? "" : "s"}
+                              {t("yourTrips.participants", { count: stats.participant_count })}
                             </span>
                           </div>
                         ) : null}
@@ -463,14 +458,14 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
               </ul>
             ) : allTrips.length ? (
               <p className="mt-6 rounded-2xl border border-dashed border-slate-300 p-6 text-sm text-slate-600">
-                Nenhuma viagem encontrada com esses filtros.{" "}
+                {t("yourTrips.noResults")}{" "}
                 <Link href="/dashboard" className="font-semibold text-primary hover:text-primary/80">
-                  Limpar filtros
+                  {t("yourTrips.clearFilters")}
                 </Link>
               </p>
             ) : (
               <p className="mt-6 rounded-2xl border border-dashed border-slate-300 p-6 text-sm text-slate-600">
-                Nenhuma viagem ainda. Crie sua primeira viagem acima.
+                {t("yourTrips.empty")}
               </p>
             )}
           </CardContent>

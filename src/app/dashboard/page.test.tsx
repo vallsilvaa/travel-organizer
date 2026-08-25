@@ -17,13 +17,17 @@ vi.mock("next-intl", async () => {
   };
 });
 vi.mock("next-intl/server", async () => {
-  const { createTranslator, ptMessages } = await import("@/i18n/test-mocks");
+  const { createFormatter, createTranslator, ptMessages } = await import("@/i18n/test-mocks");
   return {
     getTranslations: async (namespace?: string) => createTranslator(namespace),
     getLocale: async () => "pt",
     getMessages: async () => ptMessages,
+    getFormatter: async () => createFormatter(),
   };
 });
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ refresh: vi.fn() }),
+}));
 
 import DashboardPage from "./page";
 
@@ -175,6 +179,12 @@ describe("DashboardPage", () => {
 
       expect(screen.getByText("Lisbon")).toBeTruthy();
       expect(screen.queryByText("Buenos Aires")).toBeNull();
+    });
+
+    it("formats the trip date range using the locale-aware formatter", async () => {
+      render(await DashboardPage({ searchParams: Promise.resolve({}) }));
+
+      expect(screen.getByText("10 de jan. de 2099 – 20 de jan. de 2099")).toBeTruthy();
     });
 
     it("shows archived trips only when that status filter is selected", async () => {
