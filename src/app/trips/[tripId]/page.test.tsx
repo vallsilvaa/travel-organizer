@@ -192,4 +192,81 @@ describe("TripPage", () => {
       expect(screen.queryByText(/faltam|falta 1 dia|em andamento/i)).toBeNull();
     });
   });
+
+  describe("preparation quick filters", () => {
+    const criticalTask = { ...task, id: "11111111-1111-1111-1111-111111111111", title: "Critical task", is_critical: true, due_date: null };
+    const overdueTask = { ...task, id: "22222222-2222-2222-2222-222222222222", title: "Overdue task", is_critical: false, due_date: "2026-08-01" };
+    const plainTask = { ...task, id: "33333333-3333-3333-3333-333333333333", title: "Plain task", is_critical: false, due_date: null };
+
+    beforeEach(() => {
+      mocks.from.mockImplementation((table: string) => {
+        if (table === "trips") return queryBuilder({ data: trip, error: null });
+        if (table === "trip_tasks") {
+          return queryBuilder({ data: [criticalTask, overdueTask, plainTask], error: null });
+        }
+        if (table === "itinerary_items") return queryBuilder({ data: [], error: null });
+        if (table === "item_comments") return queryBuilder({ data: [], error: null });
+        if (table === "trip_expenses") return queryBuilder({ data: [], error: null });
+        if (table === "trip_expense_shares") return queryBuilder({ data: [], error: null });
+        if (table === "trip_invitations") return queryBuilder({ data: [], error: null });
+        return queryBuilder({ data: null, error: null });
+      });
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date("2026-08-25T12:00:00Z"));
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it("shows only critical tasks when the critical quick filter is active", async () => {
+      render(await TripPage({
+        params: Promise.resolve({ tripId }),
+        searchParams: Promise.resolve({ critical: "1" }),
+      }));
+
+      expect(screen.getByText("Critical task")).toBeTruthy();
+      expect(screen.queryByText("Overdue task")).toBeNull();
+      expect(screen.queryByText("Plain task")).toBeNull();
+    });
+
+    it("shows only overdue tasks when the overdue quick filter is active", async () => {
+      render(await TripPage({
+        params: Promise.resolve({ tripId }),
+        searchParams: Promise.resolve({ overdue: "1" }),
+      }));
+
+      expect(screen.getByText("Overdue task")).toBeTruthy();
+      expect(screen.queryByText("Critical task")).toBeNull();
+      expect(screen.queryByText("Plain task")).toBeNull();
+    });
+
+    it("combines a quick filter with the existing category filter", async () => {
+      render(await TripPage({
+        params: Promise.resolve({ tripId }),
+        searchParams: Promise.resolve({ category: "documents", critical: "1" }),
+      }));
+
+      expect(screen.getByText("Critical task")).toBeTruthy();
+      expect(screen.queryByText("Overdue task")).toBeNull();
+    });
+
+    it("marks the active quick filter chip as pressed and links preserve state", async () => {
+      render(await TripPage({
+        params: Promise.resolve({ tripId }),
+        searchParams: Promise.resolve({ critical: "1" }),
+      }));
+
+      // The active chip's href toggles the filter back off.
+      const criticalChip = screen.getByRole("link", { name: "Só críticas" });
+      expect(criticalChip.getAttribute("aria-current")).toBe("true");
+      expect(criticalChip.getAttribute("href")).not.toContain("critical=1");
+
+      // The inactive chip's href turns it on while preserving the active one.
+      const overdueChip = screen.getByRole("link", { name: "Em atraso" });
+      expect(overdueChip.getAttribute("aria-current")).toBeNull();
+      expect(overdueChip.getAttribute("href")).toContain("overdue=1");
+      expect(overdueChip.getAttribute("href")).toContain("critical=1");
+    });
+  });
 });
