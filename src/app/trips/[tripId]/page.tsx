@@ -67,7 +67,7 @@ import { daysUntil, todayInTimeZone } from "@/lib/timezone";
 
 type TripPageProps = {
   params: Promise<{ tripId: string }>;
-  searchParams: Promise<{ category?: string; critical?: string; expenseView?: string; overdue?: string; owner?: string; status?: string; tripError?: string; tab?: string }>;
+  searchParams: Promise<{ category?: string; city?: string; critical?: string; expenseView?: string; overdue?: string; owner?: string; period?: string; status?: string; tripError?: string; tab?: string }>;
 };
 
 type TripParticipant = {
@@ -268,6 +268,10 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
   const expenseView = filters.expenseView === "category" || filters.expenseView === "payer"
     ? filters.expenseView
     : "all";
+  const cityFilter = filters.city ?? "all";
+  const itineraryPeriodFilter = itineraryPeriods.includes(filters.period as (typeof itineraryPeriods)[number])
+    ? (filters.period as (typeof itineraryPeriods)[number])
+    : "all";
 
   const [
     { data: itineraryItems, error: itineraryError },
@@ -284,7 +288,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
     await Promise.all([
       supabase
         .from("itinerary_items")
-        .select("id, item_date, start_time, title, location, notes, period")
+        .select("id, item_date, start_time, title, location, notes, period, city")
         .eq("trip_id", trip.id)
         .order("item_date", { ascending: true })
         .order("start_time", { ascending: true, nullsFirst: false }),
@@ -403,6 +407,27 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
     }
     return itineraryPeriodRank(a.period) - itineraryPeriodRank(b.period);
   });
+  const tripCities = Array.from(
+    new Set(sortedItineraryItems.map((item) => item.city).filter((city): city is string => Boolean(city))),
+  ).sort((a, b) => a.localeCompare(b));
+  const filteredItineraryItems = sortedItineraryItems.filter((item) => {
+    const matchesCity = cityFilter === "all" || item.city === cityFilter;
+    const matchesPeriod = itineraryPeriodFilter === "all" || item.period === itineraryPeriodFilter;
+    return matchesCity && matchesPeriod;
+  });
+  const itineraryGroups = (() => {
+    type ItineraryGroup = { city: string | null; items: typeof filteredItineraryItems };
+    const groups = new Map<string, ItineraryGroup>();
+    for (const item of filteredItineraryItems) {
+      const key = item.city ?? "";
+      const group: ItineraryGroup = groups.get(key) ?? { city: item.city, items: [] };
+      group.items.push(item);
+      groups.set(key, group);
+    }
+    return Array.from(groups.values()).sort(
+      (a, b) => (a.items[0]?.item_date ?? "") < (b.items[0]?.item_date ?? "") ? -1 : 1,
+    );
+  })();
   const taskTitles = new Map((tasks ?? []).map((task) => [task.id, task.title]));
   const reservationTitles = new Map(tripReservations.map((reservation) => [reservation.id, reservation.title]));
   const itineraryItemOptions = (itineraryItems ?? []).map((item) => ({
@@ -577,7 +602,9 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
       ? "preparation"
       : filters.expenseView
         ? "expenses"
-        : "overview";
+        : filters.city || filters.period
+          ? "itinerary"
+          : "overview";
   const upcomingTasksPreview = allTasks
     .filter((task) => !task.completed_at)
     .sort((a, b) => (a.due_date ?? "9999-99-99").localeCompare(b.due_date ?? "9999-99-99"))
@@ -891,66 +918,112 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                     {t("itinerary.addItem")}
                   </summary>
                   <div className="mt-5">
-                    <ItineraryForm tripId={trip.id} />
+                    <ItineraryForm existingCities={tripCities} tripId={trip.id} />
                   </div>
                 </details>
+              ) : null}
+
+              {tripCities.length ? (
+                <form className="mt-6 grid gap-3 rounded-2xl bg-slate-50 p-4 sm:grid-cols-3">
+                  <input type="hidden" name="tab" value="itinerary" />
+                  <div className="space-y-1.5">
+                    <Label htmlFor="itinerary-city-filter" className="text-slate-700">{t("itinerary.cityFilterLabel")}</Label>
+                    <Select name="city" defaultValue={cityFilter}>
+                      <SelectTrigger id="itinerary-city-filter" className="w-full bg-white">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">{t("itinerary.cityFilterAll")}</SelectItem>
+                        {tripCities.map((city) => (
+                          <SelectItem key={city} value={city}>{city}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="itinerary-period-filter" className="text-slate-700">{t("itinerary.periodFilterLabel")}</Label>
+                    <Select name="period" defaultValue={itineraryPeriodFilter}>
+                      <SelectTrigger id="itinerary-period-filter" className="w-full bg-white">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">{t("itinerary.periodFilterAll")}</SelectItem>
+                        {itineraryPeriods.map((period) => (
+                          <SelectItem key={period} value={period}>{itineraryPeriodLabels[period]}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <Button type="submit" variant="outline" className="sm:col-span-3 sm:justify-self-start">{t("itinerary.applyFilters")}</Button>
+                </form>
               ) : null}
 
               {itineraryError ? (
                 <p role="alert" className="mt-5 rounded-xl bg-red-50 p-4 text-sm text-red-800">
                   {t("itinerary.loadError")}
                 </p>
-              ) : itineraryItems?.length ? (
-                <ol className="mt-6 space-y-4">
-                  {sortedItineraryItems.map((item) => (
-                    <li id={`itinerary-${item.id}`} key={item.id} className="rounded-2xl border border-slate-200 p-5">
-                      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                        <div>
-                          <p className="text-sm font-semibold text-sky-700">
-                            {formatDate(item.item_date)} · {formatItineraryWhen(item)}
-                          </p>
-                          <h3 className="mt-2 text-lg font-semibold text-slate-950">{item.title}</h3>
-                          {item.location ? <p className="mt-1 text-sm text-slate-600">{item.location}</p> : null}
-                          {item.notes ? <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-slate-600">{item.notes}</p> : null}
-                          {(reservationsByItineraryItemId.get(item.id) ?? []).length ? (
-                            <div className="mt-3 flex flex-wrap gap-2">
-                              {(reservationsByItineraryItemId.get(item.id) ?? []).map((reservation) => (
-                                <Link
-                                  key={reservation.id}
-                                  href={`/trips/${trip.id}?tab=itinerary#reservation-${reservation.id}`}
-                                  className="inline-flex items-center gap-1 rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-800 hover:bg-sky-100"
-                                >
-                                  {t("itinerary.linkedReservation", { title: reservation.title })}
-                                </Link>
-                              ))}
+              ) : filteredItineraryItems.length ? (
+                <div className="mt-6 space-y-8">
+                  {itineraryGroups.map((group) => (
+                    <section key={group.city ?? "__no_city__"}>
+                      {tripCities.length ? (
+                        <h3 className="text-sm font-semibold uppercase tracking-[0.12em] text-slate-500">
+                          {group.city ?? t("itinerary.noCity")}
+                        </h3>
+                      ) : null}
+                      <ol className="mt-3 space-y-4">
+                        {group.items.map((item) => (
+                          <li id={`itinerary-${item.id}`} key={item.id} className="rounded-2xl border border-slate-200 p-5">
+                            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                              <div>
+                                <p className="text-sm font-semibold text-sky-700">
+                                  {formatDate(item.item_date)} · {formatItineraryWhen(item)}
+                                </p>
+                                <h3 className="mt-2 text-lg font-semibold text-slate-950">{item.title}</h3>
+                                {item.location ? <p className="mt-1 text-sm text-slate-600">{item.location}</p> : null}
+                                {item.notes ? <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-slate-600">{item.notes}</p> : null}
+                                {(reservationsByItineraryItemId.get(item.id) ?? []).length ? (
+                                  <div className="mt-3 flex flex-wrap gap-2">
+                                    {(reservationsByItineraryItemId.get(item.id) ?? []).map((reservation) => (
+                                      <Link
+                                        key={reservation.id}
+                                        href={`/trips/${trip.id}?tab=itinerary#reservation-${reservation.id}`}
+                                        className="inline-flex items-center gap-1 rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-800 hover:bg-sky-100"
+                                      >
+                                        {t("itinerary.linkedReservation", { title: reservation.title })}
+                                      </Link>
+                                    ))}
+                                  </div>
+                                ) : null}
+                              </div>
+                              {!isArchived ? (
+                                <ItemActionsMenu
+                                  editLabel={t("itinerary.editItem")}
+                                  editForm={<ItineraryForm existingCities={tripCities} item={item} tripId={trip.id} />}
+                                  deleteAction={deleteItineraryItem}
+                                  deleteHiddenFields={{ tripId: trip.id, itemId: item.id }}
+                                  deleteTitle={t("itinerary.deleteItemTitle")}
+                                  deleteDescription={t("itinerary.deleteItemDescription", { title: item.title })}
+                                />
+                              ) : null}
                             </div>
-                          ) : null}
-                        </div>
-                        {!isArchived ? (
-                          <ItemActionsMenu
-                            editLabel={t("itinerary.editItem")}
-                            editForm={<ItineraryForm item={item} tripId={trip.id} />}
-                            deleteAction={deleteItineraryItem}
-                            deleteHiddenFields={{ tripId: trip.id, itemId: item.id }}
-                            deleteTitle={t("itinerary.deleteItemTitle")}
-                            deleteDescription={t("itinerary.deleteItemDescription", { title: item.title })}
-                          />
-                        ) : null}
-                      </div>
-                      <CommentThread
-                        comments={commentsFor("itinerary", item.id)}
-                        currentUserId={user.id}
-                        itemId={item.id}
-                        itemType="itinerary"
-                        participantNames={participantNames}
-                        tripId={trip.id}
-                      />
-                    </li>
+                            <CommentThread
+                              comments={commentsFor("itinerary", item.id)}
+                              currentUserId={user.id}
+                              itemId={item.id}
+                              itemType="itinerary"
+                              participantNames={participantNames}
+                              tripId={trip.id}
+                            />
+                          </li>
+                        ))}
+                      </ol>
+                    </section>
                   ))}
-                </ol>
+                </div>
               ) : (
                 <p className="mt-5 rounded-2xl border border-dashed border-slate-300 p-6 text-sm text-slate-600">
-                  {t("itinerary.empty")}
+                  {itineraryItems?.length ? t("itinerary.noneMatchFilters") : t("itinerary.empty")}
                 </p>
               )}
             </CardContent>

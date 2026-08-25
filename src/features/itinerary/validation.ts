@@ -17,7 +17,7 @@ export function isItineraryPeriod(value: string): value is ItineraryPeriod {
 }
 
 export type ItineraryFieldErrors = Partial<
-  Record<"date" | "time" | "title" | "location" | "notes" | "period", string>
+  Record<"date" | "time" | "title" | "location" | "notes" | "period" | "city", string>
 >;
 
 export type ItineraryInput = {
@@ -27,6 +27,7 @@ export type ItineraryInput = {
   location: string | null;
   notes: string | null;
   period: ItineraryPeriod | null;
+  city: string | null;
 };
 
 function optionalValue(value: FormDataEntryValue | null) {
@@ -46,6 +47,7 @@ export function validateItineraryInput(formData: FormData):
   const title = String(formData.get("title") ?? "").trim();
   const location = optionalValue(formData.get("location"));
   const notes = optionalValue(formData.get("notes"));
+  const city = optionalValue(formData.get("city"));
   const rawPeriodField = optionalValue(formData.get("period"));
   const rawPeriod = rawPeriodField === "none" ? null : rawPeriodField;
   const errors: ItineraryFieldErrors = {};
@@ -65,6 +67,9 @@ export function validateItineraryInput(formData: FormData):
   if (notes && notes.length > 2000) {
     errors.notes = "notesTooLong";
   }
+  if (city && city.length > 200) {
+    errors.city = "cityTooLong";
+  }
   if (rawPeriod && !isItineraryPeriod(rawPeriod)) {
     errors.period = "periodInvalid";
   }
@@ -72,5 +77,5 @@ export function validateItineraryInput(formData: FormData):
 
   return Object.keys(errors).length
     ? { success: false, errors }
-    : { success: true, data: { date, time, title, location, notes, period } };
+    : { success: true, data: { date, time, title, location, notes, period, city } };
 }

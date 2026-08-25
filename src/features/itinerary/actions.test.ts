@@ -52,6 +52,7 @@ function validForm() {
   formData.set("location", "Central Museum");
   formData.set("notes", "Bring the tickets");
   formData.set("period", "morning");
+  formData.set("city", "Lisbon");
   return formData;
 }
 
@@ -87,6 +88,7 @@ describe("itinerary actions", () => {
       location: "Central Museum",
       notes: "Bring the tickets",
       period: "morning",
+      city: "Lisbon",
       created_by: "user-123",
     });
     expect(result.success).toBe(true);

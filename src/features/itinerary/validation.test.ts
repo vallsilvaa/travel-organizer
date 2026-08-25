@@ -10,6 +10,7 @@ function validForm() {
   formData.set("location", "Central Museum");
   formData.set("notes", "Bring the tickets");
   formData.set("period", "morning");
+  formData.set("city", "Lisbon");
   return formData;
 }
 
@@ -24,6 +25,7 @@ describe("validateItineraryInput", () => {
         location: "Central Museum",
         notes: "Bring the tickets",
         period: "morning",
+        city: "Lisbon",
       },
     });
   });
@@ -34,6 +36,7 @@ describe("validateItineraryInput", () => {
     formData.set("location", "");
     formData.set("notes", "");
     formData.set("period", "");
+    formData.set("city", "");
 
     const result = validateItineraryInput(formData);
 
@@ -43,6 +46,19 @@ describe("validateItineraryInput", () => {
       expect(result.data.location).toBeNull();
       expect(result.data.notes).toBeNull();
       expect(result.data.period).toBeNull();
+      expect(result.data.city).toBeNull();
+    }
+  });
+
+  it("rejects a city name that is too long", () => {
+    const formData = validForm();
+    formData.set("city", "A".repeat(201));
+
+    const result = validateItineraryInput(formData);
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.errors.city).toBe("cityTooLong");
     }
   });
 
