@@ -930,7 +930,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
               <div className="mt-6 flex flex-wrap gap-2">
                 <Link
                   href={buildPrepQuickFilterHref({ critical: !criticalOnlyFilter })}
-                  aria-pressed={criticalOnlyFilter}
+                  aria-current={criticalOnlyFilter ? "true" : undefined}
                   className={`rounded-full border px-3 py-1.5 text-sm font-medium transition ${
                     criticalOnlyFilter
                       ? "border-amber-300 bg-amber-100 text-amber-900"
@@ -941,7 +941,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                 </Link>
                 <Link
                   href={buildPrepQuickFilterHref({ overdue: !overdueOnlyFilter })}
-                  aria-pressed={overdueOnlyFilter}
+                  aria-current={overdueOnlyFilter ? "true" : undefined}
                   className={`rounded-full border px-3 py-1.5 text-sm font-medium transition ${
                     overdueOnlyFilter
                       ? "border-red-300 bg-red-100 text-red-800"

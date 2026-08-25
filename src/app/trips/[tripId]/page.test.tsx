@@ -257,12 +257,14 @@ describe("TripPage", () => {
         searchParams: Promise.resolve({ critical: "1" }),
       }));
 
+      // The active chip's href toggles the filter back off.
       const criticalChip = screen.getByRole("link", { name: "Só críticas" });
-      expect(criticalChip.getAttribute("aria-pressed")).toBe("true");
-      expect(criticalChip.getAttribute("href")).toContain("critical=1");
+      expect(criticalChip.getAttribute("aria-current")).toBe("true");
+      expect(criticalChip.getAttribute("href")).not.toContain("critical=1");
 
+      // The inactive chip's href turns it on while preserving the active one.
       const overdueChip = screen.getByRole("link", { name: "Em atraso" });
-      expect(overdueChip.getAttribute("aria-pressed")).toBe("false");
+      expect(overdueChip.getAttribute("aria-current")).toBeNull();
       expect(overdueChip.getAttribute("href")).toContain("overdue=1");
       expect(overdueChip.getAttribute("href")).toContain("critical=1");
     });
