@@ -34,8 +34,45 @@ describe("validateReservationInput", () => {
         location: "GRU",
         destinationLocation: "LIS",
         notes: "Window seat",
+        itineraryItemId: null,
       },
     });
+  });
+
+  it("links to an itinerary item when a valid id is given", () => {
+    const formData = validForm();
+    formData.set("itineraryItemId", "11111111-1111-1111-1111-111111111111");
+
+    const result = validateReservationInput(formData);
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.itineraryItemId).toBe("11111111-1111-1111-1111-111111111111");
+    }
+  });
+
+  it("treats the \"none\" sentinel as no itinerary item link", () => {
+    const formData = validForm();
+    formData.set("itineraryItemId", "none");
+
+    const result = validateReservationInput(formData);
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.itineraryItemId).toBeNull();
+    }
+  });
+
+  it("rejects a malformed itinerary item id", () => {
+    const formData = validForm();
+    formData.set("itineraryItemId", "not-a-uuid");
+
+    const result = validateReservationInput(formData);
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.errors.itineraryItemId).toBe("Selecione um item do itinerário válido.");
+    }
   });
 
   it("allows optional fields to be empty", () => {

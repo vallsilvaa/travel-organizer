@@ -90,6 +90,7 @@ describe("reservation actions", () => {
       location: "GRU",
       destination_location: "LIS",
       notes: "Window seat",
+      itinerary_item_id: null,
       created_by: "user-123",
     });
     expect(result.success).toBe(true);

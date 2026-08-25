@@ -24,7 +24,8 @@ export type ReservationFieldErrors = Partial<
     | "endTime"
     | "location"
     | "destinationLocation"
-    | "notes",
+    | "notes"
+    | "itineraryItemId",
     string
   >
 >;
@@ -41,6 +42,7 @@ export type ReservationInput = {
   location: string | null;
   destinationLocation: string | null;
   notes: string | null;
+  itineraryItemId: string | null;
 };
 
 function optionalValue(value: FormDataEntryValue | null) {
@@ -70,7 +72,13 @@ export function validateReservationInput(formData: FormData):
   const location = optionalValue(formData.get("location"));
   const destinationLocation = optionalValue(formData.get("destinationLocation"));
   const notes = optionalValue(formData.get("notes"));
+  const rawItineraryItemId = optionalValue(formData.get("itineraryItemId"));
+  const itineraryItemId = rawItineraryItemId === "none" ? null : rawItineraryItemId;
   const errors: ReservationFieldErrors = {};
+
+  if (itineraryItemId && !uuidPattern.test(itineraryItemId)) {
+    errors.itineraryItemId = "Selecione um item do itinerário válido.";
+  }
 
   if (!isReservationType(reservationType)) {
     errors.reservationType = "Selecione um tipo de reserva válido.";
@@ -126,6 +134,7 @@ export function validateReservationInput(formData: FormData):
           location,
           destinationLocation,
           notes,
+          itineraryItemId,
         },
       };
 }
