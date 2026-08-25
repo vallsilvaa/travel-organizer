@@ -527,8 +527,8 @@ describe("TripPage", () => {
       }));
 
       expect(screen.getByText("Leve roupas leves.", { selector: "p" })).toBeTruthy();
-      expect(screen.getByText(/Fonte: Guia da Aline/)).toBeTruthy();
-      expect(screen.getByText(/Revisado em/)).toBeTruthy();
+      expect(screen.getByText(/Fonte: Guia da Aline/, { selector: "p" })).toBeTruthy();
+      expect(screen.getByText(/Revisado em/, { selector: "p" })).toBeTruthy();
       expect(screen.getByText("Editar guia do destino")).toBeTruthy();
     });
 
