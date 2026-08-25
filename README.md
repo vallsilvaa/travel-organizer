@@ -26,6 +26,9 @@ Live at [travel-organizer-zeta.vercel.app](https://travel-organizer-zeta.vercel.
 - **Notifications** — in-app notification center plus daily email reminders
   for upcoming task deadlines (opt-out per user).
 - **Appearance** — light/dark/system theme, persisted per browser.
+- **Internationalization** — Portuguese and English, switchable per user via
+  a cookie (no URL prefix, so trip invite links and calendar exports are
+  locale-independent); powered by [next-intl](https://next-intl.dev).
 - **Production monitoring** — Sentry error tracking with release context and
   cron monitoring, plus a `/api/health` endpoint for Supabase and the
   reminder service.
@@ -59,7 +62,9 @@ src/
   features/     # One module per domain, each with actions.ts, validation.ts, and tests:
     attachments/ auth/ comments/ expenses/ invitations/ itinerary/
     notifications/ participants/ realtime/ reminders/ reservations/ tasks/ trips/
+  i18n/         # next-intl request config, locale cookie helpers, setLocale action
   lib/          # Supabase clients (server/client/proxy), timezone helpers, cn()
+  messages/     # pt.json / en.json translation catalogs
 supabase/
   migrations/   # SQL migrations (schema, RLS policies, RPCs)
   tests/        # pgTAP RLS authorization tests
