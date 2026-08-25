@@ -58,7 +58,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { todayInTimeZone } from "@/lib/timezone";
+import { daysUntil, todayInTimeZone } from "@/lib/timezone";
 
 type TripPageProps = {
   params: Promise<{ tripId: string }>;
@@ -315,6 +315,18 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
     ]),
   );
   const today = todayInTimeZone(trip.timezone);
+  const tripEndDate = trip.end_date ?? trip.start_date;
+  const countdownLabel =
+    today < trip.start_date
+      ? (() => {
+          const remaining = daysUntil(trip.start_date, today);
+          return remaining === 1
+            ? "Falta 1 dia para a viagem"
+            : `Faltam ${remaining} dias para a viagem`;
+        })()
+      : today <= tripEndDate
+        ? "A viagem está em andamento"
+        : null;
   const allTasks = (tasks ?? []) as TripTask[];
   const filteredTasks = allTasks.filter((task) => {
     const matchesStatus = statusFilter === "all"
@@ -442,6 +454,9 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
             <h1 className="mt-3 text-4xl font-semibold tracking-tight text-slate-950">
               {trip.destination}
             </h1>
+            {countdownLabel && !isArchived ? (
+              <p className="mt-2 text-sm font-medium text-primary">{countdownLabel}</p>
+            ) : null}
 
             <dl className="mt-8 grid gap-4 sm:grid-cols-3">
               <div className="rounded-2xl bg-slate-50 p-5">
