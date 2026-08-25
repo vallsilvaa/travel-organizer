@@ -43,6 +43,9 @@ const trip = {
   created_by: userId,
   timezone: "UTC",
   archived_at: null,
+  destination_guide_content: null,
+  destination_guide_source: null,
+  destination_guide_reviewed_at: null,
 };
 
 const task = {
@@ -481,6 +484,91 @@ describe("TripPage", () => {
       const link = screen.getByRole("link", { name: "Museu do Louvre" });
       expect(link.getAttribute("href")).toBe(`/trips/${tripId}?tab=itinerary#itinerary-${itineraryItem.id}`);
       expect(screen.getByText("Vamos chegar cedo para evitar fila.")).toBeTruthy();
+    });
+  });
+
+  describe("destination guide", () => {
+    it("shows an empty state and lets the creator add a guide", async () => {
+      render(await TripPage({
+        params: Promise.resolve({ tripId }),
+        searchParams: Promise.resolve({}),
+      }));
+
+      expect(screen.getByText("Nenhum guia do destino foi adicionado ainda.")).toBeTruthy();
+      expect(screen.getByText("Adicionar guia do destino")).toBeTruthy();
+      expect(screen.getByLabelText("Conteúdo")).toBeTruthy();
+    });
+
+    it("shows the saved guide content, source, and reviewed date", async () => {
+      mocks.from.mockImplementation((table: string) => {
+        if (table === "trips") {
+          return queryBuilder({
+            data: {
+              ...trip,
+              destination_guide_content: "Leve roupas leves.",
+              destination_guide_source: "Guia da Aline",
+              destination_guide_reviewed_at: "2026-08-01",
+            },
+            error: null,
+          });
+        }
+        if (table === "trip_tasks") return queryBuilder({ data: [], error: null });
+        if (table === "itinerary_items") return queryBuilder({ data: [], error: null });
+        if (table === "item_comments") return queryBuilder({ data: [], error: null });
+        if (table === "trip_expenses") return queryBuilder({ data: [], error: null });
+        if (table === "trip_expense_shares") return queryBuilder({ data: [], error: null });
+        if (table === "trip_invitations") return queryBuilder({ data: [], error: null });
+        return queryBuilder({ data: null, error: null });
+      });
+
+      render(await TripPage({
+        params: Promise.resolve({ tripId }),
+        searchParams: Promise.resolve({}),
+      }));
+
+      expect(screen.getByText("Leve roupas leves.", { selector: "p" })).toBeTruthy();
+      expect(screen.getByText(/Fonte: Guia da Aline/, { selector: "p" })).toBeTruthy();
+      expect(screen.getByText(/Revisado em/, { selector: "p" })).toBeTruthy();
+      expect(screen.getByText("Editar guia do destino")).toBeTruthy();
+    });
+
+    it("does not let a plain traveler participant edit the destination guide", async () => {
+      const otherUserId = "22222222-2222-2222-2222-222222222222";
+      mocks.getUser.mockResolvedValue({ data: { user: { id: otherUserId } } });
+      mocks.rpc.mockImplementation((fn: string) =>
+        Promise.resolve({
+          data: fn === "get_trip_participants"
+            ? [{ user_id: otherUserId, display_name: "Bruno", role: "traveler" }]
+            : [],
+        }),
+      );
+
+      render(await TripPage({
+        params: Promise.resolve({ tripId }),
+        searchParams: Promise.resolve({}),
+      }));
+
+      expect(screen.queryByText("Adicionar guia do destino")).toBeNull();
+      expect(screen.queryByText("Editar guia do destino")).toBeNull();
+    });
+
+    it("lets an organizer participant who is not the creator edit the destination guide", async () => {
+      const organizerUserId = "33333333-3333-3333-3333-333333333333";
+      mocks.getUser.mockResolvedValue({ data: { user: { id: organizerUserId } } });
+      mocks.rpc.mockImplementation((fn: string) =>
+        Promise.resolve({
+          data: fn === "get_trip_participants"
+            ? [{ user_id: organizerUserId, display_name: "Carla", role: "organizer" }]
+            : [],
+        }),
+      );
+
+      render(await TripPage({
+        params: Promise.resolve({ tripId }),
+        searchParams: Promise.resolve({}),
+      }));
+
+      expect(screen.getByText("Adicionar guia do destino")).toBeTruthy();
     });
   });
 });

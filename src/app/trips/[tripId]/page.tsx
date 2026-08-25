@@ -5,6 +5,7 @@ import { AttachmentForm } from "@/features/attachments/attachment-form";
 import { deleteAttachment } from "@/features/attachments/actions";
 import { formatFileSize } from "@/features/attachments/validation";
 import { CommentThread, type ItemComment } from "@/features/comments/comment-thread";
+import { DestinationGuideForm } from "@/features/destination-guide/destination-guide-form";
 import { deleteExpense } from "@/features/expenses/actions";
 import { computeSettlements } from "@/features/expenses/balances";
 import { ExpenseForm } from "@/features/expenses/expense-form";
@@ -227,7 +228,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
 
   const { data: trip, error } = await supabase
     .from("trips")
-    .select("id, destination, start_date, end_date, created_at, created_by, archived_at, timezone")
+    .select("id, destination, start_date, end_date, created_at, created_by, archived_at, timezone, destination_guide_content, destination_guide_source, destination_guide_reviewed_at")
     .eq("id", tripId)
     .single();
 
@@ -319,6 +320,8 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
       participant.display_name,
     ]),
   );
+  const canEditDestinationGuide =
+    isCreator || tripParticipants.some((participant) => participant.user_id === user.id && participant.role === "organizer");
   const today = todayInTimeZone(trip.timezone);
   const tripEndDate = trip.end_date ?? trip.start_date;
   const countdownLabel =
@@ -756,6 +759,39 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                     </li>
                   ))}
                 </ul>
+              </section>
+
+              <section>
+                <h3 className="text-lg font-semibold text-slate-950">Guia do destino</h3>
+                {trip.destination_guide_content ? (
+                  <div className="mt-3 rounded-2xl border border-slate-200 p-4 text-sm">
+                    <p className="whitespace-pre-wrap text-slate-800">{trip.destination_guide_content}</p>
+                    <p className="mt-3 text-xs text-slate-500">
+                      {trip.destination_guide_source ? `Fonte: ${trip.destination_guide_source}` : null}
+                      {trip.destination_guide_source && trip.destination_guide_reviewed_at ? " · " : ""}
+                      {trip.destination_guide_reviewed_at ? `Revisado em ${formatDate(trip.destination_guide_reviewed_at)}` : ""}
+                    </p>
+                  </div>
+                ) : (
+                  <p className="mt-3 text-sm text-slate-600">Nenhum guia do destino foi adicionado ainda.</p>
+                )}
+                {canEditDestinationGuide && !isArchived ? (
+                  <details className="mt-4 rounded-2xl bg-slate-50 p-5" open={!trip.destination_guide_content}>
+                    <summary className="cursor-pointer font-semibold text-slate-900">
+                      {trip.destination_guide_content ? "Editar guia do destino" : "Adicionar guia do destino"}
+                    </summary>
+                    <div className="mt-5">
+                      <DestinationGuideForm
+                        tripId={trip.id}
+                        guide={{
+                          content: trip.destination_guide_content,
+                          source: trip.destination_guide_source,
+                          reviewedAt: trip.destination_guide_reviewed_at,
+                        }}
+                      />
+                    </div>
+                  </details>
+                ) : null}
               </section>
 
               <section>
