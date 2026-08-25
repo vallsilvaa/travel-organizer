@@ -99,6 +99,7 @@ test("traveler completes the critical collaborative planning journey", async ({
   });
 
   await test.step("create an itinerary item and comment", async () => {
+    await page.getByRole("tab", { name: "Itinerário" }).click();
     const form = page
       .locator("details")
       .filter({ hasText: "Adicionar item ao itinerário" });
