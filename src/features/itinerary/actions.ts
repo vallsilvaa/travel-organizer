@@ -54,6 +54,7 @@ export async function createItineraryItem(
     title: validation.data.title,
     location: validation.data.location,
     notes: validation.data.notes,
+    period: validation.data.period,
     created_by: user.id,
   });
 
@@ -90,6 +91,7 @@ export async function updateItineraryItem(
       title: validation.data.title,
       location: validation.data.location,
       notes: validation.data.notes,
+      period: validation.data.period,
       updated_at: new Date().toISOString(),
     })
     .eq("id", itemId)

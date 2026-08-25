@@ -416,6 +416,11 @@
       "flight": "Flight",
       "lodging": "Lodging",
       "transport": "Transport"
+    },
+    "itineraryPeriod": {
+      "morning": "Morning",
+      "afternoon": "Afternoon",
+      "evening": "Evening"
     }
   },
   "taskForm": {
@@ -493,6 +498,8 @@
   "itineraryForm": {
     "dateLabel": "Date",
     "timeLabel": "Time",
+    "periodLabel": "Time of day",
+    "periodNone": "No specific period",
     "titleLabel": "Title",
     "titlePlaceholder": "Museum visit",
     "locationLabel": "Location",
@@ -506,6 +513,7 @@
     "errors": {
       "dateInvalid": "Enter a valid date.",
       "timeInvalid": "Enter a valid time.",
+      "periodInvalid": "Select a valid time of day.",
       "titleRequired": "Enter a title with up to 200 characters.",
       "locationTooLong": "Location must be up to 200 characters.",
       "notesTooLong": "Notes must be up to 2,000 characters."

@@ -3,8 +3,21 @@ const uuidPattern =
 const datePattern = /^\d{4}-\d{2}-\d{2}$/;
 const timePattern = /^([01]\d|2[0-3]):[0-5]\d$/;
 
+export const itineraryPeriods = ["morning", "afternoon", "evening"] as const;
+export type ItineraryPeriod = (typeof itineraryPeriods)[number];
+
+// Built from a translator scoped to "categories.itineraryPeriod" at each call
+// site rather than a hardcoded record - this module has no render-time locale.
+export function getItineraryPeriodLabels(t: (period: ItineraryPeriod) => string): Record<ItineraryPeriod, string> {
+  return Object.fromEntries(itineraryPeriods.map((period) => [period, t(period)])) as Record<ItineraryPeriod, string>;
+}
+
+export function isItineraryPeriod(value: string): value is ItineraryPeriod {
+  return (itineraryPeriods as readonly string[]).includes(value);
+}
+
 export type ItineraryFieldErrors = Partial<
-  Record<"date" | "time" | "title" | "location" | "notes", string>
+  Record<"date" | "time" | "title" | "location" | "notes" | "period", string>
 >;
 
 export type ItineraryInput = {
@@ -13,6 +26,7 @@ export type ItineraryInput = {
   title: string;
   location: string | null;
   notes: string | null;
+  period: ItineraryPeriod | null;
 };
 
 function optionalValue(value: FormDataEntryValue | null) {
@@ -32,6 +46,8 @@ export function validateItineraryInput(formData: FormData):
   const title = String(formData.get("title") ?? "").trim();
   const location = optionalValue(formData.get("location"));
   const notes = optionalValue(formData.get("notes"));
+  const rawPeriodField = optionalValue(formData.get("period"));
+  const rawPeriod = rawPeriodField === "none" ? null : rawPeriodField;
   const errors: ItineraryFieldErrors = {};
 
   if (!datePattern.test(date) || Number.isNaN(Date.parse(`${date}T00:00:00Z`))) {
@@ -49,8 +65,12 @@ export function validateItineraryInput(formData: FormData):
   if (notes && notes.length > 2000) {
     errors.notes = "notesTooLong";
   }
+  if (rawPeriod && !isItineraryPeriod(rawPeriod)) {
+    errors.period = "periodInvalid";
+  }
+  const period = rawPeriod && isItineraryPeriod(rawPeriod) ? rawPeriod : null;
 
   return Object.keys(errors).length
     ? { success: false, errors }
-    : { success: true, data: { date, time, title, location, notes } };
+    : { success: true, data: { date, time, title, location, notes, period } };
 }

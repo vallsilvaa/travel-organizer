@@ -5,6 +5,7 @@ export type IcsItineraryItem = {
   title: string;
   location: string | null;
   notes: string | null;
+  periodLabel?: string | null;
 };
 
 function escapeIcsText(value: string) {
@@ -103,6 +104,9 @@ export function buildItineraryIcs(input: {
     lines.push(foldLine(`SUMMARY:${escapeIcsText(item.title)}`));
     if (item.location) {
       lines.push(foldLine(`LOCATION:${escapeIcsText(item.location)}`));
+    }
+    if (item.periodLabel) {
+      lines.push(foldLine(`CATEGORIES:${escapeIcsText(item.periodLabel)}`));
     }
 
     const descriptionParts = [

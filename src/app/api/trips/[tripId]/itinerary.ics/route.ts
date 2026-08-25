@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
+import { getTranslations } from "next-intl/server";
 
 import { buildItineraryIcs } from "@/features/itinerary/ics";
+import { getItineraryPeriodLabels, isItineraryPeriod } from "@/features/itinerary/validation";
 import { isValidTripId } from "@/features/trips/validation";
 import { createClient } from "@/lib/supabase/server";
 
@@ -35,7 +37,7 @@ export async function GET(
 
   const { data: items, error: itemsError } = await supabase
     .from("itinerary_items")
-    .select("id, item_date, start_time, title, location, notes")
+    .select("id, item_date, start_time, title, location, notes, period")
     .eq("trip_id", tripId)
     .order("item_date", { ascending: true })
     .order("start_time", { ascending: true, nullsFirst: false });
@@ -44,12 +46,16 @@ export async function GET(
     return NextResponse.json({ error: "load_failed" }, { status: 500 });
   }
 
+  const periodLabels = getItineraryPeriodLabels(await getTranslations("categories.itineraryPeriod"));
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? new URL(request.url).origin;
   const ics = buildItineraryIcs({
     tripDestination: trip.destination,
     tripTimezone: trip.timezone,
     tripUrl: `${appUrl.replace(/\/$/, "")}/trips/${trip.id}`,
-    items: items ?? [],
+    items: (items ?? []).map((item) => ({
+      ...item,
+      periodLabel: item.period && isItineraryPeriod(item.period) ? periodLabels[item.period] : null,
+    })),
   });
 
   const fileName = `${trip.destination.replace(/[^a-zA-Z0-9]+/g, "-") || "viagem"}-itinerario.ics`;
