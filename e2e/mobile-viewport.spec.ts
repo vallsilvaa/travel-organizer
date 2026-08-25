@@ -81,7 +81,12 @@ test("primary trip sections are navigable on a phone-sized viewport without hori
       const tab = page.getByRole("tab", { name: tabName });
       await tab.scrollIntoViewIfNeeded();
       await expect(tab).toBeVisible();
-      await tab.click();
+      // "Visão geral" is the default/already-active tab on load - clicking
+      // an already-selected tab isn't a real user action and isn't needed
+      // to exercise it, so only click tabs that actually need switching to.
+      if ((await tab.getAttribute("aria-selected")) !== "true") {
+        await tab.click();
+      }
       await expect(tab).toHaveAttribute("aria-selected", "true");
       await assertNoHorizontalOverflow(page);
     }
