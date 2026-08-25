@@ -251,6 +251,13 @@
       "deleteItemDescription": "This will permanently remove \"{title}\" from the itinerary.",
       "linkedReservation": "Linked reservation: {title} ↓",
       "empty": "No itinerary items yet. Add the first activity above.",
+      "noneMatchFilters": "No itinerary items match these filters.",
+      "cityFilterLabel": "City",
+      "cityFilterAll": "All cities",
+      "periodFilterLabel": "Time of day",
+      "periodFilterAll": "All periods",
+      "applyFilters": "Apply filters",
+      "noCity": "No city set",
       "reservationsTitle": "Reservations",
       "reservationsDescription": "Flights, lodging, and transport confirmed for this trip.",
       "addReservation": "Add reservation",
@@ -500,6 +507,8 @@
     "timeLabel": "Time",
     "periodLabel": "Time of day",
     "periodNone": "No specific period",
+    "cityLabel": "City",
+    "cityPlaceholder": "Rome",
     "titleLabel": "Title",
     "titlePlaceholder": "Museum visit",
     "locationLabel": "Location",
@@ -516,7 +525,8 @@
       "periodInvalid": "Select a valid time of day.",
       "titleRequired": "Enter a title with up to 200 characters.",
       "locationTooLong": "Location must be up to 200 characters.",
-      "notesTooLong": "Notes must be up to 2,000 characters."
+      "notesTooLong": "Notes must be up to 2,000 characters.",
+      "cityTooLong": "City must be up to 200 characters."
     },
     "actionErrors": {
       "identifyTrip": "Could not identify the trip.",

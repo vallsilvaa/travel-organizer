@@ -251,6 +251,13 @@
       "deleteItemDescription": "Isso vai remover permanentemente \"{title}\" do itinerário.",
       "linkedReservation": "Reserva vinculada: {title} ↓",
       "empty": "Nenhum item no itinerário ainda. Adicione a primeira atividade acima.",
+      "noneMatchFilters": "Nenhum item do itinerário corresponde a esses filtros.",
+      "cityFilterLabel": "Cidade",
+      "cityFilterAll": "Todas as cidades",
+      "periodFilterLabel": "Período do dia",
+      "periodFilterAll": "Todos os períodos",
+      "applyFilters": "Aplicar filtros",
+      "noCity": "Sem cidade definida",
       "reservationsTitle": "Reservas",
       "reservationsDescription": "Voos, hospedagens e transportes confirmados para esta viagem.",
       "addReservation": "Adicionar reserva",
@@ -500,6 +507,8 @@
     "timeLabel": "Horário",
     "periodLabel": "Período do dia",
     "periodNone": "Nenhum período específico",
+    "cityLabel": "Cidade",
+    "cityPlaceholder": "Roma",
     "titleLabel": "Título",
     "titlePlaceholder": "Visita ao museu",
     "locationLabel": "Local",
@@ -516,7 +525,8 @@
       "periodInvalid": "Selecione um período do dia válido.",
       "titleRequired": "Informe um título com até 200 caracteres.",
       "locationTooLong": "O local deve ter até 200 caracteres.",
-      "notesTooLong": "As notas devem ter até 2.000 caracteres."
+      "notesTooLong": "As notas devem ter até 2.000 caracteres.",
+      "cityTooLong": "A cidade deve ter até 200 caracteres."
     },
     "actionErrors": {
       "identifyTrip": "Não foi possível identificar a viagem.",

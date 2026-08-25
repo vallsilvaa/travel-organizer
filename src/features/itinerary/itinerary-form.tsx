@@ -24,6 +24,7 @@ import {
 import { getItineraryPeriodLabels, itineraryPeriods } from "./validation";
 
 type ItineraryFormProps = {
+  existingCities?: string[];
   item?: {
     id: string;
     item_date: string;
@@ -32,13 +33,14 @@ type ItineraryFormProps = {
     location: string | null;
     notes: string | null;
     period: string | null;
+    city: string | null;
   };
   tripId: string;
 };
 
 const initialState: ItineraryActionState = {};
 
-export function ItineraryForm({ item, tripId }: ItineraryFormProps) {
+export function ItineraryForm({ existingCities = [], item, tripId }: ItineraryFormProps) {
   const t = useTranslations("itineraryForm");
   const tCommon = useTranslations("common");
   const tPeriods = useTranslations("categories.itineraryPeriod");
@@ -70,7 +72,26 @@ export function ItineraryForm({ item, tripId }: ItineraryFormProps) {
         <Input id="time" name="time" type="time" defaultValue={item?.start_time?.slice(0, 5)} />
         {state.errors?.time ? <p className="text-sm text-destructive">{state.errors.time}</p> : null}
       </div>
-      <div className="space-y-2 sm:col-span-2">
+      <div className="space-y-2">
+        <Label htmlFor="city">
+          {t("cityLabel")} <span className="font-normal text-muted-foreground">{tCommon("optional")}</span>
+        </Label>
+        <Input
+          maxLength={200}
+          id="city"
+          name="city"
+          list="itinerary-city-options"
+          defaultValue={item?.city ?? ""}
+          placeholder={t("cityPlaceholder")}
+        />
+        {existingCities.length ? (
+          <datalist id="itinerary-city-options">
+            {existingCities.map((city) => <option key={city} value={city} />)}
+          </datalist>
+        ) : null}
+        {state.errors?.city ? <p className="text-sm text-destructive">{state.errors.city}</p> : null}
+      </div>
+      <div className="space-y-2">
         <Label htmlFor="period">
           {t("periodLabel")} <span className="font-normal text-muted-foreground">{tCommon("optional")}</span>
         </Label>
