@@ -41,13 +41,13 @@ describe("validateReservationInput", () => {
 
   it("links to an itinerary item when a valid id is given", () => {
     const formData = validForm();
-    formData.set("itineraryItemId", "11111111-1111-1111-1111-111111111111");
+    formData.set("itineraryItemId", "11111111-1111-4111-8111-111111111111");
 
     const result = validateReservationInput(formData);
 
     expect(result.success).toBe(true);
     if (result.success) {
-      expect(result.data.itineraryItemId).toBe("11111111-1111-1111-1111-111111111111");
+      expect(result.data.itineraryItemId).toBe("11111111-1111-4111-8111-111111111111");
     }
   });
 
