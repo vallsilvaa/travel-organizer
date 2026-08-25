@@ -416,6 +416,11 @@
       "flight": "Voo",
       "lodging": "Hospedagem",
       "transport": "Transporte"
+    },
+    "itineraryPeriod": {
+      "morning": "Manhã",
+      "afternoon": "Tarde",
+      "evening": "Noite"
     }
   },
   "taskForm": {
@@ -493,6 +498,8 @@
   "itineraryForm": {
     "dateLabel": "Data",
     "timeLabel": "Horário",
+    "periodLabel": "Período do dia",
+    "periodNone": "Nenhum período específico",
     "titleLabel": "Título",
     "titlePlaceholder": "Visita ao museu",
     "locationLabel": "Local",
@@ -506,6 +513,7 @@
     "errors": {
       "dateInvalid": "Informe uma data válida.",
       "timeInvalid": "Informe um horário válido.",
+      "periodInvalid": "Selecione um período do dia válido.",
       "titleRequired": "Informe um título com até 200 caracteres.",
       "locationTooLong": "O local deve ter até 200 caracteres.",
       "notesTooLong": "As notas devem ter até 2.000 caracteres."

@@ -85,6 +85,48 @@ describe("buildItineraryIcs", () => {
     expect(ics).not.toContain("TZID");
   });
 
+  it("adds a CATEGORIES line for items tagged with a time-of-day period", () => {
+    const ics = buildItineraryIcs({
+      tripDestination: "Lisbon",
+      tripTimezone: "Europe/Lisbon",
+      tripUrl: "https://travel.example.com/trips/trip-1",
+      items: [
+        {
+          id: "item-6",
+          item_date: "2026-09-12",
+          start_time: null,
+          title: "Explore the city",
+          location: null,
+          notes: null,
+          periodLabel: "Morning",
+        },
+      ],
+    });
+
+    expect(ics).toContain("CATEGORIES:Morning");
+    expect(ics).toContain("DTSTART;VALUE=DATE:20260912");
+  });
+
+  it("does not add a CATEGORIES line when there is no period", () => {
+    const ics = buildItineraryIcs({
+      tripDestination: "Lisbon",
+      tripTimezone: "Europe/Lisbon",
+      tripUrl: "https://travel.example.com/trips/trip-1",
+      items: [
+        {
+          id: "item-7",
+          item_date: "2026-09-12",
+          start_time: null,
+          title: "Explore the city",
+          location: null,
+          notes: null,
+        },
+      ],
+    });
+
+    expect(ics).not.toContain("CATEGORIES");
+  });
+
   it("escapes commas, semicolons, and newlines in free text", () => {
     const ics = buildItineraryIcs({
       tripDestination: "Lisbon",

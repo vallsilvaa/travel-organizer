@@ -7,6 +7,13 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 
 import {
@@ -14,6 +21,7 @@ import {
   updateItineraryItem,
   type ItineraryActionState,
 } from "./actions";
+import { getItineraryPeriodLabels, itineraryPeriods } from "./validation";
 
 type ItineraryFormProps = {
   item?: {
@@ -23,6 +31,7 @@ type ItineraryFormProps = {
     title: string;
     location: string | null;
     notes: string | null;
+    period: string | null;
   };
   tripId: string;
 };
@@ -32,6 +41,8 @@ const initialState: ItineraryActionState = {};
 export function ItineraryForm({ item, tripId }: ItineraryFormProps) {
   const t = useTranslations("itineraryForm");
   const tCommon = useTranslations("common");
+  const tPeriods = useTranslations("categories.itineraryPeriod");
+  const periodLabels = getItineraryPeriodLabels(tPeriods);
   const action = item ? updateItineraryItem : createItineraryItem;
   const [state, formAction, pending] = useActionState(action, initialState);
 
@@ -58,6 +69,23 @@ export function ItineraryForm({ item, tripId }: ItineraryFormProps) {
         </Label>
         <Input id="time" name="time" type="time" defaultValue={item?.start_time?.slice(0, 5)} />
         {state.errors?.time ? <p className="text-sm text-destructive">{state.errors.time}</p> : null}
+      </div>
+      <div className="space-y-2 sm:col-span-2">
+        <Label htmlFor="period">
+          {t("periodLabel")} <span className="font-normal text-muted-foreground">{tCommon("optional")}</span>
+        </Label>
+        <Select name="period" defaultValue={item?.period ?? "none"}>
+          <SelectTrigger id="period" className="w-full">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="none">{t("periodNone")}</SelectItem>
+            {itineraryPeriods.map((period) => (
+              <SelectItem key={period} value={period}>{periodLabels[period]}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {state.errors?.period ? <p className="text-sm text-destructive">{state.errors.period}</p> : null}
       </div>
       <div className="space-y-2 sm:col-span-2">
         <Label htmlFor="title">{t("titleLabel")}</Label>

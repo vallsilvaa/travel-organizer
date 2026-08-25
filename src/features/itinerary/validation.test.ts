@@ -9,6 +9,7 @@ function validForm() {
   formData.set("title", "Museum visit");
   formData.set("location", "Central Museum");
   formData.set("notes", "Bring the tickets");
+  formData.set("period", "morning");
   return formData;
 }
 
@@ -22,6 +23,7 @@ describe("validateItineraryInput", () => {
         title: "Museum visit",
         location: "Central Museum",
         notes: "Bring the tickets",
+        period: "morning",
       },
     });
   });
@@ -31,6 +33,7 @@ describe("validateItineraryInput", () => {
     formData.set("time", "");
     formData.set("location", "");
     formData.set("notes", "");
+    formData.set("period", "");
 
     const result = validateItineraryInput(formData);
 
@@ -39,6 +42,19 @@ describe("validateItineraryInput", () => {
       expect(result.data.time).toBeNull();
       expect(result.data.location).toBeNull();
       expect(result.data.notes).toBeNull();
+      expect(result.data.period).toBeNull();
+    }
+  });
+
+  it("treats the \"none\" sentinel as no period", () => {
+    const formData = validForm();
+    formData.set("period", "none");
+
+    const result = validateItineraryInput(formData);
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.period).toBeNull();
     }
   });
 
@@ -53,6 +69,18 @@ describe("validateItineraryInput", () => {
     if (!result.success) {
       expect(result.errors.date).toBe("dateInvalid");
       expect(result.errors.title).toBe("titleRequired");
+    }
+  });
+
+  it("rejects an invalid period", () => {
+    const formData = validForm();
+    formData.set("period", "midnight");
+
+    const result = validateItineraryInput(formData);
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.errors.period).toBe("periodInvalid");
     }
   });
 });

@@ -18,6 +18,7 @@ import {
 import { InviteForm } from "@/features/invitations/invite-form";
 import { deleteItineraryItem } from "@/features/itinerary/actions";
 import { ItineraryForm } from "@/features/itinerary/itinerary-form";
+import { getItineraryPeriodLabels, itineraryPeriods } from "@/features/itinerary/validation";
 import { removeParticipant } from "@/features/participants/actions";
 import { RealtimeStatus } from "@/features/realtime/realtime-status";
 import { ConfirmationCode } from "@/features/reservations/confirmation-code";
@@ -200,10 +201,24 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
   const taskCategoryLabels = getTaskCategoryLabels(await getTranslations("categories.task"));
   const expenseCategoryLabels = getExpenseCategoryLabels(await getTranslations("categories.expense"));
   const reservationTypeLabels = getReservationTypeLabels(await getTranslations("categories.reservationType"));
+  const itineraryPeriodLabels = getItineraryPeriodLabels(await getTranslations("categories.itineraryPeriod"));
   const locale = await getLocale();
   const format = await getFormatter();
   const formatDate = (value: string) => format.dateTime(new Date(`${value}T00:00:00Z`), "long");
   const formatTime = (value: string | null) => (value ? value.slice(0, 5) : t("itinerary.noTimeSet"));
+  const itineraryPeriodRank = (period: string | null) => {
+    const index = period ? itineraryPeriods.indexOf(period as (typeof itineraryPeriods)[number]) : -1;
+    return index === -1 ? itineraryPeriods.length : index;
+  };
+  const formatItineraryWhen = (item: { start_time: string | null; period: string | null }) => {
+    if (item.start_time) {
+      return formatTime(item.start_time);
+    }
+    if (item.period && itineraryPeriodLabels[item.period as (typeof itineraryPeriods)[number]]) {
+      return itineraryPeriodLabels[item.period as (typeof itineraryPeriods)[number]];
+    }
+    return t("itinerary.noTimeSet");
+  };
   const formatReservationWhen = (reservation: {
     start_date: string;
     start_time: string | null;
@@ -269,7 +284,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
     await Promise.all([
       supabase
         .from("itinerary_items")
-        .select("id, item_date, start_time, title, location, notes")
+        .select("id, item_date, start_time, title, location, notes, period")
         .eq("trip_id", trip.id)
         .order("item_date", { ascending: true })
         .order("start_time", { ascending: true, nullsFirst: false }),
@@ -376,6 +391,18 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
     downloadUrl: signedUrlsByPath.get(attachment.storage_path) ?? null,
   }));
   const itineraryTitles = new Map((itineraryItems ?? []).map((item) => [item.id, item.title]));
+  const sortedItineraryItems = [...(itineraryItems ?? [])].sort((a, b) => {
+    if (a.item_date !== b.item_date) {
+      return a.item_date < b.item_date ? -1 : 1;
+    }
+    if (Boolean(a.start_time) !== Boolean(b.start_time)) {
+      return a.start_time ? -1 : 1;
+    }
+    if (a.start_time && b.start_time) {
+      return a.start_time < b.start_time ? -1 : a.start_time > b.start_time ? 1 : 0;
+    }
+    return itineraryPeriodRank(a.period) - itineraryPeriodRank(b.period);
+  });
   const taskTitles = new Map((tasks ?? []).map((task) => [task.id, task.title]));
   const reservationTitles = new Map(tripReservations.map((reservation) => [reservation.id, reservation.title]));
   const itineraryItemOptions = (itineraryItems ?? []).map((item) => ({
@@ -875,12 +902,12 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                 </p>
               ) : itineraryItems?.length ? (
                 <ol className="mt-6 space-y-4">
-                  {itineraryItems.map((item) => (
+                  {sortedItineraryItems.map((item) => (
                     <li id={`itinerary-${item.id}`} key={item.id} className="rounded-2xl border border-slate-200 p-5">
                       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                         <div>
                           <p className="text-sm font-semibold text-sky-700">
-                            {formatDate(item.item_date)} · {formatTime(item.start_time)}
+                            {formatDate(item.item_date)} · {formatItineraryWhen(item)}
                           </p>
                           <h3 className="mt-2 text-lg font-semibold text-slate-950">{item.title}</h3>
                           {item.location ? <p className="mt-1 text-sm text-slate-600">{item.location}</p> : null}
