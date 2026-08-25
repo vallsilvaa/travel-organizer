@@ -1,6 +1,7 @@
 {
   "common": {
-    "appName": "Travel Organizer"
+    "appName": "Travel Organizer",
+    "traveler": "Viajante"
   },
   "themeToggle": {
     "toggleLabel": "Alternar tema",
@@ -98,6 +99,79 @@
       "invalid_display_name": "Informe um nome com pelo menos dois caracteres.",
       "profile_update_failed": "Não foi possível atualizar seu perfil. Tente novamente.",
       "profile_updated": "Perfil atualizado com sucesso."
+    }
+  },
+  "dashboard": {
+    "welcome": "Bem-vindo, {name}",
+    "welcomeDescription": "Crie uma viagem e mantenha os detalhes do planejamento em um espaço privado.",
+    "signOutPending": "Saindo...",
+    "signOut": "Sair",
+    "editProfile": {
+      "title": "Editar perfil",
+      "description": "Esse é o nome exibido para outros participantes nas suas viagens.",
+      "displayNameLabel": "Nome de exibição",
+      "savePending": "Salvando...",
+      "save": "Salvar nome"
+    },
+    "reminders": {
+      "title": "Lembretes por e-mail",
+      "description": "Receba um lembrete quando uma tarefa atribuída vencer nos próximos três dias.",
+      "checkboxLabel": "Enviar lembretes de prazos de tarefas",
+      "savePending": "Salvando...",
+      "save": "Salvar preferência"
+    },
+    "changePassword": {
+      "title": "Alterar senha",
+      "description": "Escolha uma nova senha para sua conta.",
+      "newPassword": "Nova senha",
+      "confirmPassword": "Confirmar nova senha",
+      "savePending": "Salvando...",
+      "save": "Atualizar senha"
+    },
+    "invitations": {
+      "title": "Convites de viagem",
+      "loadError": "Não foi possível carregar seus convites.",
+      "unavailable": "O convite não está mais disponível ou não pôde ser atualizado.",
+      "invitedAsOrganizer": "Você foi convidado para colaborar como organizador da viagem.",
+      "respondPending": "Respondendo...",
+      "accept": "Aceitar",
+      "decline": "Recusar"
+    },
+    "createTrip": {
+      "title": "Criar uma viagem",
+      "description": "Comece com o destino e as datas. Mais ferramentas de planejamento serão adicionadas dentro da viagem."
+    },
+    "yourTrips": {
+      "title": "Suas viagens",
+      "destinationLabel": "Destino",
+      "destinationPlaceholder": "Buscar por destino...",
+      "statusLabel": "Status",
+      "sortLabel": "Ordenar por",
+      "search": "Buscar",
+      "clearFilters": "Limpar filtros",
+      "loadError": "Não foi possível carregar suas viagens. Tente atualizar a página.",
+      "noResults": "Nenhuma viagem encontrada com esses filtros.",
+      "empty": "Nenhuma viagem ainda. Crie sua primeira viagem acima.",
+      "readiness": "{percent}% pronto",
+      "criticalOpen": "{count, plural, =0 {# críticas em aberto} =1 {# crítica em aberto} other {# críticas em aberto}}",
+      "participants": "{count, plural, =0 {# participantes} =1 {# participante} other {# participantes}}"
+    },
+    "statusFilters": {
+      "all": "Ativas",
+      "upcoming": "Futuras",
+      "active": "Em andamento",
+      "completed": "Concluídas",
+      "archived": "Arquivadas"
+    },
+    "sortOptions": {
+      "date": "Data da viagem",
+      "recent": "Atividade recente"
+    },
+    "tripStatus": {
+      "upcoming": "futura",
+      "active": "em andamento",
+      "completed": "concluída",
+      "archived": "arquivada"
     }
   }
 }

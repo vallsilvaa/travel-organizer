@@ -1,6 +1,7 @@
 {
   "common": {
-    "appName": "Travel Organizer"
+    "appName": "Travel Organizer",
+    "traveler": "Traveler"
   },
   "themeToggle": {
     "toggleLabel": "Toggle theme",
@@ -98,6 +99,79 @@
       "invalid_display_name": "Enter a name with at least two characters.",
       "profile_update_failed": "Could not update your profile. Please try again.",
       "profile_updated": "Profile updated successfully."
+    }
+  },
+  "dashboard": {
+    "welcome": "Welcome, {name}",
+    "welcomeDescription": "Create a trip and keep your planning details in a private space.",
+    "signOutPending": "Signing out...",
+    "signOut": "Sign out",
+    "editProfile": {
+      "title": "Edit profile",
+      "description": "This is the name shown to other participants on your trips.",
+      "displayNameLabel": "Display name",
+      "savePending": "Saving...",
+      "save": "Save name"
+    },
+    "reminders": {
+      "title": "Email reminders",
+      "description": "Get a reminder when an assigned task's deadline is coming up within three days.",
+      "checkboxLabel": "Send task deadline reminders",
+      "savePending": "Saving...",
+      "save": "Save preference"
+    },
+    "changePassword": {
+      "title": "Change password",
+      "description": "Choose a new password for your account.",
+      "newPassword": "New password",
+      "confirmPassword": "Confirm new password",
+      "savePending": "Saving...",
+      "save": "Update password"
+    },
+    "invitations": {
+      "title": "Trip invitations",
+      "loadError": "Could not load your invitations.",
+      "unavailable": "This invitation is no longer available or could not be updated.",
+      "invitedAsOrganizer": "You've been invited to collaborate as an organizer on this trip.",
+      "respondPending": "Responding...",
+      "accept": "Accept",
+      "decline": "Decline"
+    },
+    "createTrip": {
+      "title": "Create a trip",
+      "description": "Start with the destination and dates. More planning tools will be added inside the trip."
+    },
+    "yourTrips": {
+      "title": "Your trips",
+      "destinationLabel": "Destination",
+      "destinationPlaceholder": "Search by destination...",
+      "statusLabel": "Status",
+      "sortLabel": "Sort by",
+      "search": "Search",
+      "clearFilters": "Clear filters",
+      "loadError": "Could not load your trips. Try refreshing the page.",
+      "noResults": "No trips found with these filters.",
+      "empty": "No trips yet. Create your first trip above.",
+      "readiness": "{percent}% ready",
+      "criticalOpen": "{count, plural, one {# critical task open} other {# critical tasks open}}",
+      "participants": "{count, plural, one {# participant} other {# participants}}"
+    },
+    "statusFilters": {
+      "all": "Active",
+      "upcoming": "Upcoming",
+      "active": "In progress",
+      "completed": "Completed",
+      "archived": "Archived"
+    },
+    "sortOptions": {
+      "date": "Trip date",
+      "recent": "Recent activity"
+    },
+    "tripStatus": {
+      "upcoming": "upcoming",
+      "active": "in progress",
+      "completed": "completed",
+      "archived": "archived"
     }
   }
 }
