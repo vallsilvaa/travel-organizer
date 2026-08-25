@@ -84,9 +84,9 @@ test.describe("automated accessibility checks (WCAG 2 A/AA)", () => {
     await page.getByLabel(/Data de término/).fill("2027-07-08");
     await page.getByRole("button", { name: "Criar viagem" }).click();
     await expect(page).toHaveURL(/\/trips\/[0-9a-f-]+$/);
-    await assertNoViolations(page, "trip page (itinerary tab)");
+    await assertNoViolations(page, "trip page (overview tab)");
 
-    for (const tabName of ["Despesas", "Preparação", "Organizador"]) {
+    for (const tabName of ["Itinerário", "Despesas", "Preparação", "Organizador"]) {
       await page.getByRole("tab", { name: tabName }).click();
       await assertNoViolations(page, `trip page (${tabName} tab)`);
     }

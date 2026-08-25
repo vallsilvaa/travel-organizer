@@ -526,14 +526,35 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
     params.set("tab", "expenses");
     return `/trips/${trip.id}?${params.toString()}`;
   };
-  const validTabs = ["itinerary", "expenses", "preparation", "documents", "organizer"];
+  const validTabs = ["overview", "itinerary", "expenses", "preparation", "documents", "organizer"];
   const defaultTab = validTabs.includes(filters.tab ?? "")
     ? (filters.tab as string)
     : filters.status || filters.owner || filters.category || criticalOnlyFilter || overdueOnlyFilter
       ? "preparation"
       : filters.expenseView
         ? "expenses"
-        : "itinerary";
+        : "overview";
+  const upcomingTasksPreview = allTasks
+    .filter((task) => !task.completed_at)
+    .sort((a, b) => (a.due_date ?? "9999-99-99").localeCompare(b.due_date ?? "9999-99-99"))
+    .slice(0, 3);
+  const recentComments = [...tripComments]
+    .sort((a, b) => b.created_at.localeCompare(a.created_at))
+    .slice(0, 5)
+    .map((comment) => {
+      const sourceId = comment.item_type === "itinerary" ? comment.itinerary_item_id : comment.task_id;
+      const sourceTitle = sourceId
+        ? (comment.item_type === "itinerary" ? itineraryTitles : taskTitles).get(sourceId)
+        : undefined;
+      const sourceTab = comment.item_type === "itinerary" ? "itinerary" : "preparation";
+      return {
+        ...comment,
+        sourceTitle: sourceTitle ?? "um item removido",
+        sourceHref: sourceId
+          ? `/trips/${trip.id}?tab=${sourceTab}#${comment.item_type}-${sourceId}`
+          : `/trips/${trip.id}?tab=${sourceTab}`,
+      };
+    });
 
   return (
     <main className="min-h-screen bg-slate-50 px-6 py-12">
@@ -668,12 +689,101 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
               future English translation) quietly pushing the bar - and by
               extension the page - wider than the screen. */}
           <TabsList className="w-full overflow-x-auto sm:w-auto sm:overflow-visible">
+            <TabsTrigger value="overview" className="shrink-0 sm:flex-1 sm:shrink">Visão geral</TabsTrigger>
             <TabsTrigger value="itinerary" className="shrink-0 sm:flex-1 sm:shrink">Itinerário</TabsTrigger>
             <TabsTrigger value="expenses" className="shrink-0 sm:flex-1 sm:shrink">Despesas</TabsTrigger>
             <TabsTrigger value="preparation" className="shrink-0 sm:flex-1 sm:shrink">Preparação</TabsTrigger>
             <TabsTrigger value="documents" className="shrink-0 sm:flex-1 sm:shrink">Documentos</TabsTrigger>
             {isCreator ? <TabsTrigger value="organizer" className="shrink-0 sm:flex-1 sm:shrink">Organizador</TabsTrigger> : null}
           </TabsList>
+
+          <TabsContent value="overview">
+          <Card className="[--card-spacing:--spacing(6)]">
+            <CardHeader>
+              <CardTitle className="text-2xl">Visão geral</CardTitle>
+              <CardDescription>
+                Prontidão, próximos passos, participantes e atividade recente da viagem.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-8">
+              <section className="overflow-hidden rounded-2xl border border-sky-100 bg-sky-50 p-5">
+                <div className="flex items-end justify-between gap-4">
+                  <div>
+                    <p className="text-sm font-medium text-sky-800">Prontidão para a viagem</p>
+                    <p className="mt-1 text-3xl font-semibold text-sky-950">{readiness}%</p>
+                  </div>
+                  <p className="text-right text-sm text-sky-800">{completedTaskCount} de {allTasks.length} concluídas</p>
+                </div>
+                <div className="mt-4 h-3 overflow-hidden rounded-full bg-background" aria-label={`${readiness}% pronto`} role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={readiness}>
+                  <div className="h-full rounded-full bg-sky-600" style={{ width: `${readiness}%` }} />
+                </div>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <Badge variant="outline" className="bg-card">{criticalOpenCount} críticas em aberto</Badge>
+                  <Badge variant="outline" className={overdueTaskCount ? "border-red-200 bg-red-100 text-red-800" : "bg-card"}>{overdueTaskCount} atrasadas</Badge>
+                </div>
+              </section>
+
+              <section>
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <h3 className="text-lg font-semibold text-slate-950">Próximos passos</h3>
+                  <Link href={`/trips/${trip.id}?tab=preparation`} className="text-sm font-semibold text-primary hover:text-primary/80">
+                    Ver preparação completa
+                  </Link>
+                </div>
+                {upcomingTasksPreview.length ? (
+                  <ul className="mt-3 space-y-3">
+                    {upcomingTasksPreview.map((task) => (
+                      <li key={task.id} className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 p-4 text-sm">
+                        <span className="font-medium text-slate-900">{task.title}</span>
+                        <span className="text-slate-500">{task.due_date ? formatDate(task.due_date) : "Sem prazo"}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="mt-3 text-sm text-slate-600">Nenhuma tarefa de preparação pendente.</p>
+                )}
+              </section>
+
+              <section>
+                <h3 className="text-lg font-semibold text-slate-950">Participantes</h3>
+                <ul className="mt-3 grid gap-2 sm:grid-cols-2">
+                  {tripParticipants.map((participant) => (
+                    <li key={participant.user_id} className="flex items-center justify-between rounded-xl border border-slate-200 p-3 text-sm">
+                      <span className="text-slate-800">{participant.display_name}</span>
+                      <Badge variant="outline" className="capitalize">
+                        {participant.role === "organizer" ? "Organizador" : "Viajante"}
+                      </Badge>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+
+              <section>
+                <h3 className="text-lg font-semibold text-slate-950">Atividade recente</h3>
+                {recentComments.length ? (
+                  <ul className="mt-3 space-y-3">
+                    {recentComments.map((comment) => (
+                      <li key={comment.id} className="rounded-xl border border-slate-200 p-4 text-sm">
+                        <p className="text-slate-600">
+                          <span className="font-semibold text-slate-900">
+                            {participantNames.get(comment.author_id) ?? "Viajante"}
+                          </span>{" "}
+                          comentou em{" "}
+                          <Link href={comment.sourceHref} className="font-semibold text-primary hover:text-primary/80">
+                            {comment.sourceTitle}
+                          </Link>
+                        </p>
+                        <p className="mt-2 whitespace-pre-wrap text-slate-800">{comment.body}</p>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="mt-3 text-sm text-slate-600">Nenhum comentário ainda.</p>
+                )}
+              </section>
+            </CardContent>
+          </Card>
+          </TabsContent>
 
           <TabsContent value="itinerary">
           <Card className="[--card-spacing:--spacing(6)]">
@@ -715,7 +825,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
               ) : itineraryItems?.length ? (
                 <ol className="mt-6 space-y-4">
                   {itineraryItems.map((item) => (
-                    <li key={item.id} className="rounded-2xl border border-slate-200 p-5">
+                    <li id={`itinerary-${item.id}`} key={item.id} className="rounded-2xl border border-slate-200 p-5">
                       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                         <div>
                           <p className="text-sm font-semibold text-sky-700">
@@ -1105,7 +1215,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                           const overdue = !task.completed_at && task.due_date && task.due_date < today;
                           const upcoming = !task.completed_at && task.due_date && task.due_date >= today;
                           return (
-                            <li key={task.id} className={`rounded-2xl border p-5 ${task.completed_at ? "border-slate-200 bg-slate-50" : overdue ? "border-red-200 bg-red-50" : upcoming ? "border-sky-200 bg-sky-50" : "border-slate-200"}`}>
+                            <li id={`task-${task.id}`} key={task.id} className={`rounded-2xl border p-5 ${task.completed_at ? "border-slate-200 bg-slate-50" : overdue ? "border-red-200 bg-red-50" : upcoming ? "border-sky-200 bg-sky-50" : "border-slate-200"}`}>
                               <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                                 <div>
                                   <div className="flex flex-wrap items-center gap-2">

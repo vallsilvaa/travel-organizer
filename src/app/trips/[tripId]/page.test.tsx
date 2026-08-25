@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
@@ -382,6 +382,105 @@ describe("TripPage", () => {
 
       expect(screen.getByText("Total EUR")).toBeTruthy();
       expect(screen.getByText("Saldos")).toBeTruthy();
+    });
+  });
+
+  describe("overview tab", () => {
+    const participants = [
+      { user_id: "11111111-1111-1111-1111-111111111111", display_name: "Ana", role: "organizer" },
+      { user_id: "22222222-2222-2222-2222-222222222222", display_name: "Bruno", role: "traveler" },
+    ];
+    const taskA = { ...task, id: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", title: "Passport", due_date: "2026-08-27", completed_at: null };
+    const taskB = { ...task, id: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb", title: "Visa", due_date: "2026-08-26", completed_at: null };
+    const taskC = { ...task, id: "cccccccc-cccc-cccc-cccc-cccccccccccc", title: "Insurance", due_date: null, completed_at: null };
+    const taskD = { ...task, id: "dddddddd-dddd-dddd-dddd-dddddddddddd", title: "Vaccines", due_date: "2026-08-25", completed_at: null };
+    const doneTask = { ...task, id: "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee", title: "Book flights", due_date: "2026-08-20", completed_at: "2026-08-10T00:00:00Z" };
+    const itineraryItem = {
+      id: "ffffffff-ffff-ffff-ffff-ffffffffffff",
+      trip_id: tripId,
+      item_date: "2026-09-02",
+      start_time: "10:00",
+      title: "Museu do Louvre",
+      location: null,
+      notes: null,
+    };
+    const comment = {
+      id: "comment-1",
+      item_type: "itinerary",
+      itinerary_item_id: itineraryItem.id,
+      task_id: null,
+      body: "Vamos chegar cedo para evitar fila.",
+      author_id: participants[0].user_id,
+      created_at: "2026-08-20T10:00:00Z",
+      updated_at: "2026-08-20T10:00:00Z",
+    };
+
+    beforeEach(() => {
+      mocks.rpc.mockImplementation((fn: string) =>
+        Promise.resolve({ data: fn === "get_trip_participants" ? participants : [] }),
+      );
+      mocks.from.mockImplementation((table: string) => {
+        if (table === "trips") return queryBuilder({ data: trip, error: null });
+        if (table === "trip_tasks") {
+          return queryBuilder({ data: [taskD, taskB, taskA, taskC, doneTask], error: null });
+        }
+        if (table === "itinerary_items") return queryBuilder({ data: [itineraryItem], error: null });
+        if (table === "item_comments") return queryBuilder({ data: [comment], error: null });
+        if (table === "trip_expenses") return queryBuilder({ data: [], error: null });
+        if (table === "trip_expense_shares") return queryBuilder({ data: [], error: null });
+        if (table === "trip_invitations") return queryBuilder({ data: [], error: null });
+        return queryBuilder({ data: null, error: null });
+      });
+    });
+
+    it("is the default landing tab when opening a trip", async () => {
+      render(await TripPage({
+        params: Promise.resolve({ tripId }),
+        searchParams: Promise.resolve({}),
+      }));
+
+      expect(screen.getByText("Prontidão para a viagem")).toBeTruthy();
+    });
+
+    it("previews only the next few upcoming tasks, soonest first, excluding completed ones", async () => {
+      render(await TripPage({
+        params: Promise.resolve({ tripId }),
+        searchParams: Promise.resolve({}),
+      }));
+
+      const preview = screen.getByText("Próximos passos").closest("section")!;
+      const items = within(preview).getAllByRole("listitem");
+      expect(items.map((item) => item.textContent)).toEqual([
+        expect.stringContaining("Vaccines"),
+        expect.stringContaining("Visa"),
+        expect.stringContaining("Passport"),
+      ]);
+      expect(within(preview).queryByText("Insurance")).toBeNull();
+      expect(within(preview).queryByText("Book flights")).toBeNull();
+    });
+
+    it("lists participants with their roles", async () => {
+      render(await TripPage({
+        params: Promise.resolve({ tripId }),
+        searchParams: Promise.resolve({}),
+      }));
+
+      const list = screen.getByText("Participantes").closest("section")!;
+      expect(within(list).getByText("Ana")).toBeTruthy();
+      expect(within(list).getByText("Organizador")).toBeTruthy();
+      expect(within(list).getByText("Bruno")).toBeTruthy();
+      expect(within(list).getByText("Viajante")).toBeTruthy();
+    });
+
+    it("shows a recent comment linking back to its itinerary item", async () => {
+      render(await TripPage({
+        params: Promise.resolve({ tripId }),
+        searchParams: Promise.resolve({}),
+      }));
+
+      const link = screen.getByRole("link", { name: "Museu do Louvre" });
+      expect(link.getAttribute("href")).toBe(`/trips/${tripId}?tab=itinerary#itinerary-${itineraryItem.id}`);
+      expect(screen.getByText("Vamos chegar cedo para evitar fila.")).toBeTruthy();
     });
   });
 });
