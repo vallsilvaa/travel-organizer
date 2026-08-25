@@ -1,6 +1,7 @@
 "use client";
 
 import { Laptop, Moon, Sun } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 import { useSyncExternalStore } from "react";
 
@@ -13,9 +14,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 const options = [
-  { value: "light", label: "Claro", icon: Sun },
-  { value: "dark", label: "Escuro", icon: Moon },
-  { value: "system", label: "Sistema", icon: Laptop },
+  { value: "light", labelKey: "light", icon: Sun },
+  { value: "dark", labelKey: "dark", icon: Moon },
+  { value: "system", labelKey: "system", icon: Laptop },
 ] as const;
 
 const noopSubscribe = () => () => {};
@@ -32,6 +33,7 @@ function useHasMounted() {
 }
 
 export function ThemeToggle() {
+  const t = useTranslations("themeToggle");
   const { theme, setTheme } = useTheme();
   const mounted = useHasMounted();
 
@@ -41,7 +43,7 @@ export function ThemeToggle() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-        render={<Button variant="outline" size="icon" aria-label="Alternar tema" />}
+        render={<Button variant="outline" size="icon" aria-label={t("toggleLabel")} />}
       >
         <Icon className="size-4" />
       </DropdownMenuTrigger>
@@ -49,7 +51,7 @@ export function ThemeToggle() {
         {options.map((option) => (
           <DropdownMenuItem key={option.value} onClick={() => setTheme(option.value)}>
             <option.icon className="size-4" />
-            {option.label}
+            {t(option.labelKey)}
           </DropdownMenuItem>
         ))}
       </DropdownMenuContent>

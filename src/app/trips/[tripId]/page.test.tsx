@@ -12,6 +12,13 @@ vi.mock("@/lib/supabase/server", () => ({ createClient: mocks.createClient }));
 vi.mock("@/features/realtime/realtime-status", () => ({
   RealtimeStatus: () => null,
 }));
+vi.mock("next-intl", async () => {
+  const { createTranslator } = await import("@/i18n/test-mocks");
+  return {
+    useTranslations: (namespace?: string) => createTranslator(namespace),
+    useLocale: () => "pt",
+  };
+});
 
 import TripPage from "./page";
 

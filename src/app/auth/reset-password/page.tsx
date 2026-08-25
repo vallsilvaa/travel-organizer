@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 
 import { AuthShell } from "@/components/auth/auth-shell";
@@ -23,18 +24,20 @@ export default async function ResetPasswordPage({ searchParams }: ResetPasswordP
     redirect("/auth/forgot-password?error=reset_link_invalid");
   }
 
+  const t = await getTranslations("auth.resetPassword");
+
   return (
     <AuthShell
-      title="Defina uma nova senha"
-      description="Escolha uma nova senha para sua conta."
-      alternateText="Mudou de ideia?"
+      title={t("title")}
+      description={t("description")}
+      alternateText={t("alternateText")}
       alternateHref="/auth/sign-in"
-      alternateLabel="Voltar para entrar"
-      error={getAuthMessage(params.error)}
+      alternateLabel={t("alternateLabel")}
+      error={await getAuthMessage(params.error)}
     >
       <form action={resetPassword} className="space-y-5">
         <div className="space-y-2">
-          <Label htmlFor="password">Nova senha</Label>
+          <Label htmlFor="password">{t("password")}</Label>
           <Input
             required
             autoComplete="new-password"
@@ -45,7 +48,7 @@ export default async function ResetPasswordPage({ searchParams }: ResetPasswordP
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="passwordConfirmation">Confirmar nova senha</Label>
+          <Label htmlFor="passwordConfirmation">{t("passwordConfirmation")}</Label>
           <Input
             required
             autoComplete="new-password"
@@ -55,8 +58,8 @@ export default async function ResetPasswordPage({ searchParams }: ResetPasswordP
             minLength={8}
           />
         </div>
-        <SubmitButton pendingLabel="Salvando..." className="w-full" size="lg">
-          Salvar nova senha
+        <SubmitButton pendingLabel={t("submitPending")} className="w-full" size="lg">
+          {t("submit")}
         </SubmitButton>
       </form>
     </AuthShell>

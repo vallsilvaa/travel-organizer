@@ -1,6 +1,8 @@
+import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
+import { LanguageSwitcher } from "@/components/language-switcher";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 type AuthShellProps = {
@@ -14,7 +16,7 @@ type AuthShellProps = {
   children: ReactNode;
 };
 
-export function AuthShell({
+export async function AuthShell({
   title,
   description,
   alternateText,
@@ -24,6 +26,8 @@ export function AuthShell({
   message,
   children,
 }: AuthShellProps) {
+  const t = await getTranslations("common");
+
   return (
     <main className="flex min-h-screen items-center justify-center bg-slate-50 px-6 py-12">
       <section className="w-full max-w-md rounded-3xl border border-slate-200 bg-card p-8 shadow-sm">
@@ -32,9 +36,12 @@ export function AuthShell({
             href="/"
             className="text-sm font-semibold uppercase tracking-[0.18em] text-sky-700"
           >
-            Travel Organizer
+            {t("appName")}
           </Link>
-          <ThemeToggle />
+          <div className="flex items-center gap-2">
+            <LanguageSwitcher />
+            <ThemeToggle />
+          </div>
         </div>
         <h1 className="mt-6 text-3xl font-semibold tracking-tight text-slate-950">
           {title}

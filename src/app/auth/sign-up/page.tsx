@@ -1,3 +1,5 @@
+import { getTranslations } from "next-intl/server";
+
 import { AuthShell } from "@/components/auth/auth-shell";
 import { signUp } from "@/features/auth/actions";
 import { getAuthMessage } from "@/features/auth/messages";
@@ -11,27 +13,28 @@ type SignUpPageProps = {
 
 export default async function SignUpPage({ searchParams }: SignUpPageProps) {
   const params = await searchParams;
+  const t = await getTranslations("auth.signUp");
 
   return (
     <AuthShell
-      title="Crie sua conta"
-      description="Suas viagens, tarefas, comentários e despesas permanecem privados para os participantes convidados."
-      alternateText="Já tem uma conta?"
+      title={t("title")}
+      description={t("description")}
+      alternateText={t("alternateText")}
       alternateHref="/auth/sign-in"
-      alternateLabel="Entrar"
-      error={getAuthMessage(params.error)}
+      alternateLabel={t("alternateLabel")}
+      error={await getAuthMessage(params.error)}
     >
       <form action={signUp} className="space-y-5">
         <div className="space-y-2">
-          <Label htmlFor="displayName">Nome</Label>
+          <Label htmlFor="displayName">{t("name")}</Label>
           <Input required autoComplete="name" minLength={2} id="displayName" name="displayName" />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="email">E-mail</Label>
+          <Label htmlFor="email">{t("email")}</Label>
           <Input required autoComplete="email" id="email" name="email" type="email" />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="password">Senha</Label>
+          <Label htmlFor="password">{t("password")}</Label>
           <Input
             required
             autoComplete="new-password"
@@ -40,10 +43,10 @@ export default async function SignUpPage({ searchParams }: SignUpPageProps) {
             name="password"
             type="password"
           />
-          <p className="text-xs text-muted-foreground">Pelo menos oito caracteres.</p>
+          <p className="text-xs text-muted-foreground">{t("passwordHint")}</p>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="passwordConfirmation">Confirmar senha</Label>
+          <Label htmlFor="passwordConfirmation">{t("passwordConfirmation")}</Label>
           <Input
             required
             autoComplete="new-password"
@@ -53,8 +56,8 @@ export default async function SignUpPage({ searchParams }: SignUpPageProps) {
             type="password"
           />
         </div>
-        <SubmitButton pendingLabel="Criando conta..." className="w-full" size="lg">
-          Criar conta
+        <SubmitButton pendingLabel={t("submitPending")} className="w-full" size="lg">
+          {t("submit")}
         </SubmitButton>
       </form>
     </AuthShell>

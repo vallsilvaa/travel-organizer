@@ -1,5 +1,21 @@
 import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
+
+vi.mock("next-intl", async () => {
+  const { createTranslator } = await import("@/i18n/test-mocks");
+  return {
+    useTranslations: (namespace?: string) => createTranslator(namespace),
+    useLocale: () => "pt",
+  };
+});
+vi.mock("next-intl/server", async () => {
+  const { createTranslator, ptMessages } = await import("@/i18n/test-mocks");
+  return {
+    getTranslations: async (namespace?: string) => createTranslator(namespace),
+    getLocale: async () => "pt",
+    getMessages: async () => ptMessages,
+  };
+});
 
 import SignInPage from "./page";
 

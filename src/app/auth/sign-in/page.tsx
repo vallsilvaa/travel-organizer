@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 
 import { AuthShell } from "@/components/auth/auth-shell";
@@ -13,30 +14,31 @@ type SignInPageProps = {
 
 export default async function SignInPage({ searchParams }: SignInPageProps) {
   const params = await searchParams;
+  const t = await getTranslations("auth.signIn");
 
   return (
     <AuthShell
-      title="Bem-vindo de volta"
-      description="Entre para acessar suas viagens privadas e seu espaço de planejamento."
-      alternateText="Novo no Travel Organizer?"
+      title={t("title")}
+      description={t("description")}
+      alternateText={t("alternateText")}
       alternateHref="/auth/sign-up"
-      alternateLabel="Criar uma conta"
-      error={getAuthMessage(params.error)}
-      message={getAuthMessage(params.message)}
+      alternateLabel={t("alternateLabel")}
+      error={await getAuthMessage(params.error)}
+      message={await getAuthMessage(params.message)}
     >
       <form action={signIn} className="space-y-5">
         <div className="space-y-2">
-          <Label htmlFor="email">E-mail</Label>
+          <Label htmlFor="email">{t("email")}</Label>
           <Input required autoComplete="email" id="email" name="email" type="email" />
         </div>
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <Label htmlFor="password">Senha</Label>
+            <Label htmlFor="password">{t("password")}</Label>
             <Link
               href="/auth/forgot-password"
               className="text-sm font-semibold text-sky-700 hover:text-sky-800"
             >
-              Esqueci minha senha
+              {t("forgotPassword")}
             </Link>
           </div>
           <Input
@@ -47,8 +49,8 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
             type="password"
           />
         </div>
-        <SubmitButton pendingLabel="Entrando..." className="w-full" size="lg">
-          Entrar
+        <SubmitButton pendingLabel={t("submitPending")} className="w-full" size="lg">
+          {t("submit")}
         </SubmitButton>
       </form>
     </AuthShell>

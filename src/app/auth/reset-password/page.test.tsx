@@ -11,6 +11,21 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("@/lib/supabase/server", () => ({ createClient: mocks.createClient }));
 vi.mock("next/navigation", () => ({ redirect: mocks.redirect }));
+vi.mock("next-intl", async () => {
+  const { createTranslator } = await import("@/i18n/test-mocks");
+  return {
+    useTranslations: (namespace?: string) => createTranslator(namespace),
+    useLocale: () => "pt",
+  };
+});
+vi.mock("next-intl/server", async () => {
+  const { createTranslator, ptMessages } = await import("@/i18n/test-mocks");
+  return {
+    getTranslations: async (namespace?: string) => createTranslator(namespace),
+    getLocale: async () => "pt",
+    getMessages: async () => ptMessages,
+  };
+});
 
 import ResetPasswordPage from "./page";
 

@@ -113,6 +113,12 @@ const tripStatusLabels: Record<TripStatus, string> = {
 
 export default async function DashboardPage({ searchParams }: DashboardPageProps) {
   const params = await searchParams;
+  const [profileError, profileMessage, passwordError, passwordMessage] = await Promise.all([
+    getAuthMessage(params.profileError),
+    getAuthMessage(params.profileMessage),
+    getAuthMessage(params.passwordError),
+    getAuthMessage(params.passwordMessage),
+  ]);
   const supabase = await createClient();
   const {
     data: { user },
@@ -207,14 +213,14 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {getAuthMessage(params.profileError) ? (
+            {profileError ? (
               <p role="alert" className="mb-4 rounded-xl bg-red-50 p-3 text-sm text-red-800">
-                {getAuthMessage(params.profileError)}
+                {profileError}
               </p>
             ) : null}
-            {getAuthMessage(params.profileMessage) ? (
+            {profileMessage ? (
               <p className="mb-4 rounded-xl bg-sky-50 p-3 text-sm text-sky-900">
-                {getAuthMessage(params.profileMessage)}
+                {profileMessage}
               </p>
             ) : null}
             <form action={updateDisplayName} className="flex flex-col gap-4 sm:flex-row sm:items-end">
@@ -268,14 +274,14 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {getAuthMessage(params.passwordError) ? (
+            {passwordError ? (
               <p role="alert" className="mb-4 rounded-xl bg-red-50 p-3 text-sm text-red-800">
-                {getAuthMessage(params.passwordError)}
+                {passwordError}
               </p>
             ) : null}
-            {getAuthMessage(params.passwordMessage) ? (
+            {passwordMessage ? (
               <p className="mb-4 rounded-xl bg-sky-50 p-3 text-sm text-sky-900">
-                {getAuthMessage(params.passwordMessage)}
+                {passwordMessage}
               </p>
             ) : null}
             <form action={changePassword} className="grid gap-4 sm:grid-cols-2 sm:items-end">
