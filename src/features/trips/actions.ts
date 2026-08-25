@@ -2,8 +2,10 @@
 
 import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
+import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 
+import { translateFieldErrors } from "@/i18n/translate-field-errors";
 import { createClient } from "@/lib/supabase/server";
 import { isValidTripId, validateTripInput, type TripFieldErrors } from "./validation";
 import { buildEnglandPreparationTasks, isEnglandDestination } from "@/features/tasks/templates";
@@ -18,10 +20,11 @@ export async function createTrip(
   _previousState: CreateTripState,
   formData: FormData,
 ): Promise<CreateTripState> {
+  const t = await getTranslations("trip.editForm");
   const validation = validateTripInput(formData);
 
   if (!validation.success) {
-    return { errors: validation.errors };
+    return { errors: translateFieldErrors(t, validation.errors) };
   }
 
   const supabase = await createClient();
@@ -44,7 +47,7 @@ export async function createTrip(
   });
 
   if (error) {
-    return { message: "Não foi possível criar a viagem. Tente novamente." };
+    return { message: t("actionErrors.createFailed") };
   }
 
   if (isEnglandDestination(validation.data.destination)) {
@@ -61,14 +64,15 @@ export async function updateTrip(
   _previousState: CreateTripState,
   formData: FormData,
 ): Promise<CreateTripState> {
+  const t = await getTranslations("trip.editForm");
   const tripId = String(formData.get("tripId") ?? "");
   if (!isValidTripId(tripId)) {
-    return { message: "Não foi possível identificar a viagem." };
+    return { message: t("actionErrors.identifyTrip") };
   }
 
   const validation = validateTripInput(formData);
   if (!validation.success) {
-    return { errors: validation.errors };
+    return { errors: translateFieldErrors(t, validation.errors) };
   }
 
   const supabase = await createClient();
@@ -95,12 +99,12 @@ export async function updateTrip(
     .maybeSingle();
 
   if (error || !updatedTrip) {
-    return { message: "Somente quem criou a viagem pode editar esses dados." };
+    return { message: t("actionErrors.onlyCreatorCanEdit") };
   }
 
   revalidatePath("/dashboard");
   revalidatePath(`/trips/${tripId}`);
-  return { success: true, message: "Viagem atualizada com sucesso." };
+  return { success: true, message: t("actionErrors.updated") };
 }
 
 async function setTripArchived(formData: FormData, archived: boolean): Promise<void> {

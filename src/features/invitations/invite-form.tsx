@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -15,6 +16,7 @@ import {
 const initialState: InviteOrganizerState = {};
 
 export function InviteForm({ tripId }: { tripId: string }) {
+  const t = useTranslations("inviteForm");
   const [state, formAction, pending] = useActionState(
     inviteOrganizer,
     initialState,
@@ -32,18 +34,18 @@ export function InviteForm({ tripId }: { tripId: string }) {
     <form action={formAction} className="mt-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
       <input type="hidden" name="tripId" value={tripId} />
       <div className="flex-1 space-y-2">
-        <Label htmlFor="email">E-mail do organizador</Label>
+        <Label htmlFor="email">{t("emailLabel")}</Label>
         <Input
           required
           autoComplete="email"
           id="email"
           name="email"
           type="email"
-          placeholder="organizador@exemplo.com"
+          placeholder={t("emailPlaceholder")}
         />
       </div>
       <Button type="submit" disabled={pending} size="lg">
-        {pending ? "Convidando..." : "Convidar organizador"}
+        {pending ? t("submitPending") : t("submit")}
       </Button>
     </form>
   );

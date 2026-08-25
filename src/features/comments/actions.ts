@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
@@ -30,6 +31,7 @@ export async function createComment(
   _previousState: CommentActionState,
   formData: FormData,
 ): Promise<CommentActionState> {
+  const t = await getTranslations("comments.actionErrors");
   const tripId = String(formData.get("tripId") ?? "");
   const itemId = String(formData.get("itemId") ?? "");
   const itemType = String(formData.get("itemType") ?? "");
@@ -40,10 +42,10 @@ export async function createComment(
     !isValidCommentId(itemId) ||
     !isCommentItemType(itemType)
   ) {
-    return { error: "Não foi possível identificar o alvo do comentário." };
+    return { error: t("identifyTarget") };
   }
   if (!validation.success) {
-    return { error: validation.error };
+    return { error: t(validation.error) };
   }
 
   const { supabase, user } = await authenticatedClient();
@@ -57,7 +59,7 @@ export async function createComment(
   });
 
   if (error) {
-    return { error: "Não foi possível adicionar este comentário. Verifique seu acesso à viagem." };
+    return { error: t("addFailed") };
   }
 
   revalidatePath(`/trips/${tripId}`);
@@ -68,15 +70,16 @@ export async function updateComment(
   _previousState: CommentActionState,
   formData: FormData,
 ): Promise<CommentActionState> {
+  const t = await getTranslations("comments.actionErrors");
   const tripId = String(formData.get("tripId") ?? "");
   const commentId = String(formData.get("commentId") ?? "");
   const validation = validateCommentBody(formData.get("body"));
 
   if (!isValidCommentId(tripId) || !isValidCommentId(commentId)) {
-    return { error: "Não foi possível identificar o comentário." };
+    return { error: t("identifyComment") };
   }
   if (!validation.success) {
-    return { error: validation.error };
+    return { error: t(validation.error) };
   }
 
   const { supabase, user } = await authenticatedClient();
@@ -88,7 +91,7 @@ export async function updateComment(
     .eq("author_id", user.id);
 
   if (error) {
-    return { error: "Não foi possível atualizar este comentário." };
+    return { error: t("updateFailed") };
   }
 
   revalidatePath(`/trips/${tripId}`);

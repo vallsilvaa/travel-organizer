@@ -31,23 +31,23 @@ export function validateTripInput(formData: FormData) {
   const errors: TripFieldErrors = {};
 
   if (!destination) {
-    errors.destination = "O destino é obrigatório.";
+    errors.destination = "destinationRequired";
   } else if (destination.length > 200) {
-    errors.destination = "O destino deve ter no máximo 200 caracteres.";
+    errors.destination = "destinationTooLong";
   }
 
   if (!isIsoDate(startDate)) {
-    errors.startDate = "Informe uma data de início válida.";
+    errors.startDate = "startDateInvalid";
   }
 
   if (endDate && !isIsoDate(endDate)) {
-    errors.endDate = "Informe uma data de término válida.";
+    errors.endDate = "endDateInvalid";
   } else if (endDate && isIsoDate(startDate) && endDate < startDate) {
-    errors.endDate = "A data de término não pode ser anterior à data de início.";
+    errors.endDate = "endDateBeforeStart";
   }
 
   if (!timezone || !isSupportedTimeZone(timezone)) {
-    errors.timezone = "Selecione um fuso horário válido.";
+    errors.timezone = "timezoneInvalid";
   }
 
   return {

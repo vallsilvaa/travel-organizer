@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useRef } from "react";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -23,6 +24,8 @@ type TripFormProps = {
 };
 
 export function TripForm({ trip }: TripFormProps = {}) {
+  const t = useTranslations("trip.editForm");
+  const tCommon = useTranslations("common");
   const [state, formAction, pending] = useActionState(
     trip ? updateTrip : createTrip,
     initialState,
@@ -59,13 +62,13 @@ export function TripForm({ trip }: TripFormProps = {}) {
     <form action={formAction} className="mt-6 grid gap-5 sm:grid-cols-2">
       {trip ? <input type="hidden" name="tripId" value={trip.id} /> : null}
       <div className="space-y-2 sm:col-span-2">
-        <Label htmlFor="destination">Destino</Label>
+        <Label htmlFor="destination">{t("destinationLabel")}</Label>
         <Input
           required
           maxLength={200}
           id="destination"
           name="destination"
-          placeholder="Londres, Reino Unido"
+          placeholder={t("destinationPlaceholder")}
           defaultValue={trip?.destination}
           aria-describedby={state.errors?.destination ? "destination-error" : undefined}
         />
@@ -77,7 +80,7 @@ export function TripForm({ trip }: TripFormProps = {}) {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="startDate">Data de início</Label>
+        <Label htmlFor="startDate">{t("startDateLabel")}</Label>
         <Input
           required
           id="startDate"
@@ -95,7 +98,7 @@ export function TripForm({ trip }: TripFormProps = {}) {
 
       <div className="space-y-2">
         <Label htmlFor="endDate">
-          Data de término <span className="font-normal text-muted-foreground">(opcional)</span>
+          {t("endDateLabel")} <span className="font-normal text-muted-foreground">{tCommon("optional")}</span>
         </Label>
         <Input
           id="endDate"
@@ -112,7 +115,7 @@ export function TripForm({ trip }: TripFormProps = {}) {
       </div>
 
       <div className="space-y-2 sm:col-span-2">
-        <Label htmlFor="timezone">Fuso horário</Label>
+        <Label htmlFor="timezone">{t("timezoneLabel")}</Label>
         <select
           required
           ref={timezoneRef}
@@ -129,7 +132,7 @@ export function TripForm({ trip }: TripFormProps = {}) {
           ))}
         </select>
         <p className="text-sm text-muted-foreground">
-          Usado para calcular prazos, status da viagem e a exportação do calendário.
+          {t("timezoneHint")}
         </p>
         {state.errors?.timezone ? (
           <p id="timezone-error" className="text-sm text-destructive">
@@ -141,8 +144,8 @@ export function TripForm({ trip }: TripFormProps = {}) {
       <div className="sm:col-span-2">
         <Button type="submit" disabled={pending} size="lg">
           {pending
-            ? trip ? "Salvando alterações..." : "Criando viagem..."
-            : trip ? "Salvar alterações" : "Criar viagem"}
+            ? trip ? t("savePending") : t("createPending")
+            : trip ? t("save") : t("create")}
         </Button>
       </div>
     </form>

@@ -2,6 +2,7 @@
 
 import { EllipsisIcon } from "lucide-react";
 import { useId, useState, type ReactNode } from "react";
+import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -32,13 +33,16 @@ type ItemActionsMenuProps = {
 
 export function ItemActionsMenu({
   editForm,
-  editLabel = "Editar",
+  editLabel,
   deleteAction,
   deleteHiddenFields,
   deleteTitle,
   deleteDescription,
-  deleteLabel = "Excluir",
+  deleteLabel,
 }: ItemActionsMenuProps) {
+  const t = useTranslations("itemActionsMenu");
+  const resolvedEditLabel = editLabel ?? t("editDefault");
+  const resolvedDeleteLabel = deleteLabel ?? t("deleteDefault");
   const formId = useId();
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -50,14 +54,14 @@ export function ItemActionsMenu({
           render={<Button type="button" variant="ghost" size="icon-sm" />}
         >
           <EllipsisIcon className="size-4" />
-          <span className="sr-only">Ações do item</span>
+          <span className="sr-only">{t("actionsLabel")}</span>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem onClick={() => setEditOpen((open) => !open)}>
-            {editOpen ? "Ocultar formulário" : editLabel}
+            {editOpen ? t("hideForm") : resolvedEditLabel}
           </DropdownMenuItem>
           <DropdownMenuItem variant="destructive" onClick={() => setDeleteOpen(true)}>
-            {deleteLabel}
+            {resolvedDeleteLabel}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -77,10 +81,10 @@ export function ItemActionsMenu({
           </DialogHeader>
           <DialogFooter>
             <DialogClose render={<Button type="button" variant="outline" />}>
-              Cancelar
+              {t("cancel")}
             </DialogClose>
             <Button type="submit" form={formId} variant="destructive">
-              {deleteLabel}
+              {resolvedDeleteLabel}
             </Button>
           </DialogFooter>
         </DialogContent>

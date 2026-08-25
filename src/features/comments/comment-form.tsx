@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useRef } from "react";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -24,6 +25,7 @@ type CommentFormProps = {
 const initialState: CommentActionState = {};
 
 export function CommentForm({ comment, itemId, itemType, tripId }: CommentFormProps) {
+  const t = useTranslations("comments");
   const [state, formAction, pending] = useActionState(
     comment ? updateComment : createComment,
     initialState,
@@ -35,11 +37,11 @@ export function CommentForm({ comment, itemId, itemType, tripId }: CommentFormPr
       formRef.current?.reset();
     }
     if (state.success) {
-      toast.success(comment ? "Comentário atualizado." : "Comentário adicionado.");
+      toast.success(comment ? t("toastUpdated") : t("toastAdded"));
     } else if (state.error) {
       toast.error(state.error);
     }
-  }, [comment, state]);
+  }, [comment, state, t]);
 
   const fieldId = `comment-${comment?.id ?? itemType + itemId}`;
 
@@ -50,7 +52,7 @@ export function CommentForm({ comment, itemId, itemType, tripId }: CommentFormPr
       <input type="hidden" name="itemType" value={itemType} />
       {comment ? <input type="hidden" name="commentId" value={comment.id} /> : null}
       <Label className="sr-only" htmlFor={fieldId}>
-        {comment ? "Editar comentário" : "Adicionar comentário"}
+        {comment ? t("editAriaLabel") : t("addAriaLabel")}
       </Label>
       <Textarea
         id={fieldId}
@@ -58,13 +60,13 @@ export function CommentForm({ comment, itemId, itemType, tripId }: CommentFormPr
         maxLength={2000}
         name="body"
         defaultValue={comment?.body}
-        placeholder="Adicione um contexto ou uma decisão..."
+        placeholder={t("bodyPlaceholder")}
         rows={comment ? 2 : 3}
         className="text-sm"
       />
       <div className="mt-2 flex justify-end">
         <Button type="submit" disabled={pending} size="sm">
-          {pending ? "Salvando..." : comment ? "Salvar" : "Comentar"}
+          {pending ? t("savePending") : comment ? t("save") : t("add")}
         </Button>
       </div>
     </form>

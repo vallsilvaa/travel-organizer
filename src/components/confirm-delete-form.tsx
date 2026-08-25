@@ -1,6 +1,7 @@
 "use client";
 
 import { useId, useState } from "react";
+import { useTranslations } from "next-intl";
 
 import { SubmitButton } from "@/components/submit-button";
 import { Button } from "@/components/ui/button";
@@ -29,9 +30,11 @@ export function ConfirmDeleteForm({
   hiddenFields,
   title,
   description,
-  triggerLabel = "Excluir",
+  triggerLabel,
   triggerClassName = "h-auto p-0 text-destructive",
 }: ConfirmDeleteFormProps) {
+  const t = useTranslations("confirmDeleteForm");
+  const resolvedTriggerLabel = triggerLabel ?? t("deleteDefault");
   const formId = useId();
   const [open, setOpen] = useState(false);
 
@@ -44,7 +47,7 @@ export function ConfirmDeleteForm({
         <DialogTrigger
           render={<Button type="button" variant="link" className={triggerClassName} />}
         >
-          {triggerLabel}
+          {resolvedTriggerLabel}
         </DialogTrigger>
         <DialogContent>
           <DialogHeader>
@@ -53,14 +56,14 @@ export function ConfirmDeleteForm({
           </DialogHeader>
           <DialogFooter>
             <DialogClose render={<Button type="button" variant="outline" />}>
-              Cancelar
+              {t("cancel")}
             </DialogClose>
             <SubmitButton
-              pendingLabel="Excluindo..."
+              pendingLabel={t("deletingPending")}
               form={formId}
               variant="destructive"
             >
-              {triggerLabel}
+              {resolvedTriggerLabel}
             </SubmitButton>
           </DialogFooter>
         </DialogContent>

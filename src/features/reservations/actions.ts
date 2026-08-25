@@ -1,8 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 
+import { translateFieldErrors } from "@/i18n/translate-field-errors";
 import { createClient } from "@/lib/supabase/server";
 import {
   isValidReservationId,
@@ -33,14 +35,15 @@ export async function createReservation(
   _previousState: ReservationActionState,
   formData: FormData,
 ): Promise<ReservationActionState> {
+  const t = await getTranslations("reservationForm");
   const tripId = String(formData.get("tripId") ?? "");
   const validation = validateReservationInput(formData);
 
   if (!isValidReservationId(tripId)) {
-    return { message: "Não foi possível identificar a viagem." };
+    return { message: t("actionErrors.identifyTrip") };
   }
   if (!validation.success) {
-    return { errors: validation.errors };
+    return { errors: translateFieldErrors(t, validation.errors) };
   }
 
   const { supabase, user } = await authenticatedClient();
@@ -62,7 +65,7 @@ export async function createReservation(
   });
 
   if (error) {
-    return { message: "Não foi possível adicionar esta reserva. Verifique seu acesso à viagem e tente novamente." };
+    return { message: t("actionErrors.addFailed") };
   }
 
   revalidatePath(`/trips/${tripId}`);
@@ -73,15 +76,16 @@ export async function updateReservation(
   _previousState: ReservationActionState,
   formData: FormData,
 ): Promise<ReservationActionState> {
+  const t = await getTranslations("reservationForm");
   const tripId = String(formData.get("tripId") ?? "");
   const reservationId = String(formData.get("reservationId") ?? "");
   const validation = validateReservationInput(formData);
 
   if (!isValidReservationId(tripId) || !isValidReservationId(reservationId)) {
-    return { message: "Não foi possível identificar a reserva." };
+    return { message: t("actionErrors.identifyReservation") };
   }
   if (!validation.success) {
-    return { errors: validation.errors };
+    return { errors: translateFieldErrors(t, validation.errors) };
   }
 
   const { supabase } = await authenticatedClient();
@@ -106,7 +110,7 @@ export async function updateReservation(
     .eq("trip_id", tripId);
 
   if (error) {
-    return { message: "Não foi possível atualizar esta reserva. Tente novamente." };
+    return { message: t("actionErrors.updateFailed") };
   }
 
   revalidatePath(`/trips/${tripId}`);

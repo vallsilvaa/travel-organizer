@@ -1,8 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 
+import { translateFieldErrors } from "@/i18n/translate-field-errors";
 import { createClient } from "@/lib/supabase/server";
 import {
   isValidExpenseId,
@@ -34,19 +36,22 @@ function participantIdsFrom(formData: FormData) {
     .filter(Boolean);
 }
 
-function expenseErrorMessage(error: { message?: string }) {
+function expenseErrorMessage(
+  t: Awaited<ReturnType<typeof getTranslations<"expenseForm">>>,
+  error: { message?: string },
+) {
   switch (error.message) {
     case "shares_do_not_match_total":
-      return "A soma da divisão deve ser igual ao valor total da despesa.";
+      return t("actionErrors.sharesTotalMismatch");
     case "invalid_participant":
     case "invalid_payer":
-      return "Só é possível dividir a despesa entre participantes da viagem.";
+      return t("actionErrors.invalidParticipant");
     case "not_authorized":
-      return "Você não tem acesso a esta viagem.";
+      return t("actionErrors.notAuthorized");
     case "trip_archived":
-      return "Esta viagem está arquivada. Reative-a para alterar despesas.";
+      return t("actionErrors.tripArchived");
     default:
-      return "Não foi possível salvar esta despesa. Verifique o pagador, a divisão e seu acesso à viagem.";
+      return t("actionErrors.genericFailed");
   }
 }
 
@@ -54,14 +59,15 @@ export async function createExpense(
   _previousState: ExpenseActionState,
   formData: FormData,
 ): Promise<ExpenseActionState> {
+  const t = await getTranslations("expenseForm");
   const tripId = String(formData.get("tripId") ?? "");
   const validation = validateExpenseInput(formData);
 
   if (!isValidExpenseId(tripId)) {
-    return { message: "Não foi possível identificar a viagem." };
+    return { message: t("actionErrors.identifyTrip") };
   }
   if (!validation.success) {
-    return { errors: validation.errors };
+    return { errors: translateFieldErrors(t, validation.errors) };
   }
 
   const { shares, error: sharesError } = parseExpenseShares(
@@ -70,7 +76,7 @@ export async function createExpense(
     validation.data.amount,
   );
   if (sharesError) {
-    return { errors: { split: sharesError } };
+    return { errors: translateFieldErrors(t, { split: sharesError }) };
   }
 
   const { supabase } = await authenticatedClient();
@@ -89,7 +95,7 @@ export async function createExpense(
   });
 
   if (error) {
-    return { message: expenseErrorMessage(error) };
+    return { message: expenseErrorMessage(t, error) };
   }
 
   revalidatePath(`/trips/${tripId}`);
@@ -100,15 +106,16 @@ export async function updateExpense(
   _previousState: ExpenseActionState,
   formData: FormData,
 ): Promise<ExpenseActionState> {
+  const t = await getTranslations("expenseForm");
   const tripId = String(formData.get("tripId") ?? "");
   const expenseId = String(formData.get("expenseId") ?? "");
   const validation = validateExpenseInput(formData);
 
   if (!isValidExpenseId(tripId) || !isValidExpenseId(expenseId)) {
-    return { message: "Não foi possível identificar a despesa." };
+    return { message: t("actionErrors.identifyExpense") };
   }
   if (!validation.success) {
-    return { errors: validation.errors };
+    return { errors: translateFieldErrors(t, validation.errors) };
   }
 
   const { shares, error: sharesError } = parseExpenseShares(
@@ -117,7 +124,7 @@ export async function updateExpense(
     validation.data.amount,
   );
   if (sharesError) {
-    return { errors: { split: sharesError } };
+    return { errors: translateFieldErrors(t, { split: sharesError }) };
   }
 
   const { supabase } = await authenticatedClient();
@@ -137,7 +144,7 @@ export async function updateExpense(
   });
 
   if (error) {
-    return { message: expenseErrorMessage(error) };
+    return { message: expenseErrorMessage(t, error) };
   }
 
   revalidatePath(`/trips/${tripId}`);

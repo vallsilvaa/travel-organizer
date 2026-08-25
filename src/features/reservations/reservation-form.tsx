@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -15,12 +16,13 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 
+import { localeTag, type Locale } from "@/i18n/locale";
 import {
   createReservation,
   updateReservation,
   type ReservationActionState,
 } from "./actions";
-import { reservationTypeLabels, reservationTypes } from "./validation";
+import { getReservationTypeLabels, reservationTypes } from "./validation";
 
 type ReservationFormProps = {
   reservation?: {
@@ -44,23 +46,28 @@ type ReservationFormProps = {
 
 const initialState: ReservationActionState = {};
 
-function formatItemDate(value: string) {
-  return new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeZone: "UTC" }).format(
+function formatItemDate(value: string, locale: Locale) {
+  return new Intl.DateTimeFormat(localeTag(locale), { dateStyle: "short", timeZone: "UTC" }).format(
     new Date(`${value}T00:00:00Z`),
   );
 }
 
 export function ReservationForm({ reservation, itineraryItems = [], tripId }: ReservationFormProps) {
+  const t = useTranslations("reservationForm");
+  const tCommon = useTranslations("common");
+  const tReservationTypes = useTranslations("categories.reservationType");
+  const reservationTypeLabels = getReservationTypeLabels(tReservationTypes);
+  const locale = useLocale() as Locale;
   const action = reservation ? updateReservation : createReservation;
   const [state, formAction, pending] = useActionState(action, initialState);
 
   useEffect(() => {
     if (state.success) {
-      toast.success(reservation ? "Reserva atualizada." : "Reserva adicionada.");
+      toast.success(reservation ? t("toastUpdated") : t("toastAdded"));
     } else if (state.message) {
       toast.error(state.message);
     }
-  }, [state, reservation]);
+  }, [state, reservation, t]);
 
   return (
     <form action={formAction} className="grid gap-4 sm:grid-cols-2">
@@ -68,7 +75,7 @@ export function ReservationForm({ reservation, itineraryItems = [], tripId }: Re
       {reservation ? <input type="hidden" name="reservationId" value={reservation.id} /> : null}
 
       <div className="space-y-2">
-        <Label htmlFor="reservation-type">Tipo</Label>
+        <Label htmlFor="reservation-type">{t("typeLabel")}</Label>
         <Select required name="reservationType" defaultValue={reservation?.reservation_type ?? "flight"}>
           <SelectTrigger id="reservation-type" className="w-full">
             <SelectValue />
@@ -83,56 +90,56 @@ export function ReservationForm({ reservation, itineraryItems = [], tripId }: Re
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="reservation-title">Título</Label>
+        <Label htmlFor="reservation-title">{t("titleLabel")}</Label>
         <Input
           required
           maxLength={200}
           id="reservation-title"
           name="title"
           defaultValue={reservation?.title}
-          placeholder="Voo LATAM 3456"
+          placeholder={t("titlePlaceholder")}
         />
         {state.errors?.title ? <p className="text-sm text-destructive">{state.errors.title}</p> : null}
       </div>
 
       <div className="space-y-2">
         <Label htmlFor="reservation-provider">
-          Fornecedor <span className="font-normal text-muted-foreground">(opcional)</span>
+          {t("providerLabel")} <span className="font-normal text-muted-foreground">{tCommon("optional")}</span>
         </Label>
         <Input
           maxLength={200}
           id="reservation-provider"
           name="provider"
           defaultValue={reservation?.provider ?? ""}
-          placeholder="Companhia aérea, hotel ou empresa"
+          placeholder={t("providerPlaceholder")}
         />
         {state.errors?.provider ? <p className="text-sm text-destructive">{state.errors.provider}</p> : null}
       </div>
 
       <div className="space-y-2">
         <Label htmlFor="reservation-confirmationCode">
-          Código de confirmação <span className="font-normal text-muted-foreground">(opcional)</span>
+          {t("confirmationCodeLabel")} <span className="font-normal text-muted-foreground">{tCommon("optional")}</span>
         </Label>
         <Input
           maxLength={100}
           id="reservation-confirmationCode"
           name="confirmationCode"
           defaultValue={reservation?.confirmation_code ?? ""}
-          placeholder="Localizador ou número da reserva"
+          placeholder={t("confirmationCodePlaceholder")}
           autoComplete="off"
         />
         {state.errors?.confirmationCode ? <p className="text-sm text-destructive">{state.errors.confirmationCode}</p> : null}
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="reservation-startDate">Data de início</Label>
+        <Label htmlFor="reservation-startDate">{t("startDateLabel")}</Label>
         <Input required id="reservation-startDate" name="startDate" type="date" defaultValue={reservation?.start_date} />
         {state.errors?.startDate ? <p className="text-sm text-destructive">{state.errors.startDate}</p> : null}
       </div>
 
       <div className="space-y-2">
         <Label htmlFor="reservation-startTime">
-          Horário de início <span className="font-normal text-muted-foreground">(opcional)</span>
+          {t("startTimeLabel")} <span className="font-normal text-muted-foreground">{tCommon("optional")}</span>
         </Label>
         <Input id="reservation-startTime" name="startTime" type="time" defaultValue={reservation?.start_time?.slice(0, 5)} />
         {state.errors?.startTime ? <p className="text-sm text-destructive">{state.errors.startTime}</p> : null}
@@ -140,7 +147,7 @@ export function ReservationForm({ reservation, itineraryItems = [], tripId }: Re
 
       <div className="space-y-2">
         <Label htmlFor="reservation-endDate">
-          Data de término <span className="font-normal text-muted-foreground">(opcional)</span>
+          {t("endDateLabel")} <span className="font-normal text-muted-foreground">{tCommon("optional")}</span>
         </Label>
         <Input id="reservation-endDate" name="endDate" type="date" defaultValue={reservation?.end_date ?? ""} />
         {state.errors?.endDate ? <p className="text-sm text-destructive">{state.errors.endDate}</p> : null}
@@ -148,7 +155,7 @@ export function ReservationForm({ reservation, itineraryItems = [], tripId }: Re
 
       <div className="space-y-2">
         <Label htmlFor="reservation-endTime">
-          Horário de término <span className="font-normal text-muted-foreground">(opcional)</span>
+          {t("endTimeLabel")} <span className="font-normal text-muted-foreground">{tCommon("optional")}</span>
         </Label>
         <Input id="reservation-endTime" name="endTime" type="time" defaultValue={reservation?.end_time?.slice(0, 5) ?? ""} />
         {state.errors?.endTime ? <p className="text-sm text-destructive">{state.errors.endTime}</p> : null}
@@ -156,45 +163,45 @@ export function ReservationForm({ reservation, itineraryItems = [], tripId }: Re
 
       <div className="space-y-2">
         <Label htmlFor="reservation-location">
-          Local de origem <span className="font-normal text-muted-foreground">(opcional)</span>
+          {t("locationLabel")} <span className="font-normal text-muted-foreground">{tCommon("optional")}</span>
         </Label>
         <Input
           maxLength={200}
           id="reservation-location"
           name="location"
           defaultValue={reservation?.location ?? ""}
-          placeholder="Aeroporto, endereço ou ponto de partida"
+          placeholder={t("locationPlaceholder")}
         />
         {state.errors?.location ? <p className="text-sm text-destructive">{state.errors.location}</p> : null}
       </div>
 
       <div className="space-y-2">
         <Label htmlFor="reservation-destinationLocation">
-          Local de destino <span className="font-normal text-muted-foreground">(opcional)</span>
+          {t("destinationLocationLabel")} <span className="font-normal text-muted-foreground">{tCommon("optional")}</span>
         </Label>
         <Input
           maxLength={200}
           id="reservation-destinationLocation"
           name="destinationLocation"
           defaultValue={reservation?.destination_location ?? ""}
-          placeholder="Aeroporto, endereço ou ponto de chegada"
+          placeholder={t("destinationLocationPlaceholder")}
         />
         {state.errors?.destinationLocation ? <p className="text-sm text-destructive">{state.errors.destinationLocation}</p> : null}
       </div>
 
       <div className="space-y-2 sm:col-span-2">
         <Label htmlFor="reservation-itineraryItemId">
-          Vincular a um item do itinerário <span className="font-normal text-muted-foreground">(opcional)</span>
+          {t("linkItemLabel")} <span className="font-normal text-muted-foreground">{tCommon("optional")}</span>
         </Label>
         <Select name="itineraryItemId" defaultValue={reservation?.itinerary_item_id ?? "none"}>
           <SelectTrigger id="reservation-itineraryItemId" className="w-full">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="none">Nenhum</SelectItem>
+            <SelectItem value="none">{t("linkItemNone")}</SelectItem>
             {itineraryItems.map((item) => (
               <SelectItem key={item.id} value={item.id}>
-                {formatItemDate(item.item_date)} · {item.title}
+                {formatItemDate(item.item_date, locale)} · {item.title}
               </SelectItem>
             ))}
           </SelectContent>
@@ -204,7 +211,7 @@ export function ReservationForm({ reservation, itineraryItems = [], tripId }: Re
 
       <div className="space-y-2 sm:col-span-2">
         <Label htmlFor="reservation-notes">
-          Notas <span className="font-normal text-muted-foreground">(opcional)</span>
+          {t("notesLabel")} <span className="font-normal text-muted-foreground">{tCommon("optional")}</span>
         </Label>
         <Textarea
           maxLength={2000}
@@ -217,7 +224,7 @@ export function ReservationForm({ reservation, itineraryItems = [], tripId }: Re
       </div>
 
       <Button type="submit" disabled={pending} size="lg" className="sm:col-span-2 sm:justify-self-start">
-        {pending ? "Salvando..." : reservation ? "Salvar alterações" : "Adicionar reserva"}
+        {pending ? t("savePending") : reservation ? t("save") : t("add")}
       </Button>
     </form>
   );

@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
@@ -73,20 +74,21 @@ export async function inviteOrganizer(
   _previousState: InviteOrganizerState,
   formData: FormData,
 ): Promise<InviteOrganizerState> {
+  const t = await getTranslations("invitationActions");
   const tripId = String(formData.get("tripId") ?? "");
   const email = normalizeInvitationEmail(formData.get("email"));
 
   if (!isValidInvitationId(tripId)) {
-    return { error: "Não foi possível identificar a viagem." };
+    return { error: t("identifyTrip") };
   }
   if (!isValidInvitationEmail(email)) {
-    return { error: "Informe um e-mail válido." };
+    return { error: t("emailInvalid") };
   }
 
   const { supabase, user } = await authenticatedClient();
 
   if (user.email?.toLowerCase() === email) {
-    return { error: "Você já tem acesso a esta viagem." };
+    return { error: t("alreadyHasAccess") };
   }
 
   const { data: trip, error: tripError } = await supabase
@@ -97,7 +99,7 @@ export async function inviteOrganizer(
     .single();
 
   if (tripError || !trip) {
-    return { error: "Somente quem criou a viagem pode enviar convites." };
+    return { error: t("onlyCreatorCanInvite") };
   }
 
   const { error } = await supabase.from("trip_invitations").insert({
@@ -110,10 +112,7 @@ export async function inviteOrganizer(
 
   if (error) {
     return {
-      error:
-        error.code === "23505"
-          ? "Já existe um convite pendente para este e-mail."
-          : "Não foi possível criar o convite. Tente novamente.",
+      error: error.code === "23505" ? t("duplicatePending") : t("createFailed"),
     };
   }
 
@@ -127,13 +126,13 @@ export async function inviteOrganizer(
   const delivered = await sendInvitationEmail(
     email,
     trip.destination,
-    profile?.display_name ?? "Um organizador",
+    profile?.display_name ?? t("invitedByFallback"),
   );
 
   return {
     message: delivered
-      ? `Convite enviado para ${email}.`
-      : `Convite criado para ${email}, mas não foi possível enviar o e-mail agora. Você pode reenviar em instantes.`,
+      ? t("sentTo", { email })
+      : t("createdEmailFailed", { email }),
   };
 }
 
@@ -160,6 +159,7 @@ export async function resendInvitation(formData: FormData): Promise<void> {
     redirect(`/trips/${tripId}?tripError=resend_invitation_not_allowed`);
   }
 
+  const t = await getTranslations("invitationActions");
   const { data: profile } = await supabase
     .from("profiles")
     .select("display_name")
@@ -168,7 +168,7 @@ export async function resendInvitation(formData: FormData): Promise<void> {
   await sendInvitationEmail(
     invitation.email,
     invitation.trip_destination,
-    profile?.display_name ?? "Um organizador",
+    profile?.display_name ?? t("invitedByFallback"),
   );
 
   revalidatePath(`/trips/${tripId}`);

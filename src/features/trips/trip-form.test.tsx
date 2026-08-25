@@ -1,7 +1,13 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { createTranslator } from "@/i18n/test-mocks";
+
 import { TripForm } from "./trip-form";
+
+vi.mock("next-intl", () => ({
+  useTranslations: (namespace?: string) => createTranslator(namespace),
+}));
 
 afterEach(cleanup);
 

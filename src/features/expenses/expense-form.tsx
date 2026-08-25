@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -18,7 +19,7 @@ import { createExpense, updateExpense, type ExpenseActionState } from "./actions
 import {
   computeEqualShares,
   expenseCategories,
-  expenseCategoryLabels,
+  getExpenseCategoryLabels,
 } from "./validation";
 
 type Participant = { user_id: string; display_name: string; role: string };
@@ -52,6 +53,9 @@ export function ExpenseForm({
   participants,
   tripId,
 }: ExpenseFormProps) {
+  const t = useTranslations("expenseForm");
+  const tCategories = useTranslations("categories.expense");
+  const expenseCategoryLabels = getExpenseCategoryLabels(tCategories);
   const [state, formAction, pending] = useActionState(
     expense ? updateExpense : createExpense,
     initialState,
@@ -73,11 +77,11 @@ export function ExpenseForm({
 
   useEffect(() => {
     if (state.success) {
-      toast.success(expense ? "Despesa atualizada." : "Despesa adicionada.");
+      toast.success(expense ? t("toastUpdated") : t("toastAdded"));
     } else if (state.message) {
       toast.error(state.message);
     }
-  }, [state, expense]);
+  }, [state, expense, t]);
 
   const selectedIds = useMemo(
     () => participants.map((p) => p.user_id).filter((id) => selected.has(id)),
@@ -120,19 +124,19 @@ export function ExpenseForm({
         value={participants.map((p) => p.user_id).join(",")}
       />
       <div className="space-y-2 sm:col-span-2">
-        <Label htmlFor="description">Descrição</Label>
+        <Label htmlFor="description">{t("descriptionLabel")}</Label>
         <Input
           required
           maxLength={200}
           id="description"
           name="description"
           defaultValue={expense?.description}
-          placeholder="Reserva de jantar"
+          placeholder={t("descriptionPlaceholder")}
         />
         {state.errors?.description ? <p className="text-sm text-destructive">{state.errors.description}</p> : null}
       </div>
       <div className="space-y-2">
-        <Label htmlFor="amount">Valor</Label>
+        <Label htmlFor="amount">{t("amountLabel")}</Label>
         <Input
           required
           min="0.01"
@@ -148,7 +152,7 @@ export function ExpenseForm({
         {state.errors?.amount ? <p className="text-sm text-destructive">{state.errors.amount}</p> : null}
       </div>
       <div className="space-y-2">
-        <Label htmlFor="currency">Moeda</Label>
+        <Label htmlFor="currency">{t("currencyLabel")}</Label>
         <Input
           required
           minLength={3}
@@ -162,7 +166,7 @@ export function ExpenseForm({
         {state.errors?.currency ? <p className="text-sm text-destructive">{state.errors.currency}</p> : null}
       </div>
       <div className="space-y-2">
-        <Label htmlFor="category">Categoria</Label>
+        <Label htmlFor="category">{t("categoryLabel")}</Label>
         <Select required name="category" defaultValue={expense?.category ?? "other"}>
           <SelectTrigger id="category" className="w-full">
             <SelectValue />
@@ -176,15 +180,15 @@ export function ExpenseForm({
         {state.errors?.category ? <p className="text-sm text-destructive">{state.errors.category}</p> : null}
       </div>
       <div className="space-y-2">
-        <Label htmlFor="date">Data</Label>
+        <Label htmlFor="date">{t("dateLabel")}</Label>
         <Input required id="date" name="date" type="date" defaultValue={expense?.expense_date} />
         {state.errors?.date ? <p className="text-sm text-destructive">{state.errors.date}</p> : null}
       </div>
       <div className="space-y-2 sm:col-span-2">
-        <Label htmlFor="payerId">Pagador</Label>
+        <Label htmlFor="payerId">{t("payerLabel")}</Label>
         <Select required name="payerId" defaultValue={expense?.payer_id}>
           <SelectTrigger id="payerId" className="w-full">
-            <SelectValue placeholder="Escolha um participante" />
+            <SelectValue placeholder={t("payerPlaceholder")} />
           </SelectTrigger>
           <SelectContent>
             {participants.map((participant) => (
@@ -204,7 +208,7 @@ export function ExpenseForm({
             checked={splitEnabled}
             onChange={(event) => setSplitEnabled(event.target.checked)}
           />
-          Dividir despesa entre participantes
+          {t("splitToggleLabel")}
         </label>
 
         {splitEnabled ? (
@@ -217,7 +221,7 @@ export function ExpenseForm({
                   checked={splitMode === "equal"}
                   onChange={() => setSplitMode("equal")}
                 />
-                Igualmente
+                {t("splitEqual")}
               </label>
               <label className="flex items-center gap-1.5">
                 <input
@@ -226,7 +230,7 @@ export function ExpenseForm({
                   checked={splitMode === "custom"}
                   onChange={() => setSplitMode("custom")}
                 />
-                Personalizado
+                {t("splitCustom")}
               </label>
             </div>
 
@@ -274,7 +278,10 @@ export function ExpenseForm({
             </ul>
 
             <p className={`text-sm ${splitMatches ? "text-slate-600" : "text-destructive"}`}>
-              Dividido: {(splitTotalCents / 100).toFixed(2)} / {(amountCents / 100).toFixed(2)}
+              {t("splitProgress", {
+                current: (splitTotalCents / 100).toFixed(2),
+                total: (amountCents / 100).toFixed(2),
+              })}
             </p>
             {state.errors?.split ? <p className="text-sm text-destructive">{state.errors.split}</p> : null}
           </div>
@@ -287,7 +294,7 @@ export function ExpenseForm({
         size="lg"
         className="sm:col-span-2 sm:justify-self-start"
       >
-        {pending ? "Salvando..." : expense ? "Salvar alterações" : "Adicionar despesa"}
+        {pending ? t("savePending") : expense ? t("save") : t("add")}
       </Button>
     </form>
   );

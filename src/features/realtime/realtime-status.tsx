@@ -1,13 +1,8 @@
 "use client";
 
-import { useTripRealtime } from "./use-trip-realtime";
+import { useTranslations } from "next-intl";
 
-const statusLabels = {
-  connecting: "Conectando...",
-  connected: "Ao vivo",
-  reconnecting: "Reconectando...",
-  disconnected: "Desconectado",
-} as const;
+import { useTripRealtime } from "./use-trip-realtime";
 
 const statusDotClass = {
   connecting: "bg-slate-400",
@@ -17,6 +12,7 @@ const statusDotClass = {
 } as const;
 
 export function RealtimeStatus({ tripId }: { tripId: string }) {
+  const t = useTranslations("realtimeStatus");
   const status = useTripRealtime(tripId);
 
   return (
@@ -28,7 +24,7 @@ export function RealtimeStatus({ tripId }: { tripId: string }) {
         className={`h-1.5 w-1.5 rounded-full ${statusDotClass[status]}`}
         aria-hidden="true"
       />
-      {statusLabels[status]}
+      {t(status)}
     </span>
   );
 }

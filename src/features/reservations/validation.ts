@@ -6,11 +6,11 @@ const timePattern = /^([01]\d|2[0-3]):[0-5]\d$/;
 export const reservationTypes = ["flight", "lodging", "transport"] as const;
 export type ReservationType = (typeof reservationTypes)[number];
 
-export const reservationTypeLabels: Record<ReservationType, string> = {
-  flight: "Voo",
-  lodging: "Hospedagem",
-  transport: "Transporte",
-};
+// Built from a translator scoped to "categories.reservationType" at each call
+// site rather than a hardcoded record - this module has no render-time locale.
+export function getReservationTypeLabels(t: (type: ReservationType) => string): Record<ReservationType, string> {
+  return Object.fromEntries(reservationTypes.map((type) => [type, t(type)])) as Record<ReservationType, string>;
+}
 
 export type ReservationFieldErrors = Partial<
   Record<
@@ -77,45 +77,45 @@ export function validateReservationInput(formData: FormData):
   const errors: ReservationFieldErrors = {};
 
   if (itineraryItemId && !uuidPattern.test(itineraryItemId)) {
-    errors.itineraryItemId = "Selecione um item do itinerário válido.";
+    errors.itineraryItemId = "itineraryItemInvalid";
   }
 
   if (!isReservationType(reservationType)) {
-    errors.reservationType = "Selecione um tipo de reserva válido.";
+    errors.reservationType = "typeInvalid";
   }
   if (!title || title.length > 200) {
-    errors.title = "Informe um título com até 200 caracteres.";
+    errors.title = "titleRequired";
   }
   if (provider && provider.length > 200) {
-    errors.provider = "O fornecedor deve ter até 200 caracteres.";
+    errors.provider = "providerTooLong";
   }
   if (confirmationCode && confirmationCode.length > 100) {
-    errors.confirmationCode = "O código de confirmação deve ter até 100 caracteres.";
+    errors.confirmationCode = "confirmationCodeTooLong";
   }
   if (!datePattern.test(startDate) || Number.isNaN(Date.parse(`${startDate}T00:00:00Z`))) {
-    errors.startDate = "Informe uma data de início válida.";
+    errors.startDate = "startDateInvalid";
   }
   if (startTime && !timePattern.test(startTime)) {
-    errors.startTime = "Informe um horário de início válido.";
+    errors.startTime = "startTimeInvalid";
   }
   if (endDate) {
     if (!datePattern.test(endDate) || Number.isNaN(Date.parse(`${endDate}T00:00:00Z`))) {
-      errors.endDate = "Informe uma data de término válida.";
+      errors.endDate = "endDateInvalid";
     } else if (datePattern.test(startDate) && endDate < startDate) {
-      errors.endDate = "A data de término não pode ser anterior à data de início.";
+      errors.endDate = "endDateBeforeStart";
     }
   }
   if (endTime && !timePattern.test(endTime)) {
-    errors.endTime = "Informe um horário de término válido.";
+    errors.endTime = "endTimeInvalid";
   }
   if (location && location.length > 200) {
-    errors.location = "O local deve ter até 200 caracteres.";
+    errors.location = "locationTooLong";
   }
   if (destinationLocation && destinationLocation.length > 200) {
-    errors.destinationLocation = "O destino deve ter até 200 caracteres.";
+    errors.destinationLocation = "destinationLocationTooLong";
   }
   if (notes && notes.length > 2000) {
-    errors.notes = "As notas devem ter até 2.000 caracteres.";
+    errors.notes = "notesTooLong";
   }
 
   return Object.keys(errors).length

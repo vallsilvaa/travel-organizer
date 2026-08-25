@@ -17,6 +17,12 @@ const mocks = vi.hoisted(() => ({
 vi.mock("@/lib/supabase/server", () => ({ createClient: mocks.createClient }));
 vi.mock("next/cache", () => ({ revalidatePath: mocks.revalidatePath }));
 vi.mock("next/navigation", () => ({ redirect: mocks.redirect }));
+vi.mock("next-intl/server", async () => {
+  const { createTranslator } = await import("@/i18n/test-mocks");
+  return {
+    getTranslations: async (namespace?: string) => createTranslator(namespace),
+  };
+});
 
 import { createComment, deleteComment, updateComment } from "./actions";
 

@@ -1,7 +1,14 @@
 import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
+
+import { createTranslator } from "@/i18n/test-mocks";
 
 import { ReservationForm } from "./reservation-form";
+
+vi.mock("next-intl", () => ({
+  useTranslations: (namespace?: string) => createTranslator(namespace),
+  useLocale: () => "pt",
+}));
 
 afterEach(cleanup);
 
