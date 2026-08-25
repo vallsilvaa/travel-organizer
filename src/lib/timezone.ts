@@ -33,3 +33,14 @@ export function todayInTimeZone(timeZone: string, now = new Date()) {
     day: "2-digit",
   }).format(now);
 }
+
+/** Whole calendar days from `today` until `targetDate` (both YYYY-MM-DD).
+ * Pure date-string arithmetic at UTC midnight, the same pattern already used
+ * for ICS export math - timezone-awareness belongs to whoever produced
+ * `today` (see todayInTimeZone), not to this function. */
+export function daysUntil(targetDate: string, today: string) {
+  const msPerDay = 24 * 60 * 60 * 1000;
+  return Math.round(
+    (Date.parse(`${targetDate}T00:00:00Z`) - Date.parse(`${today}T00:00:00Z`)) / msPerDay,
+  );
+}

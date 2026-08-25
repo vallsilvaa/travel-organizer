@@ -41,6 +41,8 @@ const trip = {
   end_date: "2026-09-10",
   created_at: "2026-08-01T00:00:00Z",
   created_by: userId,
+  timezone: "UTC",
+  archived_at: null,
 };
 
 const task = {
@@ -135,5 +137,59 @@ describe("TripPage", () => {
 
     expect(screen.queryByText("Editar dados da viagem")).toBeNull();
     expect(screen.queryByRole("button", { name: "Excluir viagem" })).toBeNull();
+  });
+
+  describe("days-remaining countdown", () => {
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it("counts down the days until an upcoming trip", async () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date("2026-08-20T12:00:00Z"));
+
+      render(await TripPage({
+        params: Promise.resolve({ tripId }),
+        searchParams: Promise.resolve({}),
+      }));
+
+      expect(screen.getByText("Faltam 12 dias para a viagem")).toBeTruthy();
+    });
+
+    it("uses the singular for exactly one day left", async () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date("2026-08-31T12:00:00Z"));
+
+      render(await TripPage({
+        params: Promise.resolve({ tripId }),
+        searchParams: Promise.resolve({}),
+      }));
+
+      expect(screen.getByText("Falta 1 dia para a viagem")).toBeTruthy();
+    });
+
+    it("shows an in-progress label while the trip is under way", async () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date("2026-09-05T12:00:00Z"));
+
+      render(await TripPage({
+        params: Promise.resolve({ tripId }),
+        searchParams: Promise.resolve({}),
+      }));
+
+      expect(screen.getByText("A viagem está em andamento")).toBeTruthy();
+    });
+
+    it("hides the countdown once the trip has ended", async () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date("2026-09-15T12:00:00Z"));
+
+      render(await TripPage({
+        params: Promise.resolve({ tripId }),
+        searchParams: Promise.resolve({}),
+      }));
+
+      expect(screen.queryByText(/faltam|falta 1 dia|em andamento/i)).toBeNull();
+    });
   });
 });
