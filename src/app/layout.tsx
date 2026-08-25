@@ -6,7 +6,7 @@ import "./globals.css";
 
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
-import { localeTag } from "@/i18n/request";
+import { localeTag } from "@/i18n/locale";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",

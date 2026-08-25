@@ -14,3 +14,7 @@ export const localeTags: Record<Locale, string> = {
   pt: "pt-BR",
   en: "en-US",
 };
+
+export function localeTag(locale: string) {
+  return isLocale(locale) ? localeTags[locale] : localeTags[defaultLocale];
+}

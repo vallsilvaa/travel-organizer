@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { getRequestConfig } from "next-intl/server";
 
-import { defaultLocale, isLocale, localeCookieName, localeTags } from "./locale";
+import { defaultLocale, isLocale, localeCookieName } from "./locale";
 
 // No path-based routing (no /pt or /en segment): the locale is a plain
 // user preference kept in a cookie, so every existing URL (trip invites,
@@ -33,7 +33,3 @@ export default getRequestConfig(async () => {
     getMessageFallback: ({ key }) => key,
   };
 });
-
-export function localeTag(locale: string) {
-  return isLocale(locale) ? localeTags[locale] : localeTags[defaultLocale];
-}
