@@ -19,6 +19,18 @@ vi.mock("next-intl", async () => {
     useLocale: () => "pt",
   };
 });
+vi.mock("next-intl/server", async () => {
+  const { createFormatter, createTranslator, ptMessages } = await import("@/i18n/test-mocks");
+  return {
+    getTranslations: async (namespace?: string) => createTranslator(namespace),
+    getLocale: async () => "pt",
+    getMessages: async () => ptMessages,
+    getFormatter: async () => createFormatter(),
+  };
+});
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ refresh: vi.fn() }),
+}));
 
 import TripPage from "./page";
 
