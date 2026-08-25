@@ -35,7 +35,7 @@ import {
   taskCategoryLabels,
   type TaskCategory,
 } from "@/features/tasks/templates";
-import { localeTag } from "@/i18n/request";
+import { localeTag } from "@/i18n/locale";
 import { createClient } from "@/lib/supabase/server";
 import { Badge } from "@/components/ui/badge";
 import { ItemActionsMenu } from "@/components/item-actions-menu";
