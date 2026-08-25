@@ -54,6 +54,13 @@ type Trip = {
   timezone: string;
 };
 
+type DashboardTripStats = {
+  trip_id: string;
+  readiness_percentage: number;
+  critical_open_count: number;
+  participant_count: number;
+};
+
 type TripStatus = "upcoming" | "active" | "completed" | "archived";
 
 const statusFilters = ["all", "upcoming", "active", "completed", "archived"] as const;
@@ -115,7 +122,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     redirect("/auth/sign-in?error=authentication_required");
   }
 
-  const [{ data: profile }, { data: trips, error: tripsError }, { data: notifications }] =
+  const [{ data: profile }, { data: trips, error: tripsError }, { data: notifications }, { data: tripStats }] =
     await Promise.all([
       supabase
         .from("profiles")
@@ -130,7 +137,11 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         .select("id, notification_type, title, body, link_path, read_at, created_at")
         .order("created_at", { ascending: false })
         .limit(20),
+      supabase.rpc("get_dashboard_trip_stats"),
     ]);
+  const tripStatsByTripId = new Map(
+    ((tripStats ?? []) as DashboardTripStats[]).map((stats) => [stats.trip_id, stats]),
+  );
 
   const displayName = profile?.display_name ?? user.email ?? "Viajante";
   const { data: pendingInvitations, error: invitationsError } = user.email
@@ -403,6 +414,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
               <ul className="mt-6 grid gap-4 sm:grid-cols-2">
                 {filteredTrips.map((trip) => {
                   const status = tripStatus(trip);
+                  const stats = tripStatsByTripId.get(trip.id);
                   return (
                     <li key={trip.id}>
                       <Link
@@ -425,6 +437,19 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                           {formatDate(trip.start_date)}
                           {trip.end_date ? ` – ${formatDate(trip.end_date)}` : ""}
                         </p>
+                        {stats ? (
+                          <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-600">
+                            <span>{stats.readiness_percentage}% pronto</span>
+                            <span aria-hidden="true">·</span>
+                            <span className={stats.critical_open_count ? "font-semibold text-amber-800" : undefined}>
+                              {stats.critical_open_count} crítica{stats.critical_open_count === 1 ? "" : "s"} em aberto
+                            </span>
+                            <span aria-hidden="true">·</span>
+                            <span>
+                              {stats.participant_count} participante{stats.participant_count === 1 ? "" : "s"}
+                            </span>
+                          </div>
+                        ) : null}
                       </Link>
                     </li>
                   );

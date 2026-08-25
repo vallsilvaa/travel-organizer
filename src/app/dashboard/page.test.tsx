@@ -5,6 +5,7 @@ const mocks = vi.hoisted(() => ({
   createClient: vi.fn(),
   from: vi.fn(),
   getUser: vi.fn(),
+  rpc: vi.fn(),
 }));
 
 vi.mock("@/lib/supabase/server", () => ({ createClient: mocks.createClient }));
@@ -81,6 +82,7 @@ describe("DashboardPage", () => {
     mocks.getUser.mockResolvedValue({
       data: { user: { id: "user-1", email: "traveler@example.com" } },
     });
+    mocks.rpc.mockResolvedValue({ data: [] });
     mocks.from.mockImplementation((table: string) => {
       if (table === "profiles") {
         return queryBuilder({ data: { display_name: "Traveler", task_reminders_enabled: true } });
@@ -96,6 +98,7 @@ describe("DashboardPage", () => {
     mocks.createClient.mockResolvedValue({
       auth: { getUser: mocks.getUser },
       from: mocks.from,
+      rpc: mocks.rpc,
     });
   });
 
@@ -176,6 +179,43 @@ describe("DashboardPage", () => {
       render(await DashboardPage({ searchParams: Promise.resolve({ q: "nowhere" }) }));
 
       expect(screen.getByText(/nenhuma viagem encontrada com esses filtros/i)).toBeTruthy();
+    });
+
+    it("shows readiness, critical, and participant stats on each trip card", async () => {
+      mocks.rpc.mockResolvedValue({
+        data: [
+          {
+            trip_id: upcomingTrip.id,
+            readiness_percentage: 40,
+            critical_open_count: 2,
+            participant_count: 3,
+          },
+        ],
+      });
+
+      render(await DashboardPage({ searchParams: Promise.resolve({}) }));
+
+      expect(screen.getByText("40% pronto")).toBeTruthy();
+      expect(screen.getByText("2 críticas em aberto")).toBeTruthy();
+      expect(screen.getByText("3 participantes")).toBeTruthy();
+    });
+
+    it("still shows stats for an archived trip", async () => {
+      mocks.rpc.mockResolvedValue({
+        data: [
+          {
+            trip_id: archivedTrip.id,
+            readiness_percentage: 100,
+            critical_open_count: 0,
+            participant_count: 2,
+          },
+        ],
+      });
+
+      render(await DashboardPage({ searchParams: Promise.resolve({ status: "archived" }) }));
+
+      expect(screen.getByText("100% pronto")).toBeTruthy();
+      expect(screen.getByText("0 críticas em aberto")).toBeTruthy();
     });
   });
 });
