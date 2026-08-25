@@ -329,8 +329,8 @@ describe("TripPage", () => {
         searchParams: Promise.resolve({ expenseView: "category" }),
       }));
 
-      expect(screen.getByText("Hospedagem")).toBeTruthy();
-      expect(screen.getByText("Alimentação")).toBeTruthy();
+      expect(screen.getByRole("heading", { name: "Hospedagem" })).toBeTruthy();
+      expect(screen.getByRole("heading", { name: "Alimentação" })).toBeTruthy();
       expect(screen.getByText("Hotel")).toBeTruthy();
       expect(screen.getByText("Jantar")).toBeTruthy();
       expect(screen.getByRole("link", { name: "Por categoria" }).getAttribute("aria-current")).toBe("true");
