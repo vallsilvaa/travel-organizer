@@ -17,7 +17,7 @@ describe("comment validation", () => {
   it("rejects an empty comment", () => {
     expect(validateCommentBody("   ")).toEqual({
       success: false,
-      error: "Informe um comentário com até 2.000 caracteres.",
+      error: "bodyInvalid",
     });
   });
 

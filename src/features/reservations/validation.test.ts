@@ -71,7 +71,7 @@ describe("validateReservationInput", () => {
 
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.errors.itineraryItemId).toBe("Selecione um item do itinerário válido.");
+      expect(result.errors.itineraryItemId).toBe("itineraryItemInvalid");
     }
   });
 
@@ -109,7 +109,7 @@ describe("validateReservationInput", () => {
 
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.errors.reservationType).toBe("Selecione um tipo de reserva válido.");
+      expect(result.errors.reservationType).toBe("typeInvalid");
     }
   });
 
@@ -122,8 +122,8 @@ describe("validateReservationInput", () => {
 
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.errors.title).toBe("Informe um título com até 200 caracteres.");
-      expect(result.errors.startDate).toBe("Informe uma data de início válida.");
+      expect(result.errors.title).toBe("titleRequired");
+      expect(result.errors.startDate).toBe("startDateInvalid");
     }
   });
 
@@ -136,7 +136,7 @@ describe("validateReservationInput", () => {
 
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.errors.endDate).toBe("A data de término não pode ser anterior à data de início.");
+      expect(result.errors.endDate).toBe("endDateBeforeStart");
     }
   });
 });

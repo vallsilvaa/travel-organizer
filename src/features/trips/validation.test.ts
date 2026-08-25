@@ -33,8 +33,8 @@ describe("validateTripInput", () => {
       tripForm({ destination: " ", startDate: "2026-02-30", timezone: "UTC" }),
     );
 
-    expect(result.errors.destination).toBe("O destino é obrigatório.");
-    expect(result.errors.startDate).toBe("Informe uma data de início válida.");
+    expect(result.errors.destination).toBe("destinationRequired");
+    expect(result.errors.startDate).toBe("startDateInvalid");
   });
 
   it("rejects an end date before the start date", () => {
@@ -47,20 +47,18 @@ describe("validateTripInput", () => {
       }),
     );
 
-    expect(result.errors.endDate).toBe(
-      "A data de término não pode ser anterior à data de início.",
-    );
+    expect(result.errors.endDate).toBe("endDateBeforeStart");
   });
 
   it("rejects a missing or invalid timezone", () => {
     const missing = validateTripInput(
       tripForm({ destination: "London", startDate: "2026-10-10" }),
     );
-    expect(missing.errors.timezone).toBe("Selecione um fuso horário válido.");
+    expect(missing.errors.timezone).toBe("timezoneInvalid");
 
     const invalid = validateTripInput(
       tripForm({ destination: "London", startDate: "2026-10-10", timezone: "Mars/Colony" }),
     );
-    expect(invalid.errors.timezone).toBe("Selecione um fuso horário válido.");
+    expect(invalid.errors.timezone).toBe("timezoneInvalid");
   });
 });
