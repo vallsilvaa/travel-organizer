@@ -1,0 +1,103 @@
+{
+  "common": {
+    "appName": "Travel Organizer"
+  },
+  "themeToggle": {
+    "toggleLabel": "Toggle theme",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
+  },
+  "languageSwitcher": {
+    "toggleLabel": "Toggle language",
+    "pt": "Português",
+    "en": "English"
+  },
+  "home": {
+    "title": "Everything for your next trip, organized in one place.",
+    "subtitle": "Plan itineraries, organize tasks, collaborate, and track expenses with your travel organizer.",
+    "createAccount": "Create account",
+    "signIn": "Sign in",
+    "notice": "The project's foundation is ready. Features will be delivered incrementally from the MVP backlog."
+  },
+  "notFound": {
+    "title": "Page not found",
+    "description": "The address you visited doesn't exist or was moved.",
+    "goToDashboard": "Go to dashboard",
+    "goHome": "Home page"
+  },
+  "tripNotFound": {
+    "title": "Trip unavailable",
+    "description": "This trip couldn't be opened. It may no longer exist, may have been deleted by the person who created it, or you may not (or no longer) have access to it."
+  },
+  "errorBoundary": {
+    "title": "Something went wrong",
+    "description": "This page could not be loaded. You can try again or go somewhere safe.",
+    "retry": "Try again",
+    "goToDashboard": "Go to dashboard"
+  },
+  "auth": {
+    "signIn": {
+      "title": "Welcome back",
+      "description": "Sign in to access your private trips and planning space.",
+      "alternateText": "New to Travel Organizer?",
+      "alternateLabel": "Create an account",
+      "email": "Email",
+      "password": "Password",
+      "forgotPassword": "Forgot my password",
+      "submitPending": "Signing in...",
+      "submit": "Sign in"
+    },
+    "signUp": {
+      "title": "Create your account",
+      "description": "Your trips, tasks, comments, and expenses stay private to invited participants.",
+      "alternateText": "Already have an account?",
+      "alternateLabel": "Sign in",
+      "name": "Name",
+      "email": "Email",
+      "password": "Password",
+      "passwordHint": "At least eight characters.",
+      "passwordConfirmation": "Confirm password",
+      "submitPending": "Creating account...",
+      "submit": "Create account"
+    },
+    "forgotPassword": {
+      "title": "Forgot your password?",
+      "description": "Enter your email and, if there's an account associated with it, we'll send a link to reset your password.",
+      "alternateText": "Remembered your password?",
+      "alternateLabel": "Back to sign in",
+      "email": "Email",
+      "submitPending": "Sending...",
+      "submit": "Send reset link"
+    },
+    "resetPassword": {
+      "title": "Set a new password",
+      "description": "Choose a new password for your account.",
+      "alternateText": "Changed your mind?",
+      "alternateLabel": "Back to sign in",
+      "password": "New password",
+      "passwordConfirmation": "Confirm new password",
+      "submitPending": "Saving...",
+      "submit": "Save new password"
+    },
+    "messages": {
+      "authentication_required": "Sign in to continue.",
+      "check_email": "Check your email to confirm your account before signing in.",
+      "invalid_credentials": "Incorrect email or password.",
+      "invalid_email": "Enter a valid email.",
+      "invalid_name": "Enter a name with at least two characters.",
+      "invalid_password": "Use at least eight characters for your password.",
+      "password_mismatch": "Passwords don't match.",
+      "rate_limited": "Too many attempts. Wait a moment and try again.",
+      "signup_failed": "Could not create your account. Please try again.",
+      "callback_failed": "The confirmation link is invalid or expired.",
+      "check_email_reset": "If that email exists, we sent a link to reset your password.",
+      "reset_link_invalid": "The reset link is invalid or expired. Request a new one.",
+      "password_update_failed": "Could not update your password. Please try again.",
+      "password_updated": "Password updated successfully.",
+      "invalid_display_name": "Enter a name with at least two characters.",
+      "profile_update_failed": "Could not update your profile. Please try again.",
+      "profile_updated": "Profile updated successfully."
+    }
+  }
+}

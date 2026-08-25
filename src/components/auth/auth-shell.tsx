@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
+import { LanguageSwitcher } from "@/components/language-switcher";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 type AuthShellProps = {
@@ -14,6 +15,10 @@ type AuthShellProps = {
   children: ReactNode;
 };
 
+// Deliberately not async/translated: nested async Server Components can't
+// be rendered by @testing-library/react's render() (only the directly
+// awaited top-level page can be), and "Travel Organizer" is a brand name -
+// identical in every locale in messages/{pt,en}.json anyway.
 export function AuthShell({
   title,
   description,
@@ -34,7 +39,10 @@ export function AuthShell({
           >
             Travel Organizer
           </Link>
-          <ThemeToggle />
+          <div className="flex items-center gap-2">
+            <LanguageSwitcher />
+            <ThemeToggle />
+          </div>
         </div>
         <h1 className="mt-6 text-3xl font-semibold tracking-tight text-slate-950">
           {title}

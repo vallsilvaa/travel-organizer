@@ -1,6 +1,13 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+vi.mock("next-intl", async () => {
+  const { createTranslator } = await import("@/i18n/test-mocks");
+  return {
+    useTranslations: (namespace?: string) => createTranslator(namespace),
+  };
+});
+
 import ErrorPage from "./error";
 
 afterEach(cleanup);

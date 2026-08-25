@@ -1,0 +1,103 @@
+{
+  "common": {
+    "appName": "Travel Organizer"
+  },
+  "themeToggle": {
+    "toggleLabel": "Alternar tema",
+    "light": "Claro",
+    "dark": "Escuro",
+    "system": "Sistema"
+  },
+  "languageSwitcher": {
+    "toggleLabel": "Alternar idioma",
+    "pt": "Português",
+    "en": "English"
+  },
+  "home": {
+    "title": "Tudo para sua próxima viagem, organizado em um só lugar.",
+    "subtitle": "Planeje itinerários, organize tarefas, colabore e acompanhe despesas com seu organizador de viagens.",
+    "createAccount": "Criar conta",
+    "signIn": "Entrar",
+    "notice": "A base do projeto está pronta. As funcionalidades serão entregues de forma incremental a partir do backlog do MVP."
+  },
+  "notFound": {
+    "title": "Página não encontrada",
+    "description": "O endereço que você acessou não existe ou foi movido.",
+    "goToDashboard": "Ir para o painel",
+    "goHome": "Página inicial"
+  },
+  "tripNotFound": {
+    "title": "Viagem indisponível",
+    "description": "Não foi possível abrir esta viagem. Ela pode não existir mais, ter sido excluída pela pessoa que a criou, ou você pode não ter (ou não ter mais) acesso a ela."
+  },
+  "errorBoundary": {
+    "title": "Algo deu errado",
+    "description": "Não foi possível carregar esta página. Você pode tentar de novo ou voltar para um lugar seguro.",
+    "retry": "Tentar novamente",
+    "goToDashboard": "Ir para o painel"
+  },
+  "auth": {
+    "signIn": {
+      "title": "Bem-vindo de volta",
+      "description": "Entre para acessar suas viagens privadas e seu espaço de planejamento.",
+      "alternateText": "Novo no Travel Organizer?",
+      "alternateLabel": "Criar uma conta",
+      "email": "E-mail",
+      "password": "Senha",
+      "forgotPassword": "Esqueci minha senha",
+      "submitPending": "Entrando...",
+      "submit": "Entrar"
+    },
+    "signUp": {
+      "title": "Crie sua conta",
+      "description": "Suas viagens, tarefas, comentários e despesas permanecem privados para os participantes convidados.",
+      "alternateText": "Já tem uma conta?",
+      "alternateLabel": "Entrar",
+      "name": "Nome",
+      "email": "E-mail",
+      "password": "Senha",
+      "passwordHint": "Pelo menos oito caracteres.",
+      "passwordConfirmation": "Confirmar senha",
+      "submitPending": "Criando conta...",
+      "submit": "Criar conta"
+    },
+    "forgotPassword": {
+      "title": "Esqueceu sua senha?",
+      "description": "Informe seu e-mail e, se houver uma conta associada a ele, enviaremos um link para redefinir sua senha.",
+      "alternateText": "Lembrou a senha?",
+      "alternateLabel": "Voltar para entrar",
+      "email": "E-mail",
+      "submitPending": "Enviando...",
+      "submit": "Enviar link de redefinição"
+    },
+    "resetPassword": {
+      "title": "Defina uma nova senha",
+      "description": "Escolha uma nova senha para sua conta.",
+      "alternateText": "Mudou de ideia?",
+      "alternateLabel": "Voltar para entrar",
+      "password": "Nova senha",
+      "passwordConfirmation": "Confirmar nova senha",
+      "submitPending": "Salvando...",
+      "submit": "Salvar nova senha"
+    },
+    "messages": {
+      "authentication_required": "Entre para continuar.",
+      "check_email": "Verifique seu e-mail para confirmar sua conta antes de entrar.",
+      "invalid_credentials": "E-mail ou senha incorretos.",
+      "invalid_email": "Informe um e-mail válido.",
+      "invalid_name": "Informe um nome com pelo menos dois caracteres.",
+      "invalid_password": "Use pelo menos oito caracteres para sua senha.",
+      "password_mismatch": "As senhas não coincidem.",
+      "rate_limited": "Muitas tentativas. Aguarde um instante e tente novamente.",
+      "signup_failed": "Não foi possível criar sua conta. Tente novamente.",
+      "callback_failed": "O link de confirmação é inválido ou expirou.",
+      "check_email_reset": "Se esse e-mail existir, enviamos um link para redefinir sua senha.",
+      "reset_link_invalid": "O link de redefinição é inválido ou expirou. Solicite um novo.",
+      "password_update_failed": "Não foi possível atualizar sua senha. Tente novamente.",
+      "password_updated": "Senha atualizada com sucesso.",
+      "invalid_display_name": "Informe um nome com pelo menos dois caracteres.",
+      "profile_update_failed": "Não foi possível atualizar seu perfil. Tente novamente.",
+      "profile_updated": "Perfil atualizado com sucesso."
+    }
+  }
+}
