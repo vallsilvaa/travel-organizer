@@ -8,6 +8,13 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("@/lib/supabase/server", () => ({ createClient: mocks.createClient }));
 
+vi.mock("next-intl/server", async () => {
+  const { createTranslator } = await import("@/i18n/test-mocks");
+  return {
+    getTranslations: async (namespace?: string) => createTranslator(namespace),
+  };
+});
+
 import { GET } from "./route";
 
 type QueryResult = { data: unknown; error?: unknown };
