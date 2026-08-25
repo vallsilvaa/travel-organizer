@@ -62,7 +62,7 @@ import { daysUntil, todayInTimeZone } from "@/lib/timezone";
 
 type TripPageProps = {
   params: Promise<{ tripId: string }>;
-  searchParams: Promise<{ category?: string; owner?: string; status?: string; tripError?: string; tab?: string }>;
+  searchParams: Promise<{ category?: string; critical?: string; overdue?: string; owner?: string; status?: string; tripError?: string; tab?: string }>;
 };
 
 type TripParticipant = {
@@ -244,6 +244,8 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
   const categoryFilter = taskCategories.includes(filters.category as TaskCategory)
     ? filters.category as TaskCategory
     : "all";
+  const criticalOnlyFilter = filters.critical === "1";
+  const overdueOnlyFilter = filters.overdue === "1";
 
   const [
     { data: itineraryItems, error: itineraryError },
@@ -334,7 +336,10 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
     const matchesOwner = ownerFilter === "all"
       || (ownerFilter === "unassigned" ? !task.owner_id : task.owner_id === ownerFilter);
     const matchesCategory = categoryFilter === "all" || task.category === categoryFilter;
-    return matchesStatus && matchesOwner && matchesCategory;
+    const matchesCritical = !criticalOnlyFilter || task.is_critical;
+    const matchesOverdue = !overdueOnlyFilter
+      || Boolean(!task.completed_at && task.due_date && task.due_date < today);
+    return matchesStatus && matchesOwner && matchesCategory && matchesCritical && matchesOverdue;
   });
   const completedTaskCount = allTasks.filter((task) => task.completed_at).length;
   const readiness = allTasks.length
@@ -423,10 +428,20 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
         ? comment.itinerary_item_id === itemId
         : comment.task_id === itemId,
     );
+  const buildPrepQuickFilterHref = (next: { critical?: boolean; overdue?: boolean }) => {
+    const params = new URLSearchParams();
+    if (statusFilter !== "all") params.set("status", statusFilter);
+    if (ownerFilter !== "all") params.set("owner", ownerFilter);
+    if (categoryFilter !== "all") params.set("category", categoryFilter);
+    if (next.critical ?? criticalOnlyFilter) params.set("critical", "1");
+    if (next.overdue ?? overdueOnlyFilter) params.set("overdue", "1");
+    params.set("tab", "preparation");
+    return `/trips/${trip.id}?${params.toString()}`;
+  };
   const validTabs = ["itinerary", "expenses", "preparation", "documents", "organizer"];
   const defaultTab = validTabs.includes(filters.tab ?? "")
     ? (filters.tab as string)
-    : filters.status || filters.owner || filters.category
+    : filters.status || filters.owner || filters.category || criticalOnlyFilter || overdueOnlyFilter
       ? "preparation"
       : "itinerary";
 
@@ -912,7 +927,35 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                 </details>
               ) : null}
 
-              <form className="mt-6 grid gap-3 rounded-2xl bg-slate-50 p-4 sm:grid-cols-3">
+              <div className="mt-6 flex flex-wrap gap-2">
+                <Link
+                  href={buildPrepQuickFilterHref({ critical: !criticalOnlyFilter })}
+                  aria-pressed={criticalOnlyFilter}
+                  className={`rounded-full border px-3 py-1.5 text-sm font-medium transition ${
+                    criticalOnlyFilter
+                      ? "border-amber-300 bg-amber-100 text-amber-900"
+                      : "border-slate-200 bg-white text-slate-700 hover:bg-slate-100"
+                  }`}
+                >
+                  Só críticas
+                </Link>
+                <Link
+                  href={buildPrepQuickFilterHref({ overdue: !overdueOnlyFilter })}
+                  aria-pressed={overdueOnlyFilter}
+                  className={`rounded-full border px-3 py-1.5 text-sm font-medium transition ${
+                    overdueOnlyFilter
+                      ? "border-red-300 bg-red-100 text-red-800"
+                      : "border-slate-200 bg-white text-slate-700 hover:bg-slate-100"
+                  }`}
+                >
+                  Em atraso
+                </Link>
+              </div>
+
+              <form className="mt-4 grid gap-3 rounded-2xl bg-slate-50 p-4 sm:grid-cols-3">
+                <input type="hidden" name="tab" value="preparation" />
+                {criticalOnlyFilter ? <input type="hidden" name="critical" value="1" /> : null}
+                {overdueOnlyFilter ? <input type="hidden" name="overdue" value="1" /> : null}
                 <div className="space-y-1.5">
                   <Label htmlFor="status-filter" className="text-slate-700">Status</Label>
                   <Select name="status" defaultValue={statusFilter}>
