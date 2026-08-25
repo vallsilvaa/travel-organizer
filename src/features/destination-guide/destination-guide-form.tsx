@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -22,6 +23,8 @@ type DestinationGuideFormProps = {
 };
 
 export function DestinationGuideForm({ tripId, guide }: DestinationGuideFormProps) {
+  const t = useTranslations("destinationGuideForm");
+  const tCommon = useTranslations("common");
   const [state, formAction, pending] = useActionState(updateDestinationGuide, initialState);
 
   useEffect(() => {
@@ -36,13 +39,13 @@ export function DestinationGuideForm({ tripId, guide }: DestinationGuideFormProp
     <form action={formAction} className="space-y-4">
       <input type="hidden" name="tripId" value={tripId} />
       <div className="space-y-2">
-        <Label htmlFor="guide-content">Conteúdo</Label>
+        <Label htmlFor="guide-content">{t("contentLabel")}</Label>
         <Textarea
           id="guide-content"
           name="content"
           rows={6}
           maxLength={5000}
-          placeholder="Dicas, bairros recomendados, costumes locais, o que levar..."
+          placeholder={t("contentPlaceholder")}
           defaultValue={guide.content ?? ""}
           aria-describedby={state.errors?.content ? "guide-content-error" : undefined}
         />
@@ -54,13 +57,13 @@ export function DestinationGuideForm({ tripId, guide }: DestinationGuideFormProp
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="guide-source">
-            Fonte <span className="font-normal text-muted-foreground">(opcional)</span>
+            {t("sourceLabel")} <span className="font-normal text-muted-foreground">{tCommon("optional")}</span>
           </Label>
           <Input
             id="guide-source"
             name="source"
             maxLength={300}
-            placeholder="Link ou referência"
+            placeholder={t("sourcePlaceholder")}
             defaultValue={guide.source ?? ""}
             aria-describedby={state.errors?.source ? "guide-source-error" : undefined}
           />
@@ -71,7 +74,7 @@ export function DestinationGuideForm({ tripId, guide }: DestinationGuideFormProp
 
         <div className="space-y-2">
           <Label htmlFor="guide-reviewed-at">
-            Revisado em <span className="font-normal text-muted-foreground">(opcional)</span>
+            {t("reviewedAtLabel")} <span className="font-normal text-muted-foreground">{tCommon("optional")}</span>
           </Label>
           <Input
             id="guide-reviewed-at"
@@ -87,7 +90,7 @@ export function DestinationGuideForm({ tripId, guide }: DestinationGuideFormProp
       </div>
 
       <Button type="submit" disabled={pending}>
-        {pending ? "Salvando..." : "Salvar guia do destino"}
+        {pending ? t("savePending") : t("save")}
       </Button>
     </form>
   );

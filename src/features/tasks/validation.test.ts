@@ -63,8 +63,8 @@ describe("validateTaskInput", () => {
 
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.errors.owner).toBe("Escolha um responsável válido.");
-      expect(result.errors.dueDate).toBe("Informe uma data limite válida.");
+      expect(result.errors.owner).toBe("ownerInvalid");
+      expect(result.errors.dueDate).toBe("dueDateInvalid");
     }
   });
 
@@ -77,8 +77,8 @@ describe("validateTaskInput", () => {
 
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.errors.category).toBe("Escolha uma categoria de preparação válida.");
-      expect(result.errors.referenceUrl).toContain("HTTPS");
+      expect(result.errors.category).toBe("categoryInvalid");
+      expect(result.errors.referenceUrl).toBe("referenceUrlInsecureOrTooLong");
     }
   });
 });

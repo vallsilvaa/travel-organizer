@@ -28,6 +28,13 @@ vi.mock("next/navigation", () => ({
   redirect: mocks.redirect,
 }));
 
+vi.mock("next-intl/server", async () => {
+  const { createTranslator } = await import("@/i18n/test-mocks");
+  return {
+    getTranslations: async (namespace?: string) => createTranslator(namespace),
+  };
+});
+
 import { deleteAttachment, uploadAttachment } from "./actions";
 
 const tripId = "27823996-ec50-4cc2-8506-a29d07b86f94";

@@ -1,7 +1,13 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
+
+import { createTranslator } from "@/i18n/test-mocks";
 
 import { ExpenseForm } from "./expense-form";
+
+vi.mock("next-intl", () => ({
+  useTranslations: (namespace?: string) => createTranslator(namespace),
+}));
 
 const tripId = "27823996-ec50-4cc2-8506-a29d07b86f94";
 const alice = { user_id: "11111111-1111-1111-1111-111111111111", display_name: "Alice", role: "organizer" };

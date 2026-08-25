@@ -36,34 +36,34 @@ export function validateTaskInput(formData: FormData):
   const errors: TaskFieldErrors = {};
 
   if (!title || title.length > 200) {
-    errors.title = "Informe uma tarefa com até 200 caracteres.";
+    errors.title = "titleRequired";
   }
   if (ownerId && !isValidTaskId(ownerId)) {
-    errors.owner = "Escolha um responsável válido.";
+    errors.owner = "ownerInvalid";
   }
   if (
     dueDate &&
     (!datePattern.test(dueDate) || Number.isNaN(Date.parse(`${dueDate}T00:00:00Z`)))
   ) {
-    errors.dueDate = "Informe uma data limite válida.";
+    errors.dueDate = "dueDateInvalid";
   }
   if (!taskCategories.includes(category)) {
-    errors.category = "Escolha uma categoria de preparação válida.";
+    errors.category = "categoryInvalid";
   }
   if (referenceLabel && referenceLabel.length > 100) {
-    errors.referenceLabel = "Use um rótulo de referência com até 100 caracteres.";
+    errors.referenceLabel = "referenceLabelTooLong";
   }
   if (referenceLabel && !referenceUrl) {
-    errors.referenceUrl = "Adicione o endereço HTTPS para esta referência.";
+    errors.referenceUrl = "referenceUrlRequired";
   }
   if (referenceUrl) {
     try {
       const url = new URL(referenceUrl);
       if (url.protocol !== "https:" || referenceUrl.length > 500) {
-        errors.referenceUrl = "Informe um endereço HTTPS seguro com até 500 caracteres.";
+        errors.referenceUrl = "referenceUrlInsecureOrTooLong";
       }
     } catch {
-      errors.referenceUrl = "Informe um endereço HTTPS válido.";
+      errors.referenceUrl = "referenceUrlInvalid";
     }
   }
 

@@ -15,14 +15,11 @@ export const expenseCategories = [
 
 export type ExpenseCategory = (typeof expenseCategories)[number];
 
-export const expenseCategoryLabels: Record<ExpenseCategory, string> = {
-  transport: "Transporte",
-  lodging: "Hospedagem",
-  food: "Alimentação",
-  activities: "Atividades",
-  shopping: "Compras",
-  other: "Outro",
-};
+// Built from a translator scoped to "categories.expense" at each call site
+// rather than a hardcoded record - this module has no render-time locale.
+export function getExpenseCategoryLabels(t: (category: ExpenseCategory) => string): Record<ExpenseCategory, string> {
+  return Object.fromEntries(expenseCategories.map((category) => [category, t(category)])) as Record<ExpenseCategory, string>;
+}
 export type ExpenseFieldErrors = Partial<
   Record<"description" | "amount" | "currency" | "category" | "date" | "payer" | "split", string>
 >;
@@ -82,7 +79,7 @@ export function parseExpenseShares(
     if (!amountPattern.test(value)) {
       return {
         shares: [],
-        error: "Os valores da divisão devem ser números válidos com até duas casas decimais.",
+        error: "splitAmountInvalid",
       };
     }
 
@@ -100,7 +97,7 @@ export function parseExpenseShares(
   if (sharesCents !== toCents(totalAmount)) {
     return {
       shares: [],
-      error: "A soma da divisão deve ser igual ao valor total da despesa.",
+      error: "splitMismatch",
     };
   }
 
@@ -121,22 +118,22 @@ export function validateExpenseInput(formData: FormData) {
   const errors: ExpenseFieldErrors = {};
 
   if (!description || description.length > 200) {
-    errors.description = "Informe uma descrição com até 200 caracteres.";
+    errors.description = "descriptionRequired";
   }
   if (!amountPattern.test(rawAmount) || Number(rawAmount) <= 0) {
-    errors.amount = "Informe um valor maior que zero com até duas casas decimais.";
+    errors.amount = "amountInvalid";
   }
   if (!currencyPattern.test(currency)) {
-    errors.currency = "Informe um código de moeda de três letras, como BRL ou USD.";
+    errors.currency = "currencyInvalid";
   }
   if (!expenseCategories.includes(category as ExpenseCategory)) {
-    errors.category = "Escolha uma categoria válida.";
+    errors.category = "categoryInvalid";
   }
   if (!datePattern.test(date) || Number.isNaN(Date.parse(`${date}T00:00:00Z`))) {
-    errors.date = "Informe uma data de despesa válida.";
+    errors.date = "dateInvalid";
   }
   if (!isValidExpenseId(payerId)) {
-    errors.payer = "Escolha um pagador válido.";
+    errors.payer = "payerInvalid";
   }
 
   return Object.keys(errors).length

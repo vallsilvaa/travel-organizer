@@ -57,19 +57,6 @@ export function validateAttachmentUpload(input: {
   return { success: true };
 }
 
-export function attachmentErrorMessage(error: AttachmentValidationError) {
-  switch (error) {
-    case "missing_file":
-      return "Selecione um arquivo para enviar.";
-    case "file_too_large":
-      return "O arquivo deve ter no máximo 10 MB.";
-    case "unsupported_file_type":
-      return "Tipo de arquivo não suportado. Envie um PDF ou uma imagem (JPEG, PNG, WEBP ou HEIC).";
-    case "invalid_item_association":
-      return "Não foi possível associar o anexo ao item selecionado.";
-  }
-}
-
 export function formatFileSize(bytes: number) {
   if (bytes < 1024) {
     return `${bytes} B`;

@@ -1,8 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 
+import { translateFieldErrors } from "@/i18n/translate-field-errors";
 import { createClient } from "@/lib/supabase/server";
 import {
   isValidItineraryId,
@@ -33,14 +35,15 @@ export async function createItineraryItem(
   _previousState: ItineraryActionState,
   formData: FormData,
 ): Promise<ItineraryActionState> {
+  const t = await getTranslations("itineraryForm");
   const tripId = String(formData.get("tripId") ?? "");
   const validation = validateItineraryInput(formData);
 
   if (!isValidItineraryId(tripId)) {
-    return { message: "Não foi possível identificar a viagem." };
+    return { message: t("actionErrors.identifyTrip") };
   }
   if (!validation.success) {
-    return { errors: validation.errors };
+    return { errors: translateFieldErrors(t, validation.errors) };
   }
 
   const { supabase, user } = await authenticatedClient();
@@ -55,7 +58,7 @@ export async function createItineraryItem(
   });
 
   if (error) {
-    return { message: "Não foi possível adicionar este item ao itinerário. Verifique seu acesso à viagem e tente novamente." };
+    return { message: t("actionErrors.addFailed") };
   }
 
   revalidatePath(`/trips/${tripId}`);
@@ -66,15 +69,16 @@ export async function updateItineraryItem(
   _previousState: ItineraryActionState,
   formData: FormData,
 ): Promise<ItineraryActionState> {
+  const t = await getTranslations("itineraryForm");
   const tripId = String(formData.get("tripId") ?? "");
   const itemId = String(formData.get("itemId") ?? "");
   const validation = validateItineraryInput(formData);
 
   if (!isValidItineraryId(tripId) || !isValidItineraryId(itemId)) {
-    return { message: "Não foi possível identificar o item do itinerário." };
+    return { message: t("actionErrors.identifyItem") };
   }
   if (!validation.success) {
-    return { errors: validation.errors };
+    return { errors: translateFieldErrors(t, validation.errors) };
   }
 
   const { supabase } = await authenticatedClient();
@@ -92,7 +96,7 @@ export async function updateItineraryItem(
     .eq("trip_id", tripId);
 
   if (error) {
-    return { message: "Não foi possível atualizar este item do itinerário. Tente novamente." };
+    return { message: t("actionErrors.updateFailed") };
   }
 
   revalidatePath(`/trips/${tripId}`);

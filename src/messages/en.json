@@ -1,7 +1,8 @@
 {
   "common": {
     "appName": "Travel Organizer",
-    "traveler": "Traveler"
+    "traveler": "Traveler",
+    "optional": "(optional)"
   },
   "themeToggle": {
     "toggleLabel": "Toggle theme",
@@ -364,6 +365,313 @@
       "cancelInvitationTitle": "Cancel this invitation?",
       "cancelInvitationDescription": "The invitation for {email} will no longer be acceptable.",
       "cancel": "Cancel"
+    },
+    "editForm": {
+      "destinationLabel": "Destination",
+      "destinationPlaceholder": "London, United Kingdom",
+      "startDateLabel": "Start date",
+      "endDateLabel": "End date",
+      "timezoneLabel": "Time zone",
+      "timezoneHint": "Used to compute deadlines, trip status, and the calendar export.",
+      "savePending": "Saving changes...",
+      "save": "Save changes",
+      "createPending": "Creating trip...",
+      "create": "Create trip",
+      "errors": {
+        "destinationRequired": "Destination is required.",
+        "destinationTooLong": "Destination must be up to 200 characters.",
+        "startDateInvalid": "Enter a valid start date.",
+        "endDateInvalid": "Enter a valid end date.",
+        "endDateBeforeStart": "The end date can't be before the start date.",
+        "timezoneInvalid": "Select a valid time zone."
+      },
+      "actionErrors": {
+        "identifyTrip": "Could not identify the trip.",
+        "createFailed": "Could not create the trip. Please try again.",
+        "onlyCreatorCanEdit": "Only the trip's creator can edit this data.",
+        "updated": "Trip updated successfully."
+      }
     }
+  },
+  "categories": {
+    "task": {
+      "documents": "Documents",
+      "lodging": "Lodging",
+      "money": "Money",
+      "transport": "Transport",
+      "health": "Health",
+      "connectivity": "Connectivity",
+      "packing": "Packing",
+      "other": "Other"
+    },
+    "expense": {
+      "transport": "Transport",
+      "lodging": "Lodging",
+      "food": "Food",
+      "activities": "Activities",
+      "shopping": "Shopping",
+      "other": "Other"
+    },
+    "reservationType": {
+      "flight": "Flight",
+      "lodging": "Lodging",
+      "transport": "Transport"
+    }
+  },
+  "taskForm": {
+    "taskLabel": "Task",
+    "taskPlaceholder": "Book airport transfer",
+    "ownerLabel": "Owner",
+    "optional": "(optional)",
+    "ownerNone": "No owner",
+    "categoryLabel": "Category",
+    "criticalLabel": "Critical before departure",
+    "referenceLabelLabel": "Reference label",
+    "referenceLabelPlaceholder": "Insurance policy",
+    "referenceUrlLabel": "Secure reference URL",
+    "dueDateLabel": "Due date",
+    "savePending": "Saving...",
+    "save": "Save changes",
+    "add": "Add task",
+    "toastUpdated": "Task updated.",
+    "toastAdded": "Task added.",
+    "errors": {
+      "titleRequired": "Enter a task with up to 200 characters.",
+      "ownerInvalid": "Choose a valid owner.",
+      "dueDateInvalid": "Enter a valid due date.",
+      "categoryInvalid": "Choose a valid preparation category.",
+      "referenceLabelTooLong": "Use a reference label with up to 100 characters.",
+      "referenceUrlRequired": "Add the HTTPS address for this reference.",
+      "referenceUrlInsecureOrTooLong": "Enter a secure HTTPS address with up to 500 characters.",
+      "referenceUrlInvalid": "Enter a valid HTTPS address."
+    },
+    "actionErrors": {
+      "identifyTrip": "Could not identify the trip.",
+      "identifyTask": "Could not identify the task.",
+      "addFailed": "Could not add this task. Check the owner and your access to the trip.",
+      "updateFailed": "Could not update this task. Please try again."
+    }
+  },
+  "expenseForm": {
+    "descriptionLabel": "Description",
+    "descriptionPlaceholder": "Dinner reservation",
+    "amountLabel": "Amount",
+    "currencyLabel": "Currency",
+    "categoryLabel": "Category",
+    "dateLabel": "Date",
+    "payerLabel": "Payer",
+    "payerPlaceholder": "Choose a participant",
+    "splitToggleLabel": "Split expense among participants",
+    "splitEqual": "Equally",
+    "splitCustom": "Custom",
+    "splitProgress": "Split: {current} / {total}",
+    "savePending": "Saving...",
+    "save": "Save changes",
+    "add": "Add expense",
+    "toastUpdated": "Expense updated.",
+    "toastAdded": "Expense added.",
+    "errors": {
+      "descriptionRequired": "Enter a description with up to 200 characters.",
+      "amountInvalid": "Enter an amount greater than zero with up to two decimal places.",
+      "currencyInvalid": "Enter a three-letter currency code, like BRL or USD.",
+      "categoryInvalid": "Choose a valid category.",
+      "dateInvalid": "Enter a valid expense date.",
+      "payerInvalid": "Choose a valid payer.",
+      "splitAmountInvalid": "Split values must be valid numbers with up to two decimal places.",
+      "splitMismatch": "The split total must equal the expense's full amount."
+    },
+    "actionErrors": {
+      "identifyTrip": "Could not identify the trip.",
+      "identifyExpense": "Could not identify the expense.",
+      "sharesTotalMismatch": "The split total must equal the expense's full amount.",
+      "invalidParticipant": "You can only split the expense among trip participants.",
+      "notAuthorized": "You don't have access to this trip.",
+      "tripArchived": "This trip is archived. Reactivate it to change expenses.",
+      "genericFailed": "Could not save this expense. Check the payer, the split, and your access to the trip."
+    }
+  },
+  "itineraryForm": {
+    "dateLabel": "Date",
+    "timeLabel": "Time",
+    "titleLabel": "Title",
+    "titlePlaceholder": "Museum visit",
+    "locationLabel": "Location",
+    "locationPlaceholder": "Address or meeting point",
+    "notesLabel": "Notes",
+    "savePending": "Saving...",
+    "save": "Save changes",
+    "add": "Add to itinerary",
+    "toastUpdated": "Itinerary item updated.",
+    "toastAdded": "Itinerary item added.",
+    "errors": {
+      "dateInvalid": "Enter a valid date.",
+      "timeInvalid": "Enter a valid time.",
+      "titleRequired": "Enter a title with up to 200 characters.",
+      "locationTooLong": "Location must be up to 200 characters.",
+      "notesTooLong": "Notes must be up to 2,000 characters."
+    },
+    "actionErrors": {
+      "identifyTrip": "Could not identify the trip.",
+      "identifyItem": "Could not identify the itinerary item.",
+      "addFailed": "Could not add this itinerary item. Check your access to the trip and try again.",
+      "updateFailed": "Could not update this itinerary item. Please try again."
+    }
+  },
+  "reservationForm": {
+    "typeLabel": "Type",
+    "titleLabel": "Title",
+    "titlePlaceholder": "LATAM Flight 3456",
+    "providerLabel": "Provider",
+    "providerPlaceholder": "Airline, hotel, or company",
+    "confirmationCodeLabel": "Confirmation code",
+    "confirmationCodePlaceholder": "Locator or booking number",
+    "startDateLabel": "Start date",
+    "startTimeLabel": "Start time",
+    "endDateLabel": "End date",
+    "endTimeLabel": "End time",
+    "locationLabel": "Departure location",
+    "locationPlaceholder": "Airport, address, or departure point",
+    "destinationLocationLabel": "Arrival location",
+    "destinationLocationPlaceholder": "Airport, address, or arrival point",
+    "linkItemLabel": "Link to an itinerary item",
+    "linkItemNone": "None",
+    "notesLabel": "Notes",
+    "savePending": "Saving...",
+    "save": "Save changes",
+    "add": "Add reservation",
+    "toastUpdated": "Reservation updated.",
+    "toastAdded": "Reservation added.",
+    "errors": {
+      "itineraryItemInvalid": "Select a valid itinerary item.",
+      "typeInvalid": "Select a valid reservation type.",
+      "titleRequired": "Enter a title with up to 200 characters.",
+      "providerTooLong": "Provider must be up to 200 characters.",
+      "confirmationCodeTooLong": "Confirmation code must be up to 100 characters.",
+      "startDateInvalid": "Enter a valid start date.",
+      "startTimeInvalid": "Enter a valid start time.",
+      "endDateInvalid": "Enter a valid end date.",
+      "endDateBeforeStart": "The end date can't be before the start date.",
+      "endTimeInvalid": "Enter a valid end time.",
+      "locationTooLong": "Location must be up to 200 characters.",
+      "destinationLocationTooLong": "Destination must be up to 200 characters.",
+      "notesTooLong": "Notes must be up to 2,000 characters."
+    },
+    "actionErrors": {
+      "identifyTrip": "Could not identify the trip.",
+      "identifyReservation": "Could not identify the reservation.",
+      "addFailed": "Could not add this reservation. Check your access to the trip and try again.",
+      "updateFailed": "Could not update this reservation. Please try again."
+    }
+  },
+  "inviteForm": {
+    "emailLabel": "Organizer's email",
+    "emailPlaceholder": "organizer@example.com",
+    "submitPending": "Inviting...",
+    "submit": "Invite organizer"
+  },
+  "invitationActions": {
+    "identifyTrip": "Could not identify the trip.",
+    "emailInvalid": "Enter a valid email.",
+    "alreadyHasAccess": "You already have access to this trip.",
+    "onlyCreatorCanInvite": "Only the trip's creator can send invitations.",
+    "duplicatePending": "There's already a pending invitation for this email.",
+    "createFailed": "Could not create the invitation. Please try again.",
+    "sentTo": "Invitation sent to {email}.",
+    "createdEmailFailed": "Invitation created for {email}, but the email couldn't be sent right now. You can resend it shortly.",
+    "invitedByFallback": "An organizer"
+  },
+  "destinationGuideForm": {
+    "contentLabel": "Content",
+    "contentPlaceholder": "Tips, recommended neighborhoods, local customs, what to pack...",
+    "sourceLabel": "Source",
+    "sourcePlaceholder": "Link or reference",
+    "reviewedAtLabel": "Reviewed on",
+    "savePending": "Saving...",
+    "save": "Save destination guide",
+    "errors": {
+      "contentTooLong": "Content must be up to 5,000 characters.",
+      "sourceTooLong": "Source must be up to 300 characters.",
+      "reviewedAtInvalid": "Enter a valid review date."
+    },
+    "actionErrors": {
+      "identifyTrip": "Could not identify the trip.",
+      "notAuthorized": "Only the trip's creator or an organizer can edit the destination guide.",
+      "tripArchived": "This trip is archived. Reactivate it to edit the destination guide.",
+      "genericFailed": "Could not save the destination guide.",
+      "updated": "Destination guide updated successfully."
+    }
+  },
+  "comments": {
+    "title": "Comments",
+    "empty": "No comments yet.",
+    "editedSuffix": "edited",
+    "editLabel": "Edit",
+    "deleteTitle": "Delete comment?",
+    "deleteDescription": "This will permanently remove this comment from the conversation.",
+    "deleteTrigger": "Delete comment",
+    "editAriaLabel": "Edit comment",
+    "addAriaLabel": "Add comment",
+    "bodyPlaceholder": "Add context or a decision...",
+    "savePending": "Saving...",
+    "save": "Save",
+    "add": "Comment",
+    "toastUpdated": "Comment updated.",
+    "toastAdded": "Comment added.",
+    "actionErrors": {
+      "identifyTarget": "Could not identify the comment's target.",
+      "identifyComment": "Could not identify the comment.",
+      "bodyInvalid": "Enter a comment with up to 2,000 characters.",
+      "addFailed": "Could not add this comment. Check your access to the trip.",
+      "updateFailed": "Could not update this comment."
+    }
+  },
+  "attachmentForm": {
+    "fileLabel": "File",
+    "fileHint": "PDF or image (JPEG, PNG, WEBP, HEIC), up to 10 MB.",
+    "associateLabel": "Associate with",
+    "associateNone": "Trip in general",
+    "itineraryPrefix": "Itinerary",
+    "taskPrefix": "Task",
+    "reservationPrefix": "Reservation",
+    "submitPending": "Uploading...",
+    "submit": "Upload attachment",
+    "toastUploaded": "Attachment uploaded.",
+    "actionErrors": {
+      "identifyTrip": "Could not identify the trip.",
+      "missing_file": "Select a file to upload.",
+      "file_too_large": "The file must be up to 10 MB.",
+      "unsupported_file_type": "Unsupported file type. Upload a PDF or an image (JPEG, PNG, WEBP, or HEIC).",
+      "invalid_item_association": "Could not associate the attachment with the selected item.",
+      "uploadFailed": "Could not upload the file. Check your access to the trip and try again.",
+      "registerFailed": "Could not register the attachment. Please try again."
+    }
+  },
+  "confirmDeleteForm": {
+    "cancel": "Cancel",
+    "deleteDefault": "Delete",
+    "deletingPending": "Deleting..."
+  },
+  "itemActionsMenu": {
+    "actionsLabel": "Item actions",
+    "editDefault": "Edit",
+    "hideForm": "Hide form",
+    "deleteDefault": "Delete",
+    "cancel": "Cancel"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "markAllRead": "Mark all as read",
+    "empty": "No notifications here yet.",
+    "unreadSuffix": "({count} unread)",
+    "timeNow": "now",
+    "timeMinutes": "{count} min ago",
+    "timeHours": "{count} h ago",
+    "timeDays": "{count} d ago"
+  },
+  "realtimeStatus": {
+    "connecting": "Connecting...",
+    "connected": "Live",
+    "reconnecting": "Reconnecting...",
+    "disconnected": "Disconnected"
   }
 }

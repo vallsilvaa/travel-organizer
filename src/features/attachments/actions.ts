@@ -1,11 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
 import {
-  attachmentErrorMessage,
   isValidAttachmentId,
   sanitizeFileNameForStorage,
   validateAttachmentUpload,
@@ -33,13 +33,14 @@ export async function uploadAttachment(
   _previousState: AttachmentActionState,
   formData: FormData,
 ): Promise<AttachmentActionState> {
+  const t = await getTranslations("attachmentForm.actionErrors");
   const tripId = String(formData.get("tripId") ?? "");
   const itemType = String(formData.get("itemType") ?? "");
   const itemId = String(formData.get("itemId") ?? "");
   const file = formData.get("file");
 
   if (!isValidAttachmentId(tripId)) {
-    return { message: "Não foi possível identificar a viagem." };
+    return { message: t("identifyTrip") };
   }
 
   const validation = validateAttachmentUpload({
@@ -48,7 +49,7 @@ export async function uploadAttachment(
     itemId,
   });
   if (!validation.success) {
-    return { message: attachmentErrorMessage(validation.error) };
+    return { message: t(validation.error) };
   }
 
   const uploadedFile = file as File;
@@ -60,7 +61,7 @@ export async function uploadAttachment(
     .upload(storagePath, uploadedFile, { contentType: uploadedFile.type });
 
   if (uploadError) {
-    return { message: "Não foi possível enviar o arquivo. Verifique seu acesso à viagem e tente novamente." };
+    return { message: t("uploadFailed") };
   }
 
   const { error: insertError } = await supabase.from("trip_attachments").insert({
@@ -76,7 +77,7 @@ export async function uploadAttachment(
 
   if (insertError) {
     await supabase.storage.from("trip-attachments").remove([storagePath]);
-    return { message: "Não foi possível registrar o anexo. Tente novamente." };
+    return { message: t("registerFailed") };
   }
 
   revalidatePath(`/trips/${tripId}`);

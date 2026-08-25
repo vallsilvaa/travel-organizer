@@ -44,9 +44,7 @@ describe("validateExpenseInput", () => {
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.errors.amount).toBe(
-          "Informe um valor maior que zero com até duas casas decimais.",
-        );
+        expect(result.errors.amount).toBe("amountInvalid");
       }
     },
   );
@@ -121,7 +119,7 @@ describe("parseExpenseShares", () => {
     const result = parseExpenseShares(formData, [alice, bob], "10.00");
 
     expect(result.shares).toEqual([]);
-    expect(result.error).toBe("A soma da divisão deve ser igual ao valor total da despesa.");
+    expect(result.error).toBe("splitMismatch");
   });
 
   it("rejects a malformed share amount", () => {
@@ -130,9 +128,7 @@ describe("parseExpenseShares", () => {
 
     const result = parseExpenseShares(formData, [alice, bob], "10.00");
 
-    expect(result.error).toBe(
-      "Os valores da divisão devem ser números válidos com até duas casas decimais.",
-    );
+    expect(result.error).toBe("splitAmountInvalid");
   });
 
   it("drops zero-amount shares without requiring them to add up", () => {

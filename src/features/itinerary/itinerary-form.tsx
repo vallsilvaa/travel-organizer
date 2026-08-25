@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -29,61 +30,63 @@ type ItineraryFormProps = {
 const initialState: ItineraryActionState = {};
 
 export function ItineraryForm({ item, tripId }: ItineraryFormProps) {
+  const t = useTranslations("itineraryForm");
+  const tCommon = useTranslations("common");
   const action = item ? updateItineraryItem : createItineraryItem;
   const [state, formAction, pending] = useActionState(action, initialState);
 
   useEffect(() => {
     if (state.success) {
-      toast.success(item ? "Item do itinerário atualizado." : "Item do itinerário adicionado.");
+      toast.success(item ? t("toastUpdated") : t("toastAdded"));
     } else if (state.message) {
       toast.error(state.message);
     }
-  }, [state, item]);
+  }, [state, item, t]);
 
   return (
     <form action={formAction} className="grid gap-4 sm:grid-cols-2">
       <input type="hidden" name="tripId" value={tripId} />
       {item ? <input type="hidden" name="itemId" value={item.id} /> : null}
       <div className="space-y-2">
-        <Label htmlFor="date">Data</Label>
+        <Label htmlFor="date">{t("dateLabel")}</Label>
         <Input required id="date" name="date" type="date" defaultValue={item?.item_date} />
         {state.errors?.date ? <p className="text-sm text-destructive">{state.errors.date}</p> : null}
       </div>
       <div className="space-y-2">
         <Label htmlFor="time">
-          Horário <span className="font-normal text-muted-foreground">(opcional)</span>
+          {t("timeLabel")} <span className="font-normal text-muted-foreground">{tCommon("optional")}</span>
         </Label>
         <Input id="time" name="time" type="time" defaultValue={item?.start_time?.slice(0, 5)} />
         {state.errors?.time ? <p className="text-sm text-destructive">{state.errors.time}</p> : null}
       </div>
       <div className="space-y-2 sm:col-span-2">
-        <Label htmlFor="title">Título</Label>
+        <Label htmlFor="title">{t("titleLabel")}</Label>
         <Input
           required
           maxLength={200}
           id="title"
           name="title"
           defaultValue={item?.title}
-          placeholder="Visita ao museu"
+          placeholder={t("titlePlaceholder")}
         />
         {state.errors?.title ? <p className="text-sm text-destructive">{state.errors.title}</p> : null}
       </div>
       <div className="space-y-2 sm:col-span-2">
         <Label htmlFor="location">
-          Local <span className="font-normal text-muted-foreground">(opcional)</span>
+          {t("locationLabel")} <span className="font-normal text-muted-foreground">{tCommon("optional")}</span>
         </Label>
         <Input
           maxLength={200}
           id="location"
           name="location"
           defaultValue={item?.location ?? ""}
-          placeholder="Endereço ou ponto de encontro"
+          placeholder={t("locationPlaceholder")}
         />
         {state.errors?.location ? <p className="text-sm text-destructive">{state.errors.location}</p> : null}
       </div>
       <div className="space-y-2 sm:col-span-2">
         <Label htmlFor="notes">
-          Notas <span className="font-normal text-muted-foreground">(opcional)</span>
+          {t("notesLabel")} <span className="font-normal text-muted-foreground">{tCommon("optional")}</span>
         </Label>
         <Textarea
           maxLength={2000}
@@ -95,7 +98,7 @@ export function ItineraryForm({ item, tripId }: ItineraryFormProps) {
         {state.errors?.notes ? <p className="text-sm text-destructive">{state.errors.notes}</p> : null}
       </div>
       <Button type="submit" disabled={pending} size="lg" className="sm:col-span-2 sm:justify-self-start">
-        {pending ? "Salvando..." : item ? "Salvar alterações" : "Adicionar ao itinerário"}
+        {pending ? t("savePending") : item ? t("save") : t("add")}
       </Button>
     </form>
   );

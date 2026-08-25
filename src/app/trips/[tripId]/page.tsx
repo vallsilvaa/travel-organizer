@@ -10,7 +10,7 @@ import { DestinationGuideForm } from "@/features/destination-guide/destination-g
 import { deleteExpense } from "@/features/expenses/actions";
 import { computeSettlements } from "@/features/expenses/balances";
 import { ExpenseForm } from "@/features/expenses/expense-form";
-import { expenseCategoryLabels } from "@/features/expenses/validation";
+import { getExpenseCategoryLabels } from "@/features/expenses/validation";
 import {
   cancelInvitation,
   resendInvitation,
@@ -23,7 +23,7 @@ import { RealtimeStatus } from "@/features/realtime/realtime-status";
 import { ConfirmationCode } from "@/features/reservations/confirmation-code";
 import { deleteReservation } from "@/features/reservations/actions";
 import { ReservationForm } from "@/features/reservations/reservation-form";
-import { reservationTypeLabels, type ReservationType } from "@/features/reservations/validation";
+import { getReservationTypeLabels, type ReservationType } from "@/features/reservations/validation";
 import {
   addEnglandPreparationChecklist,
   deleteTask,
@@ -32,7 +32,7 @@ import {
 import { TaskForm } from "@/features/tasks/task-form";
 import {
   taskCategories,
-  taskCategoryLabels,
+  getTaskCategoryLabels,
   type TaskCategory,
 } from "@/features/tasks/templates";
 import { localeTag } from "@/i18n/locale";
@@ -197,6 +197,9 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
 
   const t = await getTranslations("trip");
   const tCommon = await getTranslations("common");
+  const taskCategoryLabels = getTaskCategoryLabels(await getTranslations("categories.task"));
+  const expenseCategoryLabels = getExpenseCategoryLabels(await getTranslations("categories.expense"));
+  const reservationTypeLabels = getReservationTypeLabels(await getTranslations("categories.reservationType"));
   const locale = await getLocale();
   const format = await getFormatter();
   const formatDate = (value: string) => format.dateTime(new Date(`${value}T00:00:00Z`), "long");

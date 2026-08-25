@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -15,7 +16,7 @@ import {
 } from "@/components/ui/select";
 
 import { createTask, updateTask, type TaskActionState } from "./actions";
-import { taskCategories, taskCategoryLabels, type TaskCategory } from "./templates";
+import { taskCategories, getTaskCategoryLabels, type TaskCategory } from "./templates";
 
 type Participant = { user_id: string; display_name: string; role: string };
 
@@ -37,6 +38,9 @@ type TaskFormProps = {
 const initialState: TaskActionState = {};
 
 export function TaskForm({ participants, task, tripId }: TaskFormProps) {
+  const t = useTranslations("taskForm");
+  const tCategories = useTranslations("categories.task");
+  const taskCategoryLabels = getTaskCategoryLabels(tCategories);
   const [state, formAction, pending] = useActionState(
     task ? updateTask : createTask,
     initialState,
@@ -44,38 +48,38 @@ export function TaskForm({ participants, task, tripId }: TaskFormProps) {
 
   useEffect(() => {
     if (state.success) {
-      toast.success(task ? "Tarefa atualizada." : "Tarefa adicionada.");
+      toast.success(task ? t("toastUpdated") : t("toastAdded"));
     } else if (state.message) {
       toast.error(state.message);
     }
-  }, [state, task]);
+  }, [state, task, t]);
 
   return (
     <form action={formAction} className="grid gap-4 sm:grid-cols-2">
       <input type="hidden" name="tripId" value={tripId} />
       {task ? <input type="hidden" name="taskId" value={task.id} /> : null}
       <div className="space-y-2 sm:col-span-2">
-        <Label htmlFor="title">Tarefa</Label>
+        <Label htmlFor="title">{t("taskLabel")}</Label>
         <Input
           required
           maxLength={200}
           id="title"
           name="title"
           defaultValue={task?.title}
-          placeholder="Reservar transporte do aeroporto"
+          placeholder={t("taskPlaceholder")}
         />
         {state.errors?.title ? <p className="text-sm text-destructive">{state.errors.title}</p> : null}
       </div>
       <div className="space-y-2">
         <Label htmlFor="ownerId">
-          Responsável <span className="font-normal text-muted-foreground">(opcional)</span>
+          {t("ownerLabel")} <span className="font-normal text-muted-foreground">{t("optional")}</span>
         </Label>
         <Select name="ownerId" defaultValue={task?.owner_id ?? ""}>
           <SelectTrigger id="ownerId" className="w-full">
-            <SelectValue placeholder="Sem responsável" />
+            <SelectValue placeholder={t("ownerNone")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Sem responsável</SelectItem>
+            <SelectItem value="">{t("ownerNone")}</SelectItem>
             {participants.map((participant) => (
               <SelectItem key={participant.user_id} value={participant.user_id}>
                 {participant.display_name} ({participant.role})
@@ -86,7 +90,7 @@ export function TaskForm({ participants, task, tripId }: TaskFormProps) {
         {state.errors?.owner ? <p className="text-sm text-destructive">{state.errors.owner}</p> : null}
       </div>
       <div className="space-y-2">
-        <Label htmlFor="category">Categoria</Label>
+        <Label htmlFor="category">{t("categoryLabel")}</Label>
         <Select name="category" defaultValue={task?.category ?? "other"}>
           <SelectTrigger id="category" className="w-full">
             <SelectValue />
@@ -101,24 +105,24 @@ export function TaskForm({ participants, task, tripId }: TaskFormProps) {
       </div>
       <label className="flex items-center gap-3 rounded-xl border px-4 py-3 text-sm font-medium">
         <input name="isCritical" type="checkbox" defaultChecked={task?.is_critical} className="size-4 accent-primary" />
-        Crítica antes da partida
+        {t("criticalLabel")}
       </label>
       <div className="space-y-2">
         <Label htmlFor="referenceLabel">
-          Rótulo de referência <span className="font-normal text-muted-foreground">(opcional)</span>
+          {t("referenceLabelLabel")} <span className="font-normal text-muted-foreground">{t("optional")}</span>
         </Label>
         <Input
           maxLength={100}
           id="referenceLabel"
           name="referenceLabel"
           defaultValue={task?.reference_label ?? ""}
-          placeholder="Apólice de seguro"
+          placeholder={t("referenceLabelPlaceholder")}
         />
         {state.errors?.referenceLabel ? <p className="text-sm text-destructive">{state.errors.referenceLabel}</p> : null}
       </div>
       <div className="space-y-2">
         <Label htmlFor="referenceUrl">
-          URL segura de referência <span className="font-normal text-muted-foreground">(opcional)</span>
+          {t("referenceUrlLabel")} <span className="font-normal text-muted-foreground">{t("optional")}</span>
         </Label>
         <Input
           maxLength={500}
@@ -133,13 +137,13 @@ export function TaskForm({ participants, task, tripId }: TaskFormProps) {
       </div>
       <div className="space-y-2">
         <Label htmlFor="dueDate">
-          Data limite <span className="font-normal text-muted-foreground">(opcional)</span>
+          {t("dueDateLabel")} <span className="font-normal text-muted-foreground">{t("optional")}</span>
         </Label>
         <Input id="dueDate" name="dueDate" type="date" defaultValue={task?.due_date ?? ""} />
         {state.errors?.dueDate ? <p className="text-sm text-destructive">{state.errors.dueDate}</p> : null}
       </div>
       <Button type="submit" disabled={pending} size="lg" className="sm:col-span-2 sm:justify-self-start">
-        {pending ? "Salvando..." : task ? "Salvar alterações" : "Adicionar tarefa"}
+        {pending ? t("savePending") : task ? t("save") : t("add")}
       </Button>
     </form>
   );

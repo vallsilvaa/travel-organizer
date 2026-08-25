@@ -11,16 +11,12 @@ export const taskCategories = [
 
 export type TaskCategory = (typeof taskCategories)[number];
 
-export const taskCategoryLabels: Record<TaskCategory, string> = {
-  documents: "Documentos",
-  lodging: "Hospedagem",
-  money: "Dinheiro",
-  transport: "Transporte",
-  health: "Saúde",
-  connectivity: "Conectividade",
-  packing: "Bagagem",
-  other: "Outro",
-};
+// Built from a translator scoped to the "categories.task" namespace at each
+// call site (server or client) rather than a hardcoded record, since this
+// module has no access to the render-time locale on its own.
+export function getTaskCategoryLabels(t: (category: TaskCategory) => string): Record<TaskCategory, string> {
+  return Object.fromEntries(taskCategories.map((category) => [category, t(category)])) as Record<TaskCategory, string>;
+}
 
 type PreparationTemplateItem = {
   category: TaskCategory;

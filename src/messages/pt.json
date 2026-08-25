@@ -1,7 +1,8 @@
 {
   "common": {
     "appName": "Travel Organizer",
-    "traveler": "Viajante"
+    "traveler": "Viajante",
+    "optional": "(opcional)"
   },
   "themeToggle": {
     "toggleLabel": "Alternar tema",
@@ -364,6 +365,313 @@
       "cancelInvitationTitle": "Cancelar este convite?",
       "cancelInvitationDescription": "O convite para {email} não poderá mais ser aceito.",
       "cancel": "Cancelar"
+    },
+    "editForm": {
+      "destinationLabel": "Destino",
+      "destinationPlaceholder": "Londres, Reino Unido",
+      "startDateLabel": "Data de início",
+      "endDateLabel": "Data de término",
+      "timezoneLabel": "Fuso horário",
+      "timezoneHint": "Usado para calcular prazos, status da viagem e a exportação do calendário.",
+      "savePending": "Salvando alterações...",
+      "save": "Salvar alterações",
+      "createPending": "Criando viagem...",
+      "create": "Criar viagem",
+      "errors": {
+        "destinationRequired": "O destino é obrigatório.",
+        "destinationTooLong": "O destino deve ter no máximo 200 caracteres.",
+        "startDateInvalid": "Informe uma data de início válida.",
+        "endDateInvalid": "Informe uma data de término válida.",
+        "endDateBeforeStart": "A data de término não pode ser anterior à data de início.",
+        "timezoneInvalid": "Selecione um fuso horário válido."
+      },
+      "actionErrors": {
+        "identifyTrip": "Não foi possível identificar a viagem.",
+        "createFailed": "Não foi possível criar a viagem. Tente novamente.",
+        "onlyCreatorCanEdit": "Somente quem criou a viagem pode editar esses dados.",
+        "updated": "Viagem atualizada com sucesso."
+      }
     }
+  },
+  "categories": {
+    "task": {
+      "documents": "Documentos",
+      "lodging": "Hospedagem",
+      "money": "Dinheiro",
+      "transport": "Transporte",
+      "health": "Saúde",
+      "connectivity": "Conectividade",
+      "packing": "Bagagem",
+      "other": "Outro"
+    },
+    "expense": {
+      "transport": "Transporte",
+      "lodging": "Hospedagem",
+      "food": "Alimentação",
+      "activities": "Atividades",
+      "shopping": "Compras",
+      "other": "Outro"
+    },
+    "reservationType": {
+      "flight": "Voo",
+      "lodging": "Hospedagem",
+      "transport": "Transporte"
+    }
+  },
+  "taskForm": {
+    "taskLabel": "Tarefa",
+    "taskPlaceholder": "Reservar transporte do aeroporto",
+    "ownerLabel": "Responsável",
+    "optional": "(opcional)",
+    "ownerNone": "Sem responsável",
+    "categoryLabel": "Categoria",
+    "criticalLabel": "Crítica antes da partida",
+    "referenceLabelLabel": "Rótulo de referência",
+    "referenceLabelPlaceholder": "Apólice de seguro",
+    "referenceUrlLabel": "URL segura de referência",
+    "dueDateLabel": "Data limite",
+    "savePending": "Salvando...",
+    "save": "Salvar alterações",
+    "add": "Adicionar tarefa",
+    "toastUpdated": "Tarefa atualizada.",
+    "toastAdded": "Tarefa adicionada.",
+    "errors": {
+      "titleRequired": "Informe uma tarefa com até 200 caracteres.",
+      "ownerInvalid": "Escolha um responsável válido.",
+      "dueDateInvalid": "Informe uma data limite válida.",
+      "categoryInvalid": "Escolha uma categoria de preparação válida.",
+      "referenceLabelTooLong": "Use um rótulo de referência com até 100 caracteres.",
+      "referenceUrlRequired": "Adicione o endereço HTTPS para esta referência.",
+      "referenceUrlInsecureOrTooLong": "Informe um endereço HTTPS seguro com até 500 caracteres.",
+      "referenceUrlInvalid": "Informe um endereço HTTPS válido."
+    },
+    "actionErrors": {
+      "identifyTrip": "Não foi possível identificar a viagem.",
+      "identifyTask": "Não foi possível identificar a tarefa.",
+      "addFailed": "Não foi possível adicionar esta tarefa. Verifique o responsável e seu acesso à viagem.",
+      "updateFailed": "Não foi possível atualizar esta tarefa. Tente novamente."
+    }
+  },
+  "expenseForm": {
+    "descriptionLabel": "Descrição",
+    "descriptionPlaceholder": "Reserva de jantar",
+    "amountLabel": "Valor",
+    "currencyLabel": "Moeda",
+    "categoryLabel": "Categoria",
+    "dateLabel": "Data",
+    "payerLabel": "Pagador",
+    "payerPlaceholder": "Escolha um participante",
+    "splitToggleLabel": "Dividir despesa entre participantes",
+    "splitEqual": "Igualmente",
+    "splitCustom": "Personalizado",
+    "splitProgress": "Dividido: {current} / {total}",
+    "savePending": "Salvando...",
+    "save": "Salvar alterações",
+    "add": "Adicionar despesa",
+    "toastUpdated": "Despesa atualizada.",
+    "toastAdded": "Despesa adicionada.",
+    "errors": {
+      "descriptionRequired": "Informe uma descrição com até 200 caracteres.",
+      "amountInvalid": "Informe um valor maior que zero com até duas casas decimais.",
+      "currencyInvalid": "Informe um código de moeda de três letras, como BRL ou USD.",
+      "categoryInvalid": "Escolha uma categoria válida.",
+      "dateInvalid": "Informe uma data de despesa válida.",
+      "payerInvalid": "Escolha um pagador válido.",
+      "splitAmountInvalid": "Os valores da divisão devem ser números válidos com até duas casas decimais.",
+      "splitMismatch": "A soma da divisão deve ser igual ao valor total da despesa."
+    },
+    "actionErrors": {
+      "identifyTrip": "Não foi possível identificar a viagem.",
+      "identifyExpense": "Não foi possível identificar a despesa.",
+      "sharesTotalMismatch": "A soma da divisão deve ser igual ao valor total da despesa.",
+      "invalidParticipant": "Só é possível dividir a despesa entre participantes da viagem.",
+      "notAuthorized": "Você não tem acesso a esta viagem.",
+      "tripArchived": "Esta viagem está arquivada. Reative-a para alterar despesas.",
+      "genericFailed": "Não foi possível salvar esta despesa. Verifique o pagador, a divisão e seu acesso à viagem."
+    }
+  },
+  "itineraryForm": {
+    "dateLabel": "Data",
+    "timeLabel": "Horário",
+    "titleLabel": "Título",
+    "titlePlaceholder": "Visita ao museu",
+    "locationLabel": "Local",
+    "locationPlaceholder": "Endereço ou ponto de encontro",
+    "notesLabel": "Notas",
+    "savePending": "Salvando...",
+    "save": "Salvar alterações",
+    "add": "Adicionar ao itinerário",
+    "toastUpdated": "Item do itinerário atualizado.",
+    "toastAdded": "Item do itinerário adicionado.",
+    "errors": {
+      "dateInvalid": "Informe uma data válida.",
+      "timeInvalid": "Informe um horário válido.",
+      "titleRequired": "Informe um título com até 200 caracteres.",
+      "locationTooLong": "O local deve ter até 200 caracteres.",
+      "notesTooLong": "As notas devem ter até 2.000 caracteres."
+    },
+    "actionErrors": {
+      "identifyTrip": "Não foi possível identificar a viagem.",
+      "identifyItem": "Não foi possível identificar o item do itinerário.",
+      "addFailed": "Não foi possível adicionar este item ao itinerário. Verifique seu acesso à viagem e tente novamente.",
+      "updateFailed": "Não foi possível atualizar este item do itinerário. Tente novamente."
+    }
+  },
+  "reservationForm": {
+    "typeLabel": "Tipo",
+    "titleLabel": "Título",
+    "titlePlaceholder": "Voo LATAM 3456",
+    "providerLabel": "Fornecedor",
+    "providerPlaceholder": "Companhia aérea, hotel ou empresa",
+    "confirmationCodeLabel": "Código de confirmação",
+    "confirmationCodePlaceholder": "Localizador ou número da reserva",
+    "startDateLabel": "Data de início",
+    "startTimeLabel": "Horário de início",
+    "endDateLabel": "Data de término",
+    "endTimeLabel": "Horário de término",
+    "locationLabel": "Local de origem",
+    "locationPlaceholder": "Aeroporto, endereço ou ponto de partida",
+    "destinationLocationLabel": "Local de destino",
+    "destinationLocationPlaceholder": "Aeroporto, endereço ou ponto de chegada",
+    "linkItemLabel": "Vincular a um item do itinerário",
+    "linkItemNone": "Nenhum",
+    "notesLabel": "Notas",
+    "savePending": "Salvando...",
+    "save": "Salvar alterações",
+    "add": "Adicionar reserva",
+    "toastUpdated": "Reserva atualizada.",
+    "toastAdded": "Reserva adicionada.",
+    "errors": {
+      "itineraryItemInvalid": "Selecione um item do itinerário válido.",
+      "typeInvalid": "Selecione um tipo de reserva válido.",
+      "titleRequired": "Informe um título com até 200 caracteres.",
+      "providerTooLong": "O fornecedor deve ter até 200 caracteres.",
+      "confirmationCodeTooLong": "O código de confirmação deve ter até 100 caracteres.",
+      "startDateInvalid": "Informe uma data de início válida.",
+      "startTimeInvalid": "Informe um horário de início válido.",
+      "endDateInvalid": "Informe uma data de término válida.",
+      "endDateBeforeStart": "A data de término não pode ser anterior à data de início.",
+      "endTimeInvalid": "Informe um horário de término válido.",
+      "locationTooLong": "O local deve ter até 200 caracteres.",
+      "destinationLocationTooLong": "O destino deve ter até 200 caracteres.",
+      "notesTooLong": "As notas devem ter até 2.000 caracteres."
+    },
+    "actionErrors": {
+      "identifyTrip": "Não foi possível identificar a viagem.",
+      "identifyReservation": "Não foi possível identificar a reserva.",
+      "addFailed": "Não foi possível adicionar esta reserva. Verifique seu acesso à viagem e tente novamente.",
+      "updateFailed": "Não foi possível atualizar esta reserva. Tente novamente."
+    }
+  },
+  "inviteForm": {
+    "emailLabel": "E-mail do organizador",
+    "emailPlaceholder": "organizador@exemplo.com",
+    "submitPending": "Convidando...",
+    "submit": "Convidar organizador"
+  },
+  "invitationActions": {
+    "identifyTrip": "Não foi possível identificar a viagem.",
+    "emailInvalid": "Informe um e-mail válido.",
+    "alreadyHasAccess": "Você já tem acesso a esta viagem.",
+    "onlyCreatorCanInvite": "Somente quem criou a viagem pode enviar convites.",
+    "duplicatePending": "Já existe um convite pendente para este e-mail.",
+    "createFailed": "Não foi possível criar o convite. Tente novamente.",
+    "sentTo": "Convite enviado para {email}.",
+    "createdEmailFailed": "Convite criado para {email}, mas não foi possível enviar o e-mail agora. Você pode reenviar em instantes.",
+    "invitedByFallback": "Um organizador"
+  },
+  "destinationGuideForm": {
+    "contentLabel": "Conteúdo",
+    "contentPlaceholder": "Dicas, bairros recomendados, costumes locais, o que levar...",
+    "sourceLabel": "Fonte",
+    "sourcePlaceholder": "Link ou referência",
+    "reviewedAtLabel": "Revisado em",
+    "savePending": "Salvando...",
+    "save": "Salvar guia do destino",
+    "errors": {
+      "contentTooLong": "O conteúdo deve ter no máximo 5000 caracteres.",
+      "sourceTooLong": "A fonte deve ter no máximo 300 caracteres.",
+      "reviewedAtInvalid": "Informe uma data de revisão válida."
+    },
+    "actionErrors": {
+      "identifyTrip": "Não foi possível identificar a viagem.",
+      "notAuthorized": "Somente quem criou a viagem ou um organizador pode editar o guia do destino.",
+      "tripArchived": "Esta viagem está arquivada. Reative-a para editar o guia do destino.",
+      "genericFailed": "Não foi possível salvar o guia do destino.",
+      "updated": "Guia do destino atualizado com sucesso."
+    }
+  },
+  "comments": {
+    "title": "Comentários",
+    "empty": "Nenhum comentário ainda.",
+    "editedSuffix": "editado",
+    "editLabel": "Editar",
+    "deleteTitle": "Excluir comentário?",
+    "deleteDescription": "Isso vai remover permanentemente este comentário da conversa.",
+    "deleteTrigger": "Excluir comentário",
+    "editAriaLabel": "Editar comentário",
+    "addAriaLabel": "Adicionar comentário",
+    "bodyPlaceholder": "Adicione um contexto ou uma decisão...",
+    "savePending": "Salvando...",
+    "save": "Salvar",
+    "add": "Comentar",
+    "toastUpdated": "Comentário atualizado.",
+    "toastAdded": "Comentário adicionado.",
+    "actionErrors": {
+      "identifyTarget": "Não foi possível identificar o alvo do comentário.",
+      "identifyComment": "Não foi possível identificar o comentário.",
+      "bodyInvalid": "Informe um comentário com até 2.000 caracteres.",
+      "addFailed": "Não foi possível adicionar este comentário. Verifique seu acesso à viagem.",
+      "updateFailed": "Não foi possível atualizar este comentário."
+    }
+  },
+  "attachmentForm": {
+    "fileLabel": "Arquivo",
+    "fileHint": "PDF ou imagem (JPEG, PNG, WEBP, HEIC), até 10 MB.",
+    "associateLabel": "Associar a",
+    "associateNone": "Viagem em geral",
+    "itineraryPrefix": "Itinerário",
+    "taskPrefix": "Tarefa",
+    "reservationPrefix": "Reserva",
+    "submitPending": "Enviando...",
+    "submit": "Enviar anexo",
+    "toastUploaded": "Anexo enviado.",
+    "actionErrors": {
+      "identifyTrip": "Não foi possível identificar a viagem.",
+      "missing_file": "Selecione um arquivo para enviar.",
+      "file_too_large": "O arquivo deve ter no máximo 10 MB.",
+      "unsupported_file_type": "Tipo de arquivo não suportado. Envie um PDF ou uma imagem (JPEG, PNG, WEBP ou HEIC).",
+      "invalid_item_association": "Não foi possível associar o anexo ao item selecionado.",
+      "uploadFailed": "Não foi possível enviar o arquivo. Verifique seu acesso à viagem e tente novamente.",
+      "registerFailed": "Não foi possível registrar o anexo. Tente novamente."
+    }
+  },
+  "confirmDeleteForm": {
+    "cancel": "Cancelar",
+    "deleteDefault": "Excluir",
+    "deletingPending": "Excluindo..."
+  },
+  "itemActionsMenu": {
+    "actionsLabel": "Ações do item",
+    "editDefault": "Editar",
+    "hideForm": "Ocultar formulário",
+    "deleteDefault": "Excluir",
+    "cancel": "Cancelar"
+  },
+  "notifications": {
+    "title": "Notificações",
+    "markAllRead": "Marcar todas como lidas",
+    "empty": "Nenhuma notificação por aqui ainda.",
+    "unreadSuffix": "({count} não lidas)",
+    "timeNow": "agora",
+    "timeMinutes": "há {count} min",
+    "timeHours": "há {count} h",
+    "timeDays": "há {count} d"
+  },
+  "realtimeStatus": {
+    "connecting": "Conectando...",
+    "connected": "Ao vivo",
+    "reconnecting": "Reconectando...",
+    "disconnected": "Desconectado"
   }
 }

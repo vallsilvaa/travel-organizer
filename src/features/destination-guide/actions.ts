@@ -1,8 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 
+import { translateFieldErrors } from "@/i18n/translate-field-errors";
 import { createClient } from "@/lib/supabase/server";
 import { isValidTripId } from "@/features/trips/validation";
 import { validateDestinationGuideInput, type DestinationGuideFieldErrors } from "./validation";
@@ -13,14 +15,17 @@ export type UpdateDestinationGuideState = {
   success?: boolean;
 };
 
-function destinationGuideErrorMessage(error: { message?: string }) {
+function destinationGuideErrorMessage(
+  t: Awaited<ReturnType<typeof getTranslations<"destinationGuideForm">>>,
+  error: { message?: string },
+) {
   switch (error.message) {
     case "not_authorized":
-      return "Somente quem criou a viagem ou um organizador pode editar o guia do destino.";
+      return t("actionErrors.notAuthorized");
     case "trip_archived":
-      return "Esta viagem está arquivada. Reative-a para editar o guia do destino.";
+      return t("actionErrors.tripArchived");
     default:
-      return "Não foi possível salvar o guia do destino.";
+      return t("actionErrors.genericFailed");
   }
 }
 
@@ -28,14 +33,15 @@ export async function updateDestinationGuide(
   _previousState: UpdateDestinationGuideState,
   formData: FormData,
 ): Promise<UpdateDestinationGuideState> {
+  const t = await getTranslations("destinationGuideForm");
   const tripId = String(formData.get("tripId") ?? "");
   if (!isValidTripId(tripId)) {
-    return { message: "Não foi possível identificar a viagem." };
+    return { message: t("actionErrors.identifyTrip") };
   }
 
   const validation = validateDestinationGuideInput(formData);
   if (!validation.success) {
-    return { errors: validation.errors };
+    return { errors: translateFieldErrors(t, validation.errors) };
   }
 
   const supabase = await createClient();
@@ -55,9 +61,9 @@ export async function updateDestinationGuide(
   });
 
   if (error) {
-    return { message: destinationGuideErrorMessage(error) };
+    return { message: destinationGuideErrorMessage(t, error) };
   }
 
   revalidatePath(`/trips/${tripId}`);
-  return { success: true, message: "Guia do destino atualizado com sucesso." };
+  return { success: true, message: t("actionErrors.updated") };
 }

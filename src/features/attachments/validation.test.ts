@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  attachmentErrorMessage,
   formatFileSize,
   maxAttachmentSizeBytes,
   sanitizeFileNameForStorage,
@@ -72,18 +71,6 @@ describe("validateAttachmentUpload", () => {
       itemId: "27823996-ec50-4cc2-8506-a29d07b86f94",
     });
     expect(result).toEqual({ success: false, error: "invalid_item_association" });
-  });
-});
-
-describe("attachmentErrorMessage", () => {
-  it("returns a distinct message for every error", () => {
-    const messages = new Set([
-      attachmentErrorMessage("missing_file"),
-      attachmentErrorMessage("file_too_large"),
-      attachmentErrorMessage("unsupported_file_type"),
-      attachmentErrorMessage("invalid_item_association"),
-    ]);
-    expect(messages.size).toBe(4);
   });
 });
 

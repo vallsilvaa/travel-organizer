@@ -1,8 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 
+import { translateFieldErrors } from "@/i18n/translate-field-errors";
 import { createClient } from "@/lib/supabase/server";
 import {
   isValidTaskId,
@@ -32,14 +34,15 @@ export async function createTask(
   _previousState: TaskActionState,
   formData: FormData,
 ): Promise<TaskActionState> {
+  const t = await getTranslations("taskForm");
   const tripId = String(formData.get("tripId") ?? "");
   const validation = validateTaskInput(formData);
 
   if (!isValidTaskId(tripId)) {
-    return { message: "Não foi possível identificar a viagem." };
+    return { message: t("actionErrors.identifyTrip") };
   }
   if (!validation.success) {
-    return { errors: validation.errors };
+    return { errors: translateFieldErrors(t, validation.errors) };
   }
 
   const { supabase, user } = await authenticatedClient();
@@ -57,7 +60,7 @@ export async function createTask(
   });
 
   if (error) {
-    return { message: "Não foi possível adicionar esta tarefa. Verifique o responsável e seu acesso à viagem." };
+    return { message: t("actionErrors.addFailed") };
   }
 
   revalidatePath(`/trips/${tripId}`);
@@ -68,15 +71,16 @@ export async function updateTask(
   _previousState: TaskActionState,
   formData: FormData,
 ): Promise<TaskActionState> {
+  const t = await getTranslations("taskForm");
   const tripId = String(formData.get("tripId") ?? "");
   const taskId = String(formData.get("taskId") ?? "");
   const validation = validateTaskInput(formData);
 
   if (!isValidTaskId(tripId) || !isValidTaskId(taskId)) {
-    return { message: "Não foi possível identificar a tarefa." };
+    return { message: t("actionErrors.identifyTask") };
   }
   if (!validation.success) {
-    return { errors: validation.errors };
+    return { errors: translateFieldErrors(t, validation.errors) };
   }
 
   const { supabase } = await authenticatedClient();
@@ -97,7 +101,7 @@ export async function updateTask(
     .eq("trip_id", tripId);
 
   if (error) {
-    return { message: "Não foi possível atualizar esta tarefa. Tente novamente." };
+    return { message: t("actionErrors.updateFailed") };
   }
 
   revalidatePath(`/trips/${tripId}`);

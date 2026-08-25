@@ -15,15 +15,15 @@ export function validateDestinationGuideInput(formData: FormData) {
   const errors: DestinationGuideFieldErrors = {};
 
   if (content.length > 5000) {
-    errors.content = "O conteúdo deve ter no máximo 5000 caracteres.";
+    errors.content = "contentTooLong";
   }
 
   if (source.length > 300) {
-    errors.source = "A fonte deve ter no máximo 300 caracteres.";
+    errors.source = "sourceTooLong";
   }
 
   if (reviewedAt && (!datePattern.test(reviewedAt) || Number.isNaN(Date.parse(`${reviewedAt}T00:00:00Z`)))) {
-    errors.reviewedAt = "Informe uma data de revisão válida.";
+    errors.reviewedAt = "reviewedAtInvalid";
   }
 
   return {

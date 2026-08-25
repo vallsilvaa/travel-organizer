@@ -31,6 +31,13 @@ vi.mock("next/navigation", () => ({
   redirect: mocks.redirect,
 }));
 
+vi.mock("next-intl/server", async () => {
+  const { createTranslator } = await import("@/i18n/test-mocks");
+  return {
+    getTranslations: async (namespace?: string) => createTranslator(namespace),
+  };
+});
+
 import { archiveTrip, createTrip, deleteTrip, restoreTrip, updateTrip } from "./actions";
 
 function validTripForm() {
