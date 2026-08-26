@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 
 import { changePassword, signOut, updateDisplayName } from "@/features/auth/actions";
 import { respondToInvitation } from "@/features/invitations/actions";
+import { getInvitationRoleLabels } from "@/features/invitations/validation";
 import { getAuthMessage } from "@/features/auth/messages";
 import { NotificationBell, type Notification } from "@/features/notifications/notification-bell";
 import { updateReminderPreference } from "@/features/reminders/actions";
@@ -89,6 +90,7 @@ function tripStatus(trip: Trip): TripStatus {
 export default async function DashboardPage({ searchParams }: DashboardPageProps) {
   const params = await searchParams;
   const t = await getTranslations("dashboard");
+  const invitationRoleLabels = getInvitationRoleLabels(await getTranslations("categories.invitationRole"));
   const tCommon = await getTranslations("common");
   const format = await getFormatter();
   const formatDate = (value: string) => format.dateTime(new Date(`${value}T00:00:00Z`), "medium");
@@ -149,7 +151,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const { data: pendingInvitations, error: invitationsError } = user.email
     ? await supabase
         .from("trip_invitations")
-        .select("id, trip_id, trip_destination, status, created_at")
+        .select("id, trip_id, trip_destination, status, role, created_at")
         .eq("status", "pending")
         .eq("email", user.email.toLowerCase())
         .order("created_at", { ascending: false })
@@ -317,7 +319,9 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                         {invitation.trip_destination}
                       </p>
                       <p className="mt-1 text-sm text-slate-600">
-                        {t("invitations.invitedAsOrganizer")}
+                        {t("invitations.invitedAsRole", {
+                          role: invitationRoleLabels[invitation.role as keyof typeof invitationRoleLabels] ?? invitation.role,
+                        })}
                       </p>
                       <form action={respondToInvitation} className="mt-4 flex gap-3">
                         <input

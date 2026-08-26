@@ -133,7 +133,7 @@
       "title": "Convites de viagem",
       "loadError": "Não foi possível carregar seus convites.",
       "unavailable": "O convite não está mais disponível ou não pôde ser atualizado.",
-      "invitedAsOrganizer": "Você foi convidado para colaborar como organizador da viagem.",
+      "invitedAsRole": "Você foi convidado para colaborar como {role} da viagem.",
       "respondPending": "Respondendo...",
       "accept": "Aceitar",
       "decline": "Recusar"
@@ -209,7 +209,7 @@
       "expenses": "Despesas",
       "preparation": "Preparação",
       "documents": "Documentos",
-      "organizer": "Organizador"
+      "organizer": "Colaboradores"
     },
     "readiness": {
       "title": "Prontidão para a viagem",
@@ -351,13 +351,12 @@
       "removedItem": "item removido"
     },
     "organizer": {
-      "title": "Organizador da viagem",
-      "description": "Convide um organizador por e-mail. A pessoa pode aceitar após entrar com o mesmo endereço.",
+      "title": "Colaboradores da viagem",
+      "description": "Convide viajantes ou organizadores por e-mail. A pessoa pode aceitar após entrar com o mesmo endereço.",
       "participantsTitle": "Participantes",
-      "participantsDescription": "Veja quem tem acesso a esta viagem e remova organizadores quando necessário.",
+      "participantsDescription": "Veja quem tem acesso a esta viagem e remova participantes quando necessário.",
       "roleCreator": "Criador(a) da viagem",
-      "roleOrganizer": "Organizador(a)",
-      "removeParticipantTitle": "Remover este organizador?",
+      "removeParticipantTitle": "Remover este participante?",
       "removeParticipantDescription": "{name} perderá acesso imediato a esta viagem.",
       "removeAccess": "Remover acesso",
       "invitationExpires": "Expira em {date}",
@@ -428,6 +427,10 @@
       "morning": "Manhã",
       "afternoon": "Tarde",
       "evening": "Noite"
+    },
+    "invitationRole": {
+      "traveler": "Viajante",
+      "organizer": "Organizador"
     }
   },
   "taskForm": {
@@ -582,10 +585,11 @@
     }
   },
   "inviteForm": {
-    "emailLabel": "E-mail do organizador",
-    "emailPlaceholder": "organizador@exemplo.com",
+    "emailLabel": "E-mail do convidado",
+    "emailPlaceholder": "pessoa@exemplo.com",
+    "roleLabel": "Papel",
     "submitPending": "Convidando...",
-    "submit": "Convidar organizador"
+    "submit": "Enviar convite"
   },
   "invitationActions": {
     "identifyTrip": "Não foi possível identificar a viagem.",

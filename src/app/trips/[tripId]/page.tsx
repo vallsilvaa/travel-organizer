@@ -16,6 +16,7 @@ import {
   resendInvitation,
 } from "@/features/invitations/actions";
 import { InviteForm } from "@/features/invitations/invite-form";
+import { getInvitationRoleLabels } from "@/features/invitations/validation";
 import { deleteItineraryItem } from "@/features/itinerary/actions";
 import { ItineraryForm } from "@/features/itinerary/itinerary-form";
 import { getItineraryPeriodLabels, itineraryPeriods } from "@/features/itinerary/validation";
@@ -202,6 +203,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
   const expenseCategoryLabels = getExpenseCategoryLabels(await getTranslations("categories.expense"));
   const reservationTypeLabels = getReservationTypeLabels(await getTranslations("categories.reservationType"));
   const itineraryPeriodLabels = getItineraryPeriodLabels(await getTranslations("categories.itineraryPeriod"));
+  const invitationRoleLabels = getInvitationRoleLabels(await getTranslations("categories.invitationRole"));
   const locale = await getLocale();
   const format = await getFormatter();
   const formatDate = (value: string) => format.dateTime(new Date(`${value}T00:00:00Z`), "long");
@@ -329,7 +331,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
       isCreator
         ? supabase
             .from("trip_invitations")
-            .select("id, email, status, created_at, expires_at")
+            .select("id, email, status, role, created_at, expires_at")
             .eq("trip_id", trip.id)
             .order("created_at", { ascending: false })
         : Promise.resolve({ data: [] }),
@@ -1559,7 +1561,9 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                                 {participant.display_name}
                               </p>
                               <Badge variant="outline" className="mt-1">
-                                {isTripCreator ? t("organizer.roleCreator") : t("organizer.roleOrganizer")}
+                                {isTripCreator
+                                  ? t("organizer.roleCreator")
+                                  : invitationRoleLabels[participant.role as keyof typeof invitationRoleLabels] ?? participant.role}
                               </Badge>
                             </div>
                             {!isTripCreator ? (
@@ -1590,6 +1594,10 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                           <div>
                             <span className="text-sm font-medium text-slate-800">
                               {invitation.email}
+                            </span>
+                            {" "}
+                            <span className="text-xs text-slate-500">
+                              ({invitationRoleLabels[invitation.role as keyof typeof invitationRoleLabels] ?? invitation.role})
                             </span>
                             {invitation.status === "pending" ? (
                               <p className="text-xs text-slate-500">

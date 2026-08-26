@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  isInvitationRole,
   isValidInvitationEmail,
   isValidInvitationId,
   normalizeInvitationEmail,
@@ -23,5 +24,11 @@ describe("invitation validation", () => {
     expect(
       isValidInvitationId("8f3f147b-8684-4ff1-b5c7-6814e4f57f73"),
     ).toBe(true);
+  });
+
+  it("recognizes supported invitation roles", () => {
+    expect(isInvitationRole("traveler")).toBe(true);
+    expect(isInvitationRole("organizer")).toBe(true);
+    expect(isInvitationRole("admin")).toBe(false);
   });
 });

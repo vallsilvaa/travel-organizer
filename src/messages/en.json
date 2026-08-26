@@ -133,7 +133,7 @@
       "title": "Trip invitations",
       "loadError": "Could not load your invitations.",
       "unavailable": "This invitation is no longer available or could not be updated.",
-      "invitedAsOrganizer": "You've been invited to collaborate as an organizer on this trip.",
+      "invitedAsRole": "You've been invited to collaborate as {role} on this trip.",
       "respondPending": "Responding...",
       "accept": "Accept",
       "decline": "Decline"
@@ -209,7 +209,7 @@
       "expenses": "Expenses",
       "preparation": "Preparation",
       "documents": "Documents",
-      "organizer": "Organizer"
+      "organizer": "Collaborators"
     },
     "readiness": {
       "title": "Trip readiness",
@@ -351,13 +351,12 @@
       "removedItem": "removed item"
     },
     "organizer": {
-      "title": "Trip organizer",
-      "description": "Invite an organizer by email. They can accept after signing in with the same address.",
+      "title": "Trip collaborators",
+      "description": "Invite travelers or organizers by email. They can accept after signing in with the same address.",
       "participantsTitle": "Participants",
-      "participantsDescription": "See who has access to this trip and remove organizers when needed.",
+      "participantsDescription": "See who has access to this trip and remove participants when needed.",
       "roleCreator": "Trip creator",
-      "roleOrganizer": "Organizer",
-      "removeParticipantTitle": "Remove this organizer?",
+      "removeParticipantTitle": "Remove this participant?",
       "removeParticipantDescription": "{name} will immediately lose access to this trip.",
       "removeAccess": "Remove access",
       "invitationExpires": "Expires on {date}",
@@ -428,6 +427,10 @@
       "morning": "Morning",
       "afternoon": "Afternoon",
       "evening": "Evening"
+    },
+    "invitationRole": {
+      "traveler": "Traveler",
+      "organizer": "Organizer"
     }
   },
   "taskForm": {
@@ -582,10 +585,11 @@
     }
   },
   "inviteForm": {
-    "emailLabel": "Organizer's email",
-    "emailPlaceholder": "organizer@example.com",
+    "emailLabel": "Invitee's email",
+    "emailPlaceholder": "person@example.com",
+    "roleLabel": "Role",
     "submitPending": "Inviting...",
-    "submit": "Invite organizer"
+    "submit": "Send invite"
   },
   "invitationActions": {
     "identifyTrip": "Could not identify the trip.",

@@ -7,18 +7,28 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 import {
-  inviteOrganizer,
-  type InviteOrganizerState,
+  inviteParticipant,
+  type InviteParticipantState,
 } from "./actions";
+import { getInvitationRoleLabels, invitationRoles } from "./validation";
 
-const initialState: InviteOrganizerState = {};
+const initialState: InviteParticipantState = {};
 
 export function InviteForm({ tripId }: { tripId: string }) {
   const t = useTranslations("inviteForm");
+  const tRoles = useTranslations("categories.invitationRole");
+  const roleLabels = getInvitationRoleLabels(tRoles);
   const [state, formAction, pending] = useActionState(
-    inviteOrganizer,
+    inviteParticipant,
     initialState,
   );
 
@@ -43,6 +53,19 @@ export function InviteForm({ tripId }: { tripId: string }) {
           type="email"
           placeholder={t("emailPlaceholder")}
         />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="invite-role">{t("roleLabel")}</Label>
+        <Select name="role" defaultValue="organizer">
+          <SelectTrigger id="invite-role" className="w-full sm:w-40">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {invitationRoles.map((role) => (
+              <SelectItem key={role} value={role}>{roleLabels[role]}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
       <Button type="submit" disabled={pending} size="lg">
         {pending ? t("submitPending") : t("submit")}
