@@ -86,7 +86,7 @@ test.describe("automated accessibility checks (WCAG 2 A/AA)", () => {
     await expect(page).toHaveURL(/\/trips\/[0-9a-f-]+$/);
     await assertNoViolations(page, "trip page (overview tab)");
 
-    for (const tabName of ["Itinerário", "Despesas", "Preparação", "Organizador"]) {
+    for (const tabName of ["Itinerário", "Despesas", "Preparação", "Colaboradores"]) {
       await page.getByRole("tab", { name: tabName }).click();
       await assertNoViolations(page, `trip page (${tabName} tab)`);
     }

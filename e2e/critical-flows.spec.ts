@@ -156,10 +156,10 @@ test("traveler completes the critical collaborative planning journey", async ({
   });
 
   await test.step("invite and accept an organizer", async () => {
-    await page.getByRole("tab", { name: "Organizador" }).click();
-    await page.getByLabel("E-mail do organizador").fill(organizerEmail);
-    await page.getByRole("button", { name: "Convidar organizador" }).click();
-    await page.getByRole("tab", { name: "Organizador" }).click();
+    await page.getByRole("tab", { name: "Colaboradores" }).click();
+    await page.getByLabel("E-mail do convidado").fill(organizerEmail);
+    await page.getByRole("button", { name: "Enviar convite" }).click();
+    await page.getByRole("tab", { name: "Colaboradores" }).click();
     await expect(page.getByText(organizerEmail, { exact: true })).toBeVisible();
 
     await signOut(page);
