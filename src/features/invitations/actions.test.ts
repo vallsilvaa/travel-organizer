@@ -37,7 +37,7 @@ vi.mock("next-intl/server", async () => {
 
 import {
   cancelInvitation,
-  inviteOrganizer,
+  inviteParticipant,
   resendInvitation,
   respondToInvitation,
 } from "./actions";
@@ -92,8 +92,9 @@ describe("invitation actions", () => {
     const formData = new FormData();
     formData.set("tripId", tripId);
     formData.set("email", " Organizer@Example.com ");
+    formData.set("role", "organizer");
 
-    const result = await inviteOrganizer({}, formData);
+    const result = await inviteParticipant({}, formData);
 
     expect(mocks.insert).toHaveBeenCalledWith({
       trip_id: tripId,
@@ -109,6 +110,46 @@ describe("invitation actions", () => {
     expect(result.message).toBe("Convite enviado para organizer@example.com.");
   });
 
+  it("creates a pending traveler invitation when the traveler role is chosen", async () => {
+    mocks.single.mockResolvedValue({
+      data: { id: tripId, destination: "London" },
+      error: null,
+    });
+    mocks.insert.mockResolvedValue({ error: null });
+    mocks.maybeSingle.mockResolvedValue({
+      data: { display_name: "Ana" },
+      error: null,
+    });
+    const formData = new FormData();
+    formData.set("tripId", tripId);
+    formData.set("email", "new-traveler@example.com");
+    formData.set("role", "traveler");
+
+    await inviteParticipant({}, formData);
+
+    expect(mocks.insert).toHaveBeenCalledWith(
+      expect.objectContaining({ role: "traveler" }),
+    );
+  });
+
+  it("defaults to organizer when no role is given", async () => {
+    mocks.single.mockResolvedValue({
+      data: { id: tripId, destination: "London" },
+      error: null,
+    });
+    mocks.insert.mockResolvedValue({ error: null });
+    mocks.maybeSingle.mockResolvedValue({ data: null, error: null });
+    const formData = new FormData();
+    formData.set("tripId", tripId);
+    formData.set("email", "organizer@example.com");
+
+    await inviteParticipant({}, formData);
+
+    expect(mocks.insert).toHaveBeenCalledWith(
+      expect.objectContaining({ role: "organizer" }),
+    );
+  });
+
   it("still creates the invitation when email delivery fails", async () => {
     mocks.single.mockResolvedValue({
       data: { id: tripId, destination: "London" },
@@ -121,8 +162,9 @@ describe("invitation actions", () => {
     const formData = new FormData();
     formData.set("tripId", tripId);
     formData.set("email", "organizer@example.com");
+    formData.set("role", "organizer");
 
-    const result = await inviteOrganizer({}, formData);
+    const result = await inviteParticipant({}, formData);
 
     expect(result.message).toBe(
       "Convite criado para organizer@example.com, mas não foi possível enviar o e-mail agora. Você pode reenviar em instantes.",
@@ -151,7 +193,7 @@ describe("invitation actions", () => {
   it("resends a pending invitation and re-sends the email", async () => {
     mocks.maybeSingle
       .mockResolvedValueOnce({
-        data: { email: "organizer@example.com", trip_destination: "London" },
+        data: { email: "organizer@example.com", trip_destination: "London", role: "organizer" },
         error: null,
       })
       .mockResolvedValueOnce({ data: { display_name: "Ana" }, error: null });

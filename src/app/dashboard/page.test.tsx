@@ -71,6 +71,7 @@ const invitation = {
   trip_id: "27823996-ec50-4cc2-8506-a29d07b86f94",
   trip_destination: "Lisbon",
   status: "pending",
+  role: "organizer",
   created_at: "2026-08-01T00:00:00Z",
   email: "traveler@example.com",
 };

@@ -7,12 +7,14 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { buildInvitationEmail } from "./email";
 import {
+  isInvitationRole,
   isValidInvitationEmail,
   isValidInvitationId,
   normalizeInvitationEmail,
+  type InvitationRole,
 } from "./validation";
 
-export type InviteOrganizerState = {
+export type InviteParticipantState = {
   error?: string;
   message?: string;
 };
@@ -30,7 +32,7 @@ async function authenticatedClient() {
   return { supabase, user };
 }
 
-async function sendInvitationEmail(email: string, tripDestination: string, invitedByName: string) {
+async function sendInvitationEmail(email: string, tripDestination: string, invitedByName: string, role: InvitationRole) {
   const resendApiKey = process.env.RESEND_API_KEY;
   const emailFrom = process.env.REMINDER_EMAIL_FROM;
   const appUrl = process.env.NEXT_PUBLIC_APP_URL;
@@ -40,7 +42,7 @@ async function sendInvitationEmail(email: string, tripDestination: string, invit
     return false;
   }
 
-  const message = buildInvitationEmail({ appUrl, tripDestination, invitedByName });
+  const message = buildInvitationEmail({ appUrl, tripDestination, invitedByName, role });
 
   try {
     const response = await fetch("https://api.resend.com/emails", {
@@ -70,13 +72,15 @@ async function sendInvitationEmail(email: string, tripDestination: string, invit
   }
 }
 
-export async function inviteOrganizer(
-  _previousState: InviteOrganizerState,
+export async function inviteParticipant(
+  _previousState: InviteParticipantState,
   formData: FormData,
-): Promise<InviteOrganizerState> {
+): Promise<InviteParticipantState> {
   const t = await getTranslations("invitationActions");
   const tripId = String(formData.get("tripId") ?? "");
   const email = normalizeInvitationEmail(formData.get("email"));
+  const rawRole = String(formData.get("role") ?? "");
+  const role: InvitationRole = isInvitationRole(rawRole) ? rawRole : "organizer";
 
   if (!isValidInvitationId(tripId)) {
     return { error: t("identifyTrip") };
@@ -107,7 +111,7 @@ export async function inviteOrganizer(
     trip_destination: trip.destination,
     email,
     invited_by: user.id,
-    role: "organizer",
+    role,
   });
 
   if (error) {
@@ -127,6 +131,7 @@ export async function inviteOrganizer(
     email,
     trip.destination,
     profile?.display_name ?? t("invitedByFallback"),
+    role,
   );
 
   return {
@@ -152,7 +157,7 @@ export async function resendInvitation(formData: FormData): Promise<void> {
     .eq("id", invitationId)
     .eq("trip_id", tripId)
     .eq("status", "pending")
-    .select("email, trip_destination")
+    .select("email, trip_destination, role")
     .maybeSingle();
 
   if (error || !invitation) {
@@ -169,6 +174,7 @@ export async function resendInvitation(formData: FormData): Promise<void> {
     invitation.email,
     invitation.trip_destination,
     profile?.display_name ?? t("invitedByFallback"),
+    isInvitationRole(invitation.role) ? invitation.role : "organizer",
   );
 
   revalidatePath(`/trips/${tripId}`);
