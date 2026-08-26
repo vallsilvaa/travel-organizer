@@ -122,7 +122,7 @@ describe("invitation actions", () => {
     });
     const formData = new FormData();
     formData.set("tripId", tripId);
-    formData.set("email", "traveler@example.com");
+    formData.set("email", "new-traveler@example.com");
     formData.set("role", "traveler");
 
     await inviteParticipant({}, formData);

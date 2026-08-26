@@ -150,7 +150,7 @@ select ok(
 select ok(
   not has_function_privilege(
     'authenticated',
-    'public.add_accepted_organizer_to_trip()',
+    'public.add_accepted_participant_to_trip()',
     'execute'
   ),
   'clients cannot execute the invitation trigger function directly'
