@@ -76,7 +76,7 @@ export function ReservationForm({ reservation, itineraryItems = [], tripId }: Re
 
       <div className="space-y-2">
         <Label htmlFor="reservation-type">{t("typeLabel")}</Label>
-        <Select required name="reservationType" defaultValue={reservation?.reservation_type ?? "flight"}>
+        <Select required name="reservationType" defaultValue={reservation?.reservation_type ?? "flight"} items={reservationTypeLabels}>
           <SelectTrigger id="reservation-type" className="w-full">
             <SelectValue />
           </SelectTrigger>
@@ -193,7 +193,16 @@ export function ReservationForm({ reservation, itineraryItems = [], tripId }: Re
         <Label htmlFor="reservation-itineraryItemId">
           {t("linkItemLabel")} <span className="font-normal text-muted-foreground">{tCommon("optional")}</span>
         </Label>
-        <Select name="itineraryItemId" defaultValue={reservation?.itinerary_item_id ?? "none"}>
+        <Select
+          name="itineraryItemId"
+          defaultValue={reservation?.itinerary_item_id ?? "none"}
+          items={{
+            none: t("linkItemNone"),
+            ...Object.fromEntries(
+              itineraryItems.map((item) => [item.id, `${formatItemDate(item.item_date, locale)} · ${item.title}`]),
+            ),
+          }}
+        >
           <SelectTrigger id="reservation-itineraryItemId" className="w-full">
             <SelectValue />
           </SelectTrigger>

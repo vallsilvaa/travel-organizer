@@ -74,7 +74,16 @@ export function TaskForm({ participants, task, tripId }: TaskFormProps) {
         <Label htmlFor="ownerId">
           {t("ownerLabel")} <span className="font-normal text-muted-foreground">{t("optional")}</span>
         </Label>
-        <Select name="ownerId" defaultValue={task?.owner_id ?? ""}>
+        <Select
+          name="ownerId"
+          defaultValue={task?.owner_id ?? ""}
+          items={{
+            "": t("ownerNone"),
+            ...Object.fromEntries(
+              participants.map((participant) => [participant.user_id, `${participant.display_name} (${participant.role})`]),
+            ),
+          }}
+        >
           <SelectTrigger id="ownerId" className="w-full">
             <SelectValue placeholder={t("ownerNone")} />
           </SelectTrigger>
@@ -91,7 +100,7 @@ export function TaskForm({ participants, task, tripId }: TaskFormProps) {
       </div>
       <div className="space-y-2">
         <Label htmlFor="category">{t("categoryLabel")}</Label>
-        <Select name="category" defaultValue={task?.category ?? "other"}>
+        <Select name="category" defaultValue={task?.category ?? "other"} items={taskCategoryLabels}>
           <SelectTrigger id="category" className="w-full">
             <SelectValue />
           </SelectTrigger>

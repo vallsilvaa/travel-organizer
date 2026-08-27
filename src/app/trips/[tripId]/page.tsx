@@ -930,7 +930,11 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                   <input type="hidden" name="tab" value="itinerary" />
                   <div className="space-y-1.5">
                     <Label htmlFor="itinerary-city-filter" className="text-slate-700">{t("itinerary.cityFilterLabel")}</Label>
-                    <Select name="city" defaultValue={cityFilter}>
+                    <Select
+                      name="city"
+                      defaultValue={cityFilter}
+                      items={{ all: t("itinerary.cityFilterAll"), ...Object.fromEntries(tripCities.map((city) => [city, city])) }}
+                    >
                       <SelectTrigger id="itinerary-city-filter" className="w-full bg-white">
                         <SelectValue />
                       </SelectTrigger>
@@ -944,7 +948,11 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                   </div>
                   <div className="space-y-1.5">
                     <Label htmlFor="itinerary-period-filter" className="text-slate-700">{t("itinerary.periodFilterLabel")}</Label>
-                    <Select name="period" defaultValue={itineraryPeriodFilter}>
+                    <Select
+                      name="period"
+                      defaultValue={itineraryPeriodFilter}
+                      items={{ all: t("itinerary.periodFilterAll"), ...itineraryPeriodLabels }}
+                    >
                       <SelectTrigger id="itinerary-period-filter" className="w-full bg-white">
                         <SelectValue />
                       </SelectTrigger>
@@ -1342,7 +1350,15 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                 {overdueOnlyFilter ? <input type="hidden" name="overdue" value="1" /> : null}
                 <div className="space-y-1.5">
                   <Label htmlFor="status-filter" className="text-slate-700">{t("preparation.statusLabel")}</Label>
-                  <Select name="status" defaultValue={statusFilter}>
+                  <Select
+                    name="status"
+                    defaultValue={statusFilter}
+                    items={{
+                      all: t("preparation.statusAll"),
+                      open: t("preparation.statusOpen"),
+                      completed: t("preparation.statusCompleted"),
+                    }}
+                  >
                     <SelectTrigger id="status-filter" className="w-full bg-white">
                       <SelectValue />
                     </SelectTrigger>
@@ -1355,7 +1371,15 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="owner-filter" className="text-slate-700">{t("preparation.ownerLabel")}</Label>
-                  <Select name="owner" defaultValue={ownerFilter}>
+                  <Select
+                    name="owner"
+                    defaultValue={ownerFilter}
+                    items={{
+                      all: t("preparation.ownerAll"),
+                      unassigned: t("preparation.ownerUnassigned"),
+                      ...Object.fromEntries(tripParticipants.map((participant) => [participant.user_id, participant.display_name])),
+                    }}
+                  >
                     <SelectTrigger id="owner-filter" className="w-full bg-white">
                       <SelectValue />
                     </SelectTrigger>
@@ -1370,7 +1394,11 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="category-filter" className="text-slate-700">{t("preparation.categoryLabel")}</Label>
-                  <Select name="category" defaultValue={categoryFilter}>
+                  <Select
+                    name="category"
+                    defaultValue={categoryFilter}
+                    items={{ all: t("preparation.categoryAll"), ...taskCategoryLabels }}
+                  >
                     <SelectTrigger id="category-filter" className="w-full bg-white">
                       <SelectValue />
                     </SelectTrigger>

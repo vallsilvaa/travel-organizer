@@ -95,7 +95,7 @@ export function ItineraryForm({ existingCities = [], item, tripId }: ItineraryFo
         <Label htmlFor="period">
           {t("periodLabel")} <span className="font-normal text-muted-foreground">{tCommon("optional")}</span>
         </Label>
-        <Select name="period" defaultValue={item?.period ?? "none"}>
+        <Select name="period" defaultValue={item?.period ?? "none"} items={{ none: t("periodNone"), ...periodLabels }}>
           <SelectTrigger id="period" className="w-full">
             <SelectValue />
           </SelectTrigger>
