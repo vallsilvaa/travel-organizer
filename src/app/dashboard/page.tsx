@@ -375,7 +375,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="status-filter" className="text-slate-700">{t("yourTrips.statusLabel")}</Label>
-                  <Select name="status" defaultValue={statusFilter}>
+                  <Select name="status" defaultValue={statusFilter} items={statusFilterLabels}>
                     <SelectTrigger id="status-filter" className="w-full bg-white sm:w-44">
                       <SelectValue />
                     </SelectTrigger>
@@ -388,7 +388,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="sort-option" className="text-slate-700">{t("yourTrips.sortLabel")}</Label>
-                  <Select name="sort" defaultValue={sortOption}>
+                  <Select name="sort" defaultValue={sortOption} items={sortLabels}>
                     <SelectTrigger id="sort-option" className="w-full bg-white sm:w-48">
                       <SelectValue />
                     </SelectTrigger>

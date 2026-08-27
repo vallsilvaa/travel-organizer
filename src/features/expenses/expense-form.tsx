@@ -167,7 +167,7 @@ export function ExpenseForm({
       </div>
       <div className="space-y-2">
         <Label htmlFor="category">{t("categoryLabel")}</Label>
-        <Select required name="category" defaultValue={expense?.category ?? "other"}>
+        <Select required name="category" defaultValue={expense?.category ?? "other"} items={expenseCategoryLabels}>
           <SelectTrigger id="category" className="w-full">
             <SelectValue />
           </SelectTrigger>
@@ -186,7 +186,14 @@ export function ExpenseForm({
       </div>
       <div className="space-y-2 sm:col-span-2">
         <Label htmlFor="payerId">{t("payerLabel")}</Label>
-        <Select required name="payerId" defaultValue={expense?.payer_id}>
+        <Select
+          required
+          name="payerId"
+          defaultValue={expense?.payer_id}
+          items={Object.fromEntries(
+            participants.map((participant) => [participant.user_id, `${participant.display_name} (${participant.role})`]),
+          )}
+        >
           <SelectTrigger id="payerId" className="w-full">
             <SelectValue placeholder={t("payerPlaceholder")} />
           </SelectTrigger>

@@ -68,6 +68,12 @@ export function AttachmentForm({ tripId, itineraryItems, tasks, reservations }: 
           </Label>
           <Select
             defaultValue="none"
+            items={{
+              none: t("associateNone"),
+              ...Object.fromEntries(itineraryItems.map((item) => [`itinerary:${item.id}`, `${t("itineraryPrefix")} · ${item.title}`])),
+              ...Object.fromEntries(tasks.map((task) => [`task:${task.id}`, `${t("taskPrefix")} · ${task.title}`])),
+              ...Object.fromEntries(reservations.map((reservation) => [`reservation:${reservation.id}`, `${t("reservationPrefix")} · ${reservation.title}`])),
+            }}
             onValueChange={(value) => {
               const form = formRef.current;
               if (!form) return;

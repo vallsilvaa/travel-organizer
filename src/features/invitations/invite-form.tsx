@@ -56,7 +56,7 @@ export function InviteForm({ tripId }: { tripId: string }) {
       </div>
       <div className="space-y-2">
         <Label htmlFor="invite-role">{t("roleLabel")}</Label>
-        <Select name="role" defaultValue="organizer">
+        <Select name="role" defaultValue="organizer" items={roleLabels}>
           <SelectTrigger id="invite-role" className="w-full sm:w-40">
             <SelectValue />
           </SelectTrigger>
