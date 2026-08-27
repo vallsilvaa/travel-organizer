@@ -68,6 +68,18 @@ describe("validateTaskInput", () => {
     }
   });
 
+  it("accepts the experiences category", () => {
+    const formData = validForm();
+    formData.set("category", "experiences");
+
+    const result = validateTaskInput(formData);
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.category).toBe("experiences");
+    }
+  });
+
   it("rejects unsafe reference URLs and unknown categories", () => {
     const formData = validForm();
     formData.set("category", "visa");

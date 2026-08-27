@@ -5,6 +5,7 @@ export const taskCategories = [
   "transport",
   "health",
   "connectivity",
+  "experiences",
   "packing",
   "other",
 ] as const;

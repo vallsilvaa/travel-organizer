@@ -407,6 +407,7 @@
       "transport": "Transport",
       "health": "Health",
       "connectivity": "Connectivity",
+      "experiences": "Bookings & Experiences",
       "packing": "Packing",
       "other": "Other"
     },
