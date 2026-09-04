@@ -9,6 +9,7 @@ import { getAuthMessage } from "@/features/auth/messages";
 import { NotificationBell, type Notification } from "@/features/notifications/notification-bell";
 import { updateReminderPreference } from "@/features/reminders/actions";
 import { updateCollaborationEmailPreference } from "@/features/notifications/actions";
+import { PushToggle } from "@/features/push/push-toggle";
 import { TripForm } from "@/features/trips/trip-form";
 import { createClient } from "@/lib/supabase/server";
 import { Badge } from "@/components/ui/badge";
@@ -290,6 +291,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
               </label>
               <SubmitButton pendingLabel={t("reminders.savePending")} variant="outline">{t("reminders.save")}</SubmitButton>
             </form>
+            <PushToggle />
           </CardContent>
         </Card>
 

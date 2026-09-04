@@ -97,8 +97,10 @@ Supabase instance, pages that require auth/data will fail — start one with
 | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Supabase project connection (client + server) |
 | `SUPABASE_SERVICE_ROLE_KEY` | Server-only key used by the reminder cron to bypass RLS |
 | `RESEND_API_KEY`, `REMINDER_EMAIL_FROM` | Transactional email for invitations and task reminders |
-| `CRON_SECRET` | Authorizes Vercel's call to `/api/cron/task-reminders` |
+| `CRON_SECRET` | Authorizes Vercel's call to `/api/cron/task-reminders` and `/api/cron/overdue-tasks` |
 | `NEXT_PUBLIC_APP_URL` | Public base URL used in email links and calendar exports |
+| `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` | Web push (server-side signing). Generate a pair with `npx web-push generate-vapid-keys` |
+| `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | Same value as `VAPID_PUBLIC_KEY`, exposed to the browser for `pushManager.subscribe()` |
 | `SENTRY_DSN`, `NEXT_PUBLIC_SENTRY_DSN` | Sentry error reporting (server and client) |
 | `SENTRY_ORG`, `SENTRY_PROJECT`, `SENTRY_AUTH_TOKEN` | Build-time only, for source map upload — not needed for local dev |
 

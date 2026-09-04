@@ -925,5 +925,17 @@
       "currentModeOrganizer": "Modo: Organizador",
       "switchToTraveler": "Traveler View"
     }
+  },
+  "pushNotifications": {
+    "label": "Notificações push",
+    "enabledHint": "Ativadas neste dispositivo.",
+    "disabledHint": "Receba um alerta no celular ou navegador quando algo mudar, mesmo com o app fechado.",
+    "enable": "Ativar",
+    "disable": "Desativar",
+    "pending": "Aguarde...",
+    "permissionDenied": "Permissão de notificações negada pelo navegador.",
+    "enabledToast": "Notificações push ativadas neste dispositivo.",
+    "disabledToast": "Notificações push desativadas neste dispositivo.",
+    "errorToast": "Não foi possível atualizar as notificações push. Tente novamente."
   }
 }
