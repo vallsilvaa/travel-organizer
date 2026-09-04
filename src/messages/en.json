@@ -99,7 +99,14 @@
       "password_updated": "Password updated successfully.",
       "invalid_display_name": "Enter a name with at least two characters.",
       "profile_update_failed": "Could not update your profile. Please try again.",
-      "profile_updated": "Profile updated successfully."
+      "profile_updated": "Profile updated successfully.",
+      "organizer_access_required": "You don't have access to the Organizer Panel yet. Create a trip to become an organizer."
+    },
+    "chooseMode": {
+      "title": "How do you want to sign in?",
+      "description": "Your account has access to both the trips dashboard and the Organizer Panel. Choose an experience to continue.",
+      "organizerView": "Organizer View",
+      "travelerView": "Traveler View"
     }
   },
   "dashboard": {
@@ -871,6 +878,10 @@
       "templateNotFound": "Template not found.",
       "tripNotFound": "Trip not found.",
       "applyFailed": "Could not apply this template. Check your access to the trip."
+    },
+    "modeSwitcher": {
+      "currentModeOrganizer": "Mode: Organizer",
+      "switchToTraveler": "Traveler View"
     }
   }
 }

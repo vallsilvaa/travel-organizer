@@ -18,6 +18,7 @@ const messageCodes = [
   "invalid_display_name",
   "profile_update_failed",
   "profile_updated",
+  "organizer_access_required",
 ] as const;
 
 export type AuthMessageCode = (typeof messageCodes)[number];

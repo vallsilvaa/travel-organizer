@@ -65,4 +65,25 @@ describe("updateSession", () => {
 
     expect(response.headers.get("location")).toBeNull();
   });
+
+  it("redirects an unauthenticated visitor away from the organizer panel", async () => {
+    mocks.getUser.mockResolvedValue({ data: { user: null } });
+
+    const response = await updateSession(makeRequest("/organizer"));
+
+    expect(response.status).toBe(307);
+    const location = new URL(response.headers.get("location")!);
+    expect(location.pathname).toBe("/auth/sign-in");
+    expect(location.searchParams.get("error")).toBe("authentication_required");
+  });
+
+  it("redirects an unauthenticated visitor away from the mode selector", async () => {
+    mocks.getUser.mockResolvedValue({ data: { user: null } });
+
+    const response = await updateSession(makeRequest("/auth/choose-mode"));
+
+    expect(response.status).toBe(307);
+    const location = new URL(response.headers.get("location")!);
+    expect(location.pathname).toBe("/auth/sign-in");
+  });
 });
