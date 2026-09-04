@@ -65,4 +65,27 @@ describe("TemplateForm", () => {
 
     expect(screen.queryByLabelText(/instruções da documentação/i)).toBeNull();
   });
+
+  it("does not show a lead time field for an itinerary_item template", () => {
+    render(
+      <TemplateForm
+        template={{
+          id: "8f3f147b-8684-4ff1-b5c7-6814e4f57f73",
+          title: "Visit the Colosseum",
+          item_type: "itinerary_item",
+          category: "experiences",
+          continent: null,
+          country: "Italy",
+          city: "Rome",
+          classification: "recommended",
+          due_offset_days: null,
+          currency: null,
+          estimated_amount: null,
+          document_instructions: null,
+        }}
+      />,
+    );
+
+    expect(screen.queryByLabelText(/dias antes da partida/i)).toBeNull();
+  });
 });

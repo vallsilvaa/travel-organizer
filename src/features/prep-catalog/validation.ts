@@ -4,11 +4,13 @@ import {
   isClassification,
   isContinent,
   isPrepItemType,
+  isTimelineOffset,
   taskCategories,
   type Classification,
   type Continent,
   type PrepItemType,
   type TaskCategory,
+  type TimelineOffset,
 } from "./shared";
 
 const uuidPattern =
@@ -37,11 +39,11 @@ export type TemplateInput = {
   title: string;
   itemType: PrepItemType;
   category: TaskCategory;
-  continent: Continent;
+  continent: Continent | null;
   country: string;
   city: string | null;
   classification: Classification;
-  dueOffsetDays: number;
+  dueOffsetDays: TimelineOffset | null;
   currency: string | null;
   estimatedAmount: string | null;
   documentInstructions: string | null;
@@ -62,7 +64,8 @@ export function validateTemplateInput(formData: FormData):
   const title = String(formData.get("title") ?? "").trim();
   const itemType = String(formData.get("itemType") ?? "");
   const category = String(formData.get("category") ?? "other");
-  const continent = String(formData.get("continent") ?? "");
+  const rawContinent = String(formData.get("continent") ?? "");
+  const continent = rawContinent === "none" ? "" : rawContinent;
   const country = String(formData.get("country") ?? "").trim();
   const city = optionalValue(formData.get("city"));
   const classification = String(formData.get("classification") ?? "");
@@ -81,7 +84,7 @@ export function validateTemplateInput(formData: FormData):
   if (!(taskCategories as readonly string[]).includes(category)) {
     errors.category = "categoryInvalid";
   }
-  if (!isContinent(continent)) {
+  if (continent && !isContinent(continent)) {
     errors.continent = "continentInvalid";
   }
   if (!country || country.length > 100) {
@@ -94,14 +97,23 @@ export function validateTemplateInput(formData: FormData):
     errors.classification = "classificationInvalid";
   }
 
-  const dueOffsetDays = Number(rawDueOffsetDays);
-  if (
-    !rawDueOffsetDays ||
-    !Number.isInteger(dueOffsetDays) ||
-    dueOffsetDays < 0 ||
-    dueOffsetDays > 730
-  ) {
-    errors.dueOffsetDays = "dueOffsetDaysInvalid";
+  // Only required (and only meaningful) for "Preparação para viagem" -
+  // the other two item types don't collect a lead time at all.
+  let dueOffsetDays: TimelineOffset | null = null;
+  if (itemType === "preparation") {
+    const parsed = Number(rawDueOffsetDays);
+    if (!rawDueOffsetDays || !Number.isInteger(parsed) || !isTimelineOffset(parsed)) {
+      errors.dueOffsetDays = "dueOffsetDaysInvalid";
+    } else {
+      dueOffsetDays = parsed;
+    }
+  } else if (rawDueOffsetDays) {
+    const parsed = Number(rawDueOffsetDays);
+    if (!Number.isInteger(parsed) || !isTimelineOffset(parsed)) {
+      errors.dueOffsetDays = "dueOffsetDaysInvalid";
+    } else {
+      dueOffsetDays = parsed;
+    }
   }
 
   if (currency && !currencyPattern.test(currency)) {
@@ -132,7 +144,7 @@ export function validateTemplateInput(formData: FormData):
           title,
           itemType: itemType as PrepItemType,
           category: category as TaskCategory,
-          continent: continent as Continent,
+          continent: (continent || null) as Continent | null,
           country,
           city,
           classification: classification as Classification,

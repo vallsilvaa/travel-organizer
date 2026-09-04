@@ -461,7 +461,8 @@
     },
     "prepItemType": {
       "preparation": "Tarefa de preparação",
-      "document_request": "Solicitação de documento"
+      "document_request": "Solicitação de documento",
+      "itinerary_item": "Item de roteiro"
     }
   },
   "taskForm": {
@@ -769,7 +770,11 @@
       "addFailed": "Não foi possível adicionar este modelo. Verifique os campos e tente novamente.",
       "updateFailed": "Não foi possível atualizar este modelo.",
       "identifyTemplate": "Não foi possível identificar este modelo."
-    }
+    },
+    "continentNone": "Sem continente",
+    "dueOffsetDaysPlaceholder": "Selecione o prazo",
+    "timelineOffsetEve": "Véspera",
+    "timelineOffsetDays": "{count} dias antes"
   },
   "prepItemForm": {
     "titleLabel": "Título",

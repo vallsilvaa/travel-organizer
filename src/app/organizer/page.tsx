@@ -55,11 +55,11 @@ type Template = {
   title: string;
   item_type: PrepItemType;
   category: TaskCategory;
-  continent: Continent;
+  continent: Continent | null;
   country: string;
   city: string | null;
   classification: Classification;
-  due_offset_days: number;
+  due_offset_days: number | null;
   currency: string | null;
   estimated_amount: string | null;
   document_instructions: string | null;
@@ -249,12 +249,20 @@ export default async function OrganizerPage({ searchParams }: OrganizerPageProps
                           <Badge variant="outline">{classificationLabels[template.classification]}</Badge>
                         </div>
                         <p className="mt-2 text-sm text-slate-600">
-                          {taskCategoryLabels[template.category]} · {continentLabels[template.continent]} · {template.country}
-                          {template.city ? ` · ${template.city}` : ""}
+                          {[
+                            taskCategoryLabels[template.category],
+                            template.continent ? continentLabels[template.continent] : null,
+                            template.country,
+                            template.city,
+                          ]
+                            .filter(Boolean)
+                            .join(" · ")}
                         </p>
-                        <p className="mt-1 text-sm text-slate-600">
-                          {t("catalog.daysBeforeDeparture", { count: template.due_offset_days })}
-                        </p>
+                        {template.due_offset_days ? (
+                          <p className="mt-1 text-sm text-slate-600">
+                            {t("catalog.daysBeforeDeparture", { count: template.due_offset_days })}
+                          </p>
+                        ) : null}
                       </div>
                       <ItemActionsMenu
                         editLabel={t("catalog.editTemplate")}
