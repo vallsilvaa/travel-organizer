@@ -8,7 +8,6 @@ import { redirect } from "next/navigation";
 import { translateFieldErrors } from "@/i18n/translate-field-errors";
 import { createClient } from "@/lib/supabase/server";
 import { isValidTripId, validateTripInput, type TripFieldErrors } from "./validation";
-import { buildEnglandPreparationTasks, isEnglandDestination } from "@/features/tasks/templates";
 import { inviteParticipant } from "@/features/invitations/actions";
 import { applyTemplateRowToTrip, type TemplateRow } from "@/features/prep-catalog/actions";
 import { isValidTemplateId } from "@/features/prep-catalog/validation";
@@ -51,12 +50,6 @@ export async function createTrip(
 
   if (error) {
     return { message: t("actionErrors.createFailed") };
-  }
-
-  if (isEnglandDestination(validation.data.destination)) {
-    await supabase.from("trip_tasks").insert(
-      buildEnglandPreparationTasks(tripId, validation.data.startDate, user.id),
-    );
   }
 
   // Creating a trip is how an account becomes an organizer (issue #150) -

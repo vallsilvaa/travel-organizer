@@ -99,16 +99,16 @@ test("traveler completes the critical collaborative planning journey", async ({
   });
 
   await test.step("create an itinerary item and comment", async () => {
-    await page.getByRole("tab", { name: "Itinerário" }).click();
+    await page.getByRole("tab", { name: "Roteiro" }).click();
     const form = page
       .locator("details")
-      .filter({ hasText: "Adicionar item ao itinerário" });
+      .filter({ hasText: "Adicionar item ao roteiro" });
 
     await form.getByLabel("Data").fill("2027-05-11");
     await form.getByLabel("Horário").fill("10:30");
     await form.getByLabel("Título").fill(itineraryTitle);
     await form.getByLabel("Local").fill("Centro");
-    await form.getByRole("button", { name: "Adicionar ao itinerário" }).click();
+    await form.getByRole("button", { name: "Adicionar ao roteiro" }).click();
 
     const item = page.locator("li").filter({
       has: page.getByRole("heading", { name: itineraryTitle }),
@@ -137,14 +137,16 @@ test("traveler completes the critical collaborative planning journey", async ({
 
   await test.step("create and complete a preparation task", async () => {
     await page.getByRole("tab", { name: "Preparação" }).click();
-    const form = page
-      .locator("details")
-      .filter({ hasText: "Adicionar tarefa personalizada" });
+    await page.getByRole("button", { name: "Criar Tarefa" }).click();
 
-    await form.getByLabel("Tarefa").fill(taskTitle);
-    await form.getByLabel("Crítica antes da partida").check();
-    await form.getByLabel("Data limite").fill("2027-04-10");
-    await form.getByRole("button", { name: "Adicionar tarefa" }).click();
+    const dialog = page.getByRole("dialog");
+    await dialog.getByLabel("Título").fill(taskTitle);
+    await dialog.getByRole("combobox", { name: "Classificação" }).click();
+    await page.getByRole("option", { name: "Obrigatório" }).click();
+    await dialog.getByLabel("País").fill("Brasil");
+    await dialog.getByRole("combobox", { name: "Dias antes da partida" }).click();
+    await page.getByRole("option", { name: "30 dias antes" }).click();
+    await dialog.getByRole("button", { name: "Adicionar modelo" }).click();
 
     await page.getByRole("tab", { name: "Preparação" }).click();
     const taskItem = page.locator("li").filter({

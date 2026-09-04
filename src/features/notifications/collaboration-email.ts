@@ -8,7 +8,7 @@ export type CollaborationEntityType =
   | "item_comment";
 
 const entityLabels: Record<CollaborationEntityType, string> = {
-  itinerary_item: "um item do itinerário",
+  itinerary_item: "um item do roteiro",
   reservation: "uma reserva",
   trip_task: "um item de preparação",
   trip_expense: "uma despesa",

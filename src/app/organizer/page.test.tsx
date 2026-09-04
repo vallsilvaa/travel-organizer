@@ -136,4 +136,40 @@ describe("OrganizerPage content", () => {
 
     expect(screen.getByRole("alert")).toBeTruthy();
   });
+
+  it("does not render a link back to the dashboard (#163)", async () => {
+    mockOrganizerData({});
+
+    render(await OrganizerPage());
+
+    expect(screen.queryByRole("link", { name: /voltar ao painel/i })).toBeNull();
+  });
+
+  it("keeps the catalog task list collapsed by default (#164)", async () => {
+    mockOrganizerData({
+      templates: [
+        {
+          id: "template-1",
+          title: "Check passport validity",
+          item_type: "preparation",
+          category: "documents",
+          continent: null,
+          country: "Portugal",
+          city: null,
+          classification: "required",
+          due_offset_days: 180,
+          currency: null,
+          estimated_amount: null,
+          document_instructions: null,
+        },
+      ],
+    });
+
+    render(await OrganizerPage());
+
+    const summary = screen.getByText(/Ver tarefas? do catálogo/i);
+    const details = summary.closest("details");
+    expect(details).toBeTruthy();
+    expect(details?.hasAttribute("open")).toBe(false);
+  });
 });

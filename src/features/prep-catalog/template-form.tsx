@@ -19,16 +19,13 @@ import {
 import { createTemplate, updateTemplate, type TemplateActionState } from "./actions";
 import {
   classifications,
-  continents,
   getClassificationLabels,
-  getContinentLabels,
   getPrepItemTypeLabels,
   getTaskCategoryLabels,
   prepItemTypes,
   taskCategories,
   timelineOffsets,
   type Classification,
-  type Continent,
   type PrepItemType,
   type TaskCategory,
 } from "./shared";
@@ -39,9 +36,7 @@ type TemplateFormProps = {
     title: string;
     item_type: PrepItemType;
     category: TaskCategory;
-    continent: Continent | null;
     country: string;
-    city: string | null;
     classification: Classification;
     due_offset_days: number | null;
     currency: string | null;
@@ -59,11 +54,9 @@ export function TemplateForm({ template, onSuccess, cancelSlot, tripId }: Templa
   const t = useTranslations("templateForm");
   const tPrepItemType = useTranslations("categories.prepItemType");
   const tClassification = useTranslations("categories.classification");
-  const tContinent = useTranslations("categories.continent");
   const tCategory = useTranslations("categories.task");
   const prepItemTypeLabels = getPrepItemTypeLabels(tPrepItemType);
   const classificationLabels = getClassificationLabels(tClassification);
-  const continentLabels = getContinentLabels(tContinent);
   const taskCategoryLabels = getTaskCategoryLabels(tCategory);
 
   const [state, formAction, pending] = useActionState(
@@ -165,28 +158,6 @@ export function TemplateForm({ template, onSuccess, cancelSlot, tripId }: Templa
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="template-continent">
-          {t("continentLabel")} <span className="font-normal text-muted-foreground">{t("optional")}</span>
-        </Label>
-        <Select
-          name="continent"
-          defaultValue={template?.continent ?? "none"}
-          items={{ none: t("continentNone"), ...continentLabels }}
-        >
-          <SelectTrigger id="template-continent" className="w-full">
-            <SelectValue placeholder={t("continentPlaceholder")} />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="none">{t("continentNone")}</SelectItem>
-            {continents.map((continent) => (
-              <SelectItem key={continent} value={continent}>{continentLabels[continent]}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        {state.errors?.continent ? <p className="text-sm text-destructive">{state.errors.continent}</p> : null}
-      </div>
-
-      <div className="space-y-2">
         <Label htmlFor="template-country">{t("countryLabel")}</Label>
         <Input
           required
@@ -197,20 +168,6 @@ export function TemplateForm({ template, onSuccess, cancelSlot, tripId }: Templa
           placeholder={t("countryPlaceholder")}
         />
         {state.errors?.country ? <p className="text-sm text-destructive">{state.errors.country}</p> : null}
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="template-city">
-          {t("cityLabel")} <span className="font-normal text-muted-foreground">{t("optional")}</span>
-        </Label>
-        <Input
-          maxLength={200}
-          id="template-city"
-          name="city"
-          defaultValue={template?.city ?? ""}
-          placeholder={t("cityPlaceholder")}
-        />
-        {state.errors?.city ? <p className="text-sm text-destructive">{state.errors.city}</p> : null}
       </div>
 
       {itemType === "preparation" ? (

@@ -147,6 +147,28 @@ describe("TripPage", () => {
     expect(screen.queryByRole("button", { name: /checklist da inglaterra/i })).toBeNull();
   });
 
+  it("does not show the custom-task-add section anymore (#167)", async () => {
+    render(
+      await TripPage({
+        params: Promise.resolve({ tripId }),
+        searchParams: Promise.resolve({ tab: "preparation" }),
+      }),
+    );
+
+    expect(screen.queryByText(/adicionar tarefa personalizada/i)).toBeNull();
+  });
+
+  it("shows a lead-time filter (#168)", async () => {
+    render(
+      await TripPage({
+        params: Promise.resolve({ tripId }),
+        searchParams: Promise.resolve({ tab: "preparation" }),
+      }),
+    );
+
+    expect(screen.getByLabelText("Prazo")).toBeTruthy();
+  });
+
   it("shows edit and confirmed deletion controls to the creator", async () => {
     render(await TripPage({
       params: Promise.resolve({ tripId }),
