@@ -147,9 +147,6 @@ export default async function OrganizerPage() {
               <NewTripModal templates={templateList} />
               <NewTaskModal />
             </div>
-            <Link href="/dashboard" className="mt-4 inline-block text-sm font-semibold text-primary hover:text-primary/80">
-              {t("backToDashboard")}
-            </Link>
           </CardContent>
         </Card>
 
@@ -166,50 +163,59 @@ export default async function OrganizerPage() {
               <p role="alert" className="rounded-xl bg-red-50 p-4 text-sm text-red-800">
                 {t("catalog.loadError")}
               </p>
-            ) : templateList.length ? (
-              <ul className="space-y-4">
-                {templateList.map((template) => (
-                  <li key={template.id} className="rounded-2xl border border-slate-200 p-5">
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                      <div>
-                        <div className="flex flex-wrap items-center gap-2">
-                          <h3 className="font-semibold text-slate-950">{template.title}</h3>
-                          <Badge variant="outline">{prepItemTypeLabels[template.item_type]}</Badge>
-                          <Badge variant="outline">{classificationLabels[template.classification]}</Badge>
-                        </div>
-                        <p className="mt-2 text-sm text-slate-600">
-                          {[
-                            taskCategoryLabels[template.category],
-                            template.continent ? continentLabels[template.continent] : null,
-                            template.country,
-                            template.city,
-                          ]
-                            .filter(Boolean)
-                            .join(" · ")}
-                        </p>
-                        {template.due_offset_days ? (
-                          <p className="mt-1 text-sm text-slate-600">
-                            {t("catalog.daysBeforeDeparture", { count: template.due_offset_days })}
-                          </p>
-                        ) : null}
-                      </div>
-                      <ItemActionsMenu
-                        editLabel={t("catalog.editTemplate")}
-                        editForm={<TemplateForm template={template} />}
-                        deleteAction={deleteTemplate}
-                        deleteHiddenFields={{ templateId: template.id }}
-                        deleteTitle={t("catalog.deleteTemplateTitle")}
-                        deleteDescription={t("catalog.deleteTemplateDescription", { title: template.title })}
-                        deleteLabel={t("catalog.removeTemplate")}
-                      />
-                    </div>
-                  </li>
-                ))}
-              </ul>
             ) : (
-              <p className="rounded-2xl border border-dashed border-slate-300 p-6 text-sm text-slate-600">
-                {t("catalog.empty")}
-              </p>
+              <details className="rounded-2xl bg-slate-50 p-5">
+                <summary className="cursor-pointer font-semibold text-slate-900">
+                  {t("catalog.viewTasks", { count: templateList.length })}
+                </summary>
+                <div className="mt-5">
+                  {templateList.length ? (
+                    <ul className="space-y-4">
+                      {templateList.map((template) => (
+                        <li key={template.id} className="rounded-2xl border border-slate-200 bg-card p-5">
+                          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                            <div>
+                              <div className="flex flex-wrap items-center gap-2">
+                                <h3 className="font-semibold text-slate-950">{template.title}</h3>
+                                <Badge variant="outline">{prepItemTypeLabels[template.item_type]}</Badge>
+                                <Badge variant="outline">{classificationLabels[template.classification]}</Badge>
+                              </div>
+                              <p className="mt-2 text-sm text-slate-600">
+                                {[
+                                  taskCategoryLabels[template.category],
+                                  template.continent ? continentLabels[template.continent] : null,
+                                  template.country,
+                                  template.city,
+                                ]
+                                  .filter(Boolean)
+                                  .join(" · ")}
+                              </p>
+                              {template.due_offset_days ? (
+                                <p className="mt-1 text-sm text-slate-600">
+                                  {t("catalog.daysBeforeDeparture", { count: template.due_offset_days })}
+                                </p>
+                              ) : null}
+                            </div>
+                            <ItemActionsMenu
+                              editLabel={t("catalog.editTemplate")}
+                              editForm={<TemplateForm template={template} />}
+                              deleteAction={deleteTemplate}
+                              deleteHiddenFields={{ templateId: template.id }}
+                              deleteTitle={t("catalog.deleteTemplateTitle")}
+                              deleteDescription={t("catalog.deleteTemplateDescription", { title: template.title })}
+                              deleteLabel={t("catalog.removeTemplate")}
+                            />
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="rounded-2xl border border-dashed border-slate-300 p-6 text-sm text-slate-600">
+                      {t("catalog.empty")}
+                    </p>
+                  )}
+                </div>
+              </details>
             )}
           </CardContent>
         </Card>

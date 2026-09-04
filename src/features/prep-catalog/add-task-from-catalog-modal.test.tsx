@@ -108,7 +108,7 @@ describe("AddTaskFromCatalogModal", () => {
     fireEvent.click(screen.getByText("Visit the Colosseum"));
 
     expect(screen.queryByLabelText("Viajante responsável")).toBeNull();
-    expect(screen.queryByLabelText("Item do itinerário vinculado")).toBeNull();
+    expect(screen.queryByLabelText("Item do roteiro vinculado")).toBeNull();
   });
 
   it("Back returns from the preview to the search list", () => {

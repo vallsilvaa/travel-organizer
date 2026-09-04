@@ -308,7 +308,6 @@
       "description": "Complete documents, reservations, money, health, connectivity, and packing before departure.",
       "addTaskFromCatalog": "Add Task",
       "createTask": "Create New Task",
-      "addCustomTask": "Add custom task",
       "criticalOnly": "Critical only",
       "overdueOnly": "Overdue",
       "statusLabel": "Status",
@@ -320,6 +319,8 @@
       "ownerUnassigned": "Unassigned",
       "categoryLabel": "Category",
       "categoryAll": "All categories",
+      "dueOffsetLabel": "Lead time",
+      "dueOffsetAll": "All lead times",
       "applyFilters": "Apply filters",
       "loadError": "Could not load preparation tasks. Try refreshing the page.",
       "badgeCritical": "Critical",
@@ -852,7 +853,6 @@
     "eyebrow": "Organizer panel",
     "title": "Organizer panel",
     "description": "Create trips, manage your reusable preparation catalog, and apply it to the trips you organize.",
-    "backToDashboard": "Back to dashboard",
     "createTrip": {
       "triggerLabel": "Create New Trip",
       "title": "Create a trip",
@@ -876,7 +876,8 @@
       "deleteTemplateDescription": "This permanently removes \"{title}\" from your catalog. Items already applied to trips are not affected.",
       "removeTemplate": "Remove",
       "empty": "No templates yet. Add your first one above.",
-      "daysBeforeDeparture": "{count} days before departure"
+      "daysBeforeDeparture": "{count} days before departure",
+      "viewTasks": "{count, plural, =0 {View catalog tasks} one {View catalog task (#)} other {View catalog tasks (#)}}"
     },
     "trips": {
       "title": "Your organized trips",

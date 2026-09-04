@@ -19,6 +19,13 @@ describe("TemplateForm", () => {
     expect(button.getAttribute("type")).toBe("submit");
   });
 
+  it("does not show continent or city fields (#165)", () => {
+    render(<TemplateForm />);
+
+    expect(screen.queryByLabelText(/continente/i)).toBeNull();
+    expect(screen.queryByLabelText(/^cidade/i)).toBeNull();
+  });
+
   it("shows document instructions for an existing document_request template", () => {
     render(
       <TemplateForm
@@ -27,9 +34,7 @@ describe("TemplateForm", () => {
           title: "Provide visa scan",
           item_type: "document_request",
           category: "documents",
-          continent: "europe",
           country: "Portugal",
-          city: null,
           classification: "required",
           due_offset_days: 90,
           currency: "EUR",
@@ -51,9 +56,7 @@ describe("TemplateForm", () => {
           title: "Check passport validity",
           item_type: "preparation",
           category: "documents",
-          continent: "europe",
           country: "Portugal",
-          city: null,
           classification: "required",
           due_offset_days: 180,
           currency: null,
@@ -74,9 +77,7 @@ describe("TemplateForm", () => {
           title: "Visit the Colosseum",
           item_type: "itinerary_item",
           category: "experiences",
-          continent: null,
           country: "Italy",
-          city: "Rome",
           classification: "recommended",
           due_offset_days: null,
           currency: null,
@@ -106,9 +107,7 @@ describe("TemplateForm", () => {
           title: "Check passport validity",
           item_type: "preparation",
           category: "documents",
-          continent: "europe",
           country: "Portugal",
-          city: null,
           classification: "required",
           due_offset_days: 180,
           currency: null,

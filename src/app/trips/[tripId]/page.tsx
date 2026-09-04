@@ -43,6 +43,7 @@ import {
   getClassificationLabels,
   getContinentLabels,
   getPrepItemTypeLabels,
+  timelineOffsets,
   type Classification,
   type Continent,
   type PrepItemType,
@@ -78,7 +79,7 @@ import { daysUntil, todayInTimeZone } from "@/lib/timezone";
 
 type TripPageProps = {
   params: Promise<{ tripId: string }>;
-  searchParams: Promise<{ category?: string; city?: string; critical?: string; expenseView?: string; overdue?: string; owner?: string; period?: string; status?: string; tripError?: string; tab?: string }>;
+  searchParams: Promise<{ category?: string; city?: string; critical?: string; dueOffset?: string; expenseView?: string; overdue?: string; owner?: string; period?: string; status?: string; tripError?: string; tab?: string }>;
 };
 
 type TripParticipant = {
@@ -235,6 +236,13 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
 
   const t = await getTranslations("trip");
   const tCommon = await getTranslations("common");
+  const tTemplateForm = await getTranslations("templateForm");
+  const timelineOffsetLabels: Record<number, string> = Object.fromEntries(
+    timelineOffsets.map((offset) => [
+      offset,
+      offset === 1 ? tTemplateForm("timelineOffsetEve") : tTemplateForm("timelineOffsetDays", { count: offset }),
+    ]),
+  );
   const taskCategoryLabels = getTaskCategoryLabels(await getTranslations("categories.task"));
   const expenseCategoryLabels = getExpenseCategoryLabels(await getTranslations("categories.expense"));
   const reservationTypeLabels = getReservationTypeLabels(await getTranslations("categories.reservationType"));
@@ -303,6 +311,9 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
   const ownerFilter = filters.owner ?? "all";
   const categoryFilter = taskCategories.includes(filters.category as TaskCategory)
     ? filters.category as TaskCategory
+    : "all";
+  const dueOffsetFilter = timelineOffsets.includes(Number(filters.dueOffset) as (typeof timelineOffsets)[number])
+    ? Number(filters.dueOffset)
     : "all";
   const criticalOnlyFilter = filters.critical === "1";
   const overdueOnlyFilter = filters.overdue === "1";
@@ -410,10 +421,11 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
     const matchesOwner = ownerFilter === "all"
       || (ownerFilter === "unassigned" ? !task.owner_id : task.owner_id === ownerFilter);
     const matchesCategory = categoryFilter === "all" || task.category === categoryFilter;
+    const matchesDueOffset = dueOffsetFilter === "all" || task.due_offset_days === dueOffsetFilter;
     const matchesCritical = !criticalOnlyFilter || task.is_critical;
     const matchesOverdue = !overdueOnlyFilter
       || Boolean(!task.completed_at && task.due_date && task.due_date < today);
-    return matchesStatus && matchesOwner && matchesCategory && matchesCritical && matchesOverdue;
+    return matchesStatus && matchesOwner && matchesCategory && matchesDueOffset && matchesCritical && matchesOverdue;
   });
   const completedTaskCount = allTasks.filter((task) => task.completed_at).length;
   const readiness = allTasks.length
@@ -591,6 +603,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
     if (statusFilter !== "all") params.set("status", statusFilter);
     if (ownerFilter !== "all") params.set("owner", ownerFilter);
     if (categoryFilter !== "all") params.set("category", categoryFilter);
+    if (dueOffsetFilter !== "all") params.set("dueOffset", String(dueOffsetFilter));
     if (next.critical ?? criticalOnlyFilter) params.set("critical", "1");
     if (next.overdue ?? overdueOnlyFilter) params.set("overdue", "1");
     params.set("tab", "preparation");
@@ -1368,15 +1381,6 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                 </div>
               </div>
 
-              {!isArchived ? (
-                <details className="mt-5 rounded-2xl bg-slate-50 p-5" open={!allTasks.length}>
-                  <summary className="cursor-pointer font-semibold text-slate-900">{t("preparation.addCustomTask")}</summary>
-                  <div className="mt-5">
-                    <TaskForm participants={tripParticipants} tripId={trip.id} />
-                  </div>
-                </details>
-              ) : null}
-
               <div className="mt-6 flex flex-wrap gap-2">
                 <Link
                   href={buildPrepQuickFilterHref({ critical: !criticalOnlyFilter })}
@@ -1402,7 +1406,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                 </Link>
               </div>
 
-              <form className="mt-4 grid gap-3 rounded-2xl bg-slate-50 p-4 sm:grid-cols-3">
+              <form className="mt-4 grid gap-3 rounded-2xl bg-slate-50 p-4 sm:grid-cols-4">
                 <input type="hidden" name="tab" value="preparation" />
                 {criticalOnlyFilter ? <input type="hidden" name="critical" value="1" /> : null}
                 {overdueOnlyFilter ? <input type="hidden" name="overdue" value="1" /> : null}
@@ -1468,7 +1472,28 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                     </SelectContent>
                   </Select>
                 </div>
-                <Button type="submit" variant="outline" className="sm:col-span-3 sm:justify-self-start">{t("preparation.applyFilters")}</Button>
+                <div className="space-y-1.5">
+                  <Label htmlFor="due-offset-filter" className="text-slate-700">{t("preparation.dueOffsetLabel")}</Label>
+                  <Select
+                    name="dueOffset"
+                    defaultValue={dueOffsetFilter === "all" ? "all" : String(dueOffsetFilter)}
+                    items={{
+                      all: t("preparation.dueOffsetAll"),
+                      ...Object.fromEntries(timelineOffsets.map((offset) => [String(offset), timelineOffsetLabels[offset]])),
+                    }}
+                  >
+                    <SelectTrigger id="due-offset-filter" className="w-full bg-white">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{t("preparation.dueOffsetAll")}</SelectItem>
+                      {timelineOffsets.map((offset) => (
+                        <SelectItem key={offset} value={String(offset)}>{timelineOffsetLabels[offset]}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button type="submit" variant="outline" className="sm:col-span-4 sm:justify-self-start">{t("preparation.applyFilters")}</Button>
               </form>
 
               {tasksError ? (

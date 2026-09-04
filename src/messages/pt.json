@@ -17,7 +17,7 @@
   },
   "home": {
     "title": "Tudo para sua próxima viagem, organizado em um só lugar.",
-    "subtitle": "Planeje itinerários, organize tarefas, colabore e acompanhe despesas com seu organizador de viagens.",
+    "subtitle": "Planeje roteiros, organize tarefas, colabore e acompanhe despesas com seu organizador de viagens.",
     "createAccount": "Criar conta",
     "signIn": "Entrar",
     "notice": "A base do projeto está pronta. As funcionalidades serão entregues de forma incremental a partir do backlog do MVP."
@@ -202,7 +202,7 @@
       "invitation_not_allowed": "Não foi possível atualizar esse convite. Ele pode já ter sido respondido ou cancelado.",
       "archive_not_allowed": "Somente quem criou a viagem pode arquivá-la ou reativá-la."
     },
-    "archivedNotice": "Esta viagem está arquivada. Itinerário, tarefas e despesas ficam somente leitura até que seja reativada.",
+    "archivedNotice": "Esta viagem está arquivada. Roteiro, tarefas e despesas ficam somente leitura até que seja reativada.",
     "editTrip": "Editar dados da viagem",
     "reactivatingPending": "Reativando...",
     "archivingPending": "Arquivando...",
@@ -214,7 +214,7 @@
     "commentsLoadError": "Não foi possível carregar os comentários. O restante do conteúdo da viagem continua disponível.",
     "tabs": {
       "overview": "Visão geral",
-      "itinerary": "Itinerário",
+      "itinerary": "Roteiro",
       "expenses": "Despesas",
       "preparation": "Preparação",
       "documents": "Documentos",
@@ -249,18 +249,18 @@
       "noComments": "Nenhum comentário ainda."
     },
     "itinerary": {
-      "title": "Itinerário",
+      "title": "Roteiro",
       "description": "Mantenha atividades, reservas e pontos de encontro em ordem cronológica.",
       "exportIcs": "Exportar .ics",
-      "addItem": "Adicionar item ao itinerário",
-      "loadError": "Não foi possível carregar o itinerário. Tente atualizar a página.",
+      "addItem": "Adicionar item ao roteiro",
+      "loadError": "Não foi possível carregar o roteiro. Tente atualizar a página.",
       "noTimeSet": "Horário não definido",
       "editItem": "Editar item",
-      "deleteItemTitle": "Excluir item do itinerário?",
-      "deleteItemDescription": "Isso vai remover permanentemente \"{title}\" do itinerário.",
+      "deleteItemTitle": "Excluir item do roteiro?",
+      "deleteItemDescription": "Isso vai remover permanentemente \"{title}\" do roteiro.",
       "linkedReservation": "Reserva vinculada: {title} ↓",
-      "empty": "Nenhum item no itinerário ainda. Adicione a primeira atividade acima.",
-      "noneMatchFilters": "Nenhum item do itinerário corresponde a esses filtros.",
+      "empty": "Nenhum item no roteiro ainda. Adicione a primeira atividade acima.",
+      "noneMatchFilters": "Nenhum item do roteiro corresponde a esses filtros.",
       "cityFilterLabel": "Cidade",
       "cityFilterAll": "Todas as cidades",
       "periodFilterLabel": "Período do dia",
@@ -273,7 +273,7 @@
       "reservationsLoadError": "Não foi possível carregar as reservas. Tente atualizar a página.",
       "confirmation": "Confirmação:",
       "linkedToItemPrefix": "Vinculada ao item",
-      "linkedToItemSuffix": "do itinerário",
+      "linkedToItemSuffix": "do roteiro",
       "editReservation": "Editar reserva",
       "deleteReservationTitle": "Excluir esta reserva?",
       "deleteReservationDescription": "Isso vai remover permanentemente \"{title}\" das reservas da viagem.",
@@ -303,12 +303,11 @@
       "empty": "Nenhuma despesa ainda. Adicione o primeiro custo compartilhado acima."
     },
     "preparation": {
-      "eyebrow": "Antes do itinerário",
+      "eyebrow": "Antes do roteiro",
       "title": "Preparação pré-viagem",
       "description": "Complete documentos, reservas, dinheiro, saúde, conectividade e bagagem antes da partida.",
       "addTaskFromCatalog": "Add Tarefa",
       "createTask": "Criar Tarefa",
-      "addCustomTask": "Adicionar tarefa personalizada",
       "criticalOnly": "Só críticas",
       "overdueOnly": "Em atraso",
       "statusLabel": "Status",
@@ -320,6 +319,8 @@
       "ownerUnassigned": "Sem responsável",
       "categoryLabel": "Categoria",
       "categoryAll": "Todas as categorias",
+      "dueOffsetLabel": "Prazo",
+      "dueOffsetAll": "Todos os prazos",
       "applyFilters": "Aplicar filtros",
       "loadError": "Não foi possível carregar as tarefas de preparação. Tente atualizar a página.",
       "badgeCritical": "Crítica",
@@ -340,7 +341,7 @@
       "deleteTaskDescription": "Isso vai remover permanentemente \"{title}\" da sua lista de preparação.",
       "removeTask": "Remover",
       "empty": "Nenhuma tarefa de preparação corresponde a esses filtros. Adicione uma tarefa do catálogo ou crie uma nova.",
-      "linkedItinerary": "Vinculado ao itinerário: {title}",
+      "linkedItinerary": "Vinculado ao roteiro: {title}",
       "expenseLinked": "Vinculado a um gasto na aba Gastos.",
       "expenseWillLink": "Concluir este item vai adicioná-lo aos gastos da viagem.",
       "catalogModal": {
@@ -357,7 +358,7 @@
         "toastApplied": "Tarefa adicionada à viagem.",
         "assignedToLabel": "Viajante responsável",
         "assignedToNone": "Sem responsável",
-        "itineraryLinkLabel": "Item do itinerário vinculado",
+        "itineraryLinkLabel": "Item do roteiro vinculado",
         "itineraryLinkNone": "Sem vínculo",
         "daysBeforeDeparture": "{count} dias antes da partida"
       }
@@ -374,7 +375,7 @@
       "delete": "Excluir",
       "empty": "Nenhum documento enviado ainda. Envie passaportes, vouchers ou outros arquivos acima.",
       "itemLabels": {
-        "itinerary": "Itinerário",
+        "itinerary": "Roteiro",
         "task": "Tarefa",
         "reservation": "Reserva"
       },
@@ -573,9 +574,9 @@
     "notesLabel": "Notas",
     "savePending": "Salvando...",
     "save": "Salvar alterações",
-    "add": "Adicionar ao itinerário",
-    "toastUpdated": "Item do itinerário atualizado.",
-    "toastAdded": "Item do itinerário adicionado.",
+    "add": "Adicionar ao roteiro",
+    "toastUpdated": "Item do roteiro atualizado.",
+    "toastAdded": "Item do roteiro adicionado.",
     "errors": {
       "dateInvalid": "Informe uma data válida.",
       "timeInvalid": "Informe um horário válido.",
@@ -587,9 +588,9 @@
     },
     "actionErrors": {
       "identifyTrip": "Não foi possível identificar a viagem.",
-      "identifyItem": "Não foi possível identificar o item do itinerário.",
-      "addFailed": "Não foi possível adicionar este item ao itinerário. Verifique seu acesso à viagem e tente novamente.",
-      "updateFailed": "Não foi possível atualizar este item do itinerário. Tente novamente."
+      "identifyItem": "Não foi possível identificar o item do roteiro.",
+      "addFailed": "Não foi possível adicionar este item ao roteiro. Verifique seu acesso à viagem e tente novamente.",
+      "updateFailed": "Não foi possível atualizar este item do roteiro. Tente novamente."
     }
   },
   "reservationForm": {
@@ -608,7 +609,7 @@
     "locationPlaceholder": "Aeroporto, endereço ou ponto de partida",
     "destinationLocationLabel": "Local de destino",
     "destinationLocationPlaceholder": "Aeroporto, endereço ou ponto de chegada",
-    "linkItemLabel": "Vincular a um item do itinerário",
+    "linkItemLabel": "Vincular a um item do roteiro",
     "linkItemNone": "Nenhum",
     "notesLabel": "Notas",
     "savePending": "Salvando...",
@@ -617,7 +618,7 @@
     "toastUpdated": "Reserva atualizada.",
     "toastAdded": "Reserva adicionada.",
     "errors": {
-      "itineraryItemInvalid": "Selecione um item do itinerário válido.",
+      "itineraryItemInvalid": "Selecione um item do roteiro válido.",
       "typeInvalid": "Selecione um tipo de reserva válido.",
       "titleRequired": "Informe um título com até 200 caracteres.",
       "providerTooLong": "O fornecedor deve ter até 200 caracteres.",
@@ -706,7 +707,7 @@
     "fileHint": "PDF ou imagem (JPEG, PNG, WEBP, HEIC), até 10 MB.",
     "associateLabel": "Associar a",
     "associateNone": "Viagem em geral",
-    "itineraryPrefix": "Itinerário",
+    "itineraryPrefix": "Roteiro",
     "taskPrefix": "Tarefa",
     "reservationPrefix": "Reserva",
     "submitPending": "Enviando...",
@@ -815,7 +816,7 @@
     "dueOffsetDaysLabel": "Dias antes da partida",
     "assignedToLabel": "Viajante responsável",
     "assignedToNone": "Sem responsável",
-    "itineraryLinkLabel": "Item do itinerário vinculado",
+    "itineraryLinkLabel": "Item do roteiro vinculado",
     "itineraryLinkNone": "Sem vínculo",
     "currencyLabel": "Moeda",
     "estimatedAmountLabel": "Valor estimado",
@@ -840,7 +841,7 @@
       "documentInstructionsRequired": "Adicione instruções para esta solicitação de documento.",
       "documentInstructionsTooLong": "Use instruções com até 2000 caracteres.",
       "assignedToInvalid": "Escolha um viajante válido.",
-      "itineraryItemInvalid": "Escolha um item de itinerário válido."
+      "itineraryItemInvalid": "Escolha um item de roteiro válido."
     },
     "actionErrors": {
       "identifyItem": "Não foi possível identificar este item.",
@@ -852,7 +853,6 @@
     "eyebrow": "Painel do organizador",
     "title": "Painel do organizador",
     "description": "Crie viagens, gerencie seu catálogo reutilizável de preparação e aplique-o às viagens que você organiza.",
-    "backToDashboard": "Voltar ao painel principal",
     "createTrip": {
       "triggerLabel": "Criar Nova Viagem",
       "title": "Criar viagem",
@@ -876,7 +876,8 @@
       "deleteTemplateDescription": "Isso remove permanentemente \"{title}\" do seu catálogo. Itens já aplicados a viagens não são afetados.",
       "removeTemplate": "Remover",
       "empty": "Nenhum modelo ainda. Adicione o primeiro acima.",
-      "daysBeforeDeparture": "{count} dias antes da partida"
+      "daysBeforeDeparture": "{count} dias antes da partida",
+      "viewTasks": "{count, plural, =0 {Ver tarefas do catálogo} =1 {Ver tarefa do catálogo (1)} other {Ver tarefas do catálogo (#)}}"
     },
     "trips": {
       "title": "Suas viagens organizadas",
@@ -910,7 +911,7 @@
       "templatePlaceholder": "Escolha um modelo",
       "assignedToLabel": "Viajante responsável",
       "assignedToNone": "Sem responsável",
-      "itineraryLinkLabel": "Item do itinerário vinculado",
+      "itineraryLinkLabel": "Item do roteiro vinculado",
       "itineraryLinkNone": "Sem vínculo",
       "apply": "Aplicar à viagem",
       "applyPending": "Aplicando...",
