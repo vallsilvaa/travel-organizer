@@ -144,7 +144,7 @@ export default async function OrganizerPage() {
           </CardHeader>
           <CardContent>
             <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-              <NewTripModal />
+              <NewTripModal templates={templateList} />
               <NewTaskModal />
             </div>
             <Link href="/dashboard" className="mt-4 inline-block text-sm font-semibold text-primary hover:text-primary/80">

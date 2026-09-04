@@ -426,7 +426,10 @@
         "identifyTrip": "Não foi possível identificar a viagem.",
         "createFailed": "Não foi possível criar a viagem. Tente novamente.",
         "onlyCreatorCanEdit": "Somente quem criou a viagem pode editar esses dados.",
-        "updated": "Viagem atualizada com sucesso."
+        "updated": "Viagem atualizada com sucesso.",
+        "created": "Viagem criada com sucesso.",
+        "createdWithIssues": "Viagem criada, mas com pendências:",
+        "taskApplyFailed": "Não foi possível adicionar a tarefa \"{title}\"."
       }
     }
   },
@@ -853,7 +856,15 @@
     "createTrip": {
       "triggerLabel": "Criar Nova Viagem",
       "title": "Criar viagem",
-      "description": "Usa o mesmo fluxo de criação de viagem do painel principal."
+      "description": "Usa o mesmo fluxo de criação de viagem do painel principal.",
+      "extras": {
+        "tasksLabel": "Adicionar tarefas (opcional)",
+        "tasksEmpty": "Você ainda não tem modelos no catálogo.",
+        "tasksSearchPlaceholder": "Buscar tarefas do catálogo",
+        "inviteLabel": "Adicionar viajante (opcional)",
+        "invitePlaceholder": "email@exemplo.com",
+        "inviteHint": "Convida esta pessoa como traveler desta viagem."
+      }
     },
     "catalog": {
       "title": "Catálogo reutilizável",

@@ -31,6 +31,12 @@ vi.mock("next/navigation", () => ({
   redirect: mocks.redirect,
 }));
 
+vi.mock("next/server", () => ({
+  after: (fn: () => unknown) => {
+    fn();
+  },
+}));
+
 vi.mock("next-intl/server", async () => {
   const { createTranslator } = await import("@/i18n/test-mocks");
   return {
@@ -123,6 +129,128 @@ describe("createTrip", () => {
       "A data de término não pode ser anterior à data de início.",
     );
     expect(mocks.createClient).not.toHaveBeenCalled();
+  });
+});
+
+describe("createTrip - organizer panel context (#154)", () => {
+  function chain(result: { data?: unknown; error?: unknown }) {
+    const builder = {
+      eq: () => builder,
+      in: () => builder,
+      select: () => builder,
+      single: async () => result,
+      maybeSingle: async () => result,
+      then: (...args: Parameters<Promise<typeof result>["then"]>) =>
+        Promise.resolve(result).then(...args),
+    };
+    return builder;
+  }
+
+  const templateRow = {
+    id: "8f3f147b-8684-4ff1-b5c7-6814e4f57f73",
+    title: "Check passport validity",
+    item_type: "preparation",
+    category: "documents",
+    continent: "europe",
+    country: "Portugal",
+    city: "Lisbon",
+    classification: "required",
+    due_offset_days: 30,
+    currency: null,
+    estimated_amount: null,
+    document_instructions: null,
+  };
+
+  function organizerForm() {
+    const formData = validTripForm();
+    formData.set("organizerContext", "true");
+    return formData;
+  }
+
+  function makeFrom({
+    taskInsertOk = true,
+    inviteInsertError = null,
+  }: { taskInsertOk?: boolean; inviteInsertError?: unknown } = {}) {
+    return vi.fn((table: string) => {
+      if (table === "trips") {
+        return {
+          insert: () => chain({ error: null }),
+          select: () => chain({ data: { id: "trip-id", start_date: "2027-01-01", destination: "London" } }),
+        };
+      }
+      if (table === "trip_tasks") {
+        return {
+          insert: () =>
+            taskInsertOk
+              ? chain({ data: { id: "new-task-id" }, error: null })
+              : chain({ data: null, error: { message: "boom" } }),
+        };
+      }
+      if (table === "profiles") {
+        return {
+          update: () => chain({ error: null }),
+          select: () => chain({ data: { display_name: "Alice" } }),
+        };
+      }
+      if (table === "trip_participants") {
+        return { update: () => chain({ error: null }) };
+      }
+      if (table === "prep_item_templates") {
+        return { select: () => chain({ data: [templateRow] }) };
+      }
+      if (table === "trip_invitations") {
+        return { insert: () => chain({ error: inviteInsertError }) };
+      }
+      throw new Error(`unexpected table ${table}`);
+    });
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.getUser.mockResolvedValue({ data: { user: { id: "user-123", email: "organizer@example.com" } } });
+  });
+
+  it("registers the creator as the trip's organizer, copies selected tasks, and invites a traveler - without redirecting", async () => {
+    const from = makeFrom();
+    mocks.createClient.mockResolvedValue({ auth: { getUser: mocks.getUser }, from });
+
+    const formData = organizerForm();
+    formData.append("taskTemplateIds", templateRow.id);
+    formData.set("inviteEmail", "traveler@example.com");
+
+    const result = await createTrip({}, formData);
+
+    expect(from).toHaveBeenCalledWith("trip_participants");
+    expect(from).toHaveBeenCalledWith("trip_tasks");
+    expect(from).toHaveBeenCalledWith("trip_invitations");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/organizer");
+    expect(mocks.redirect).not.toHaveBeenCalled();
+    expect(result.success).toBe(true);
+    expect(result.message).toBe("Viagem criada com sucesso.");
+  });
+
+  it("reports a partial failure when a selected task can't be copied into the new trip", async () => {
+    const from = makeFrom({ taskInsertOk: false });
+    mocks.createClient.mockResolvedValue({ auth: { getUser: mocks.getUser }, from });
+
+    const formData = organizerForm();
+    formData.append("taskTemplateIds", templateRow.id);
+
+    const result = await createTrip({}, formData);
+
+    expect(result.success).toBe(true);
+    expect(result.message).toContain("pendências");
+    expect(result.message).toContain(templateRow.title);
+  });
+
+  it("does not touch trip_participants, catalog tasks, or invitations for a plain (non-organizer) creation", async () => {
+    const from = makeFrom();
+    mocks.createClient.mockResolvedValue({ auth: { getUser: mocks.getUser }, from });
+
+    await expect(createTrip({}, validTripForm())).rejects.toThrow(/^NEXT_REDIRECT:/);
+
+    expect(from).not.toHaveBeenCalledWith("trip_participants");
+    expect(from).not.toHaveBeenCalledWith("trip_invitations");
   });
 });
 
