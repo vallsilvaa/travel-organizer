@@ -3,9 +3,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   rpc: vi.fn(),
   sendEmail: vi.fn(),
+  sendPushToUser: vi.fn(),
 }));
 
 vi.mock("@/lib/email", () => ({ sendEmail: mocks.sendEmail }));
+vi.mock("@/lib/push", () => ({ sendPushToUser: mocks.sendPushToUser }));
 
 import { notifyTripCollaborators } from "./collaboration";
 
@@ -78,6 +80,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   process.env.NEXT_PUBLIC_APP_URL = "https://example.com";
   mocks.sendEmail.mockResolvedValue({ success: true, messageId: "email-1" });
+  mocks.sendPushToUser.mockResolvedValue(undefined);
 });
 
 describe("notifyTripCollaborators", () => {
@@ -109,6 +112,37 @@ describe("notifyTripCollaborators", () => {
       }),
     );
     expect(mocks.sendEmail).toHaveBeenCalledTimes(2);
+  });
+
+  it("sends a push notification to every recipient, regardless of the email preference", async () => {
+    const supabase = fakeSupabase({
+      emailRows: [
+        { user_id: travelerId, email: "traveler@example.com", collaboration_emails_enabled: false },
+        { user_id: otherTravelerId, email: "other@example.com", collaboration_emails_enabled: true },
+      ],
+    });
+
+    await notifyTripCollaborators({
+      supabase,
+      tripId,
+      actorId: organizerId,
+      entityType: "itinerary_item",
+      entityId: "item-1",
+      action: "created",
+      itemLabel: "Museu do Louvre",
+      tab: "itinerary",
+    });
+
+    expect(mocks.sendPushToUser).toHaveBeenCalledWith(
+      supabase,
+      travelerId,
+      expect.objectContaining({ url: `/trips/${tripId}?tab=itinerary` }),
+    );
+    expect(mocks.sendPushToUser).toHaveBeenCalledWith(
+      supabase,
+      otherTravelerId,
+      expect.objectContaining({ url: `/trips/${tripId}?tab=itinerary` }),
+    );
   });
 
   it("notifies the organizer when a traveler makes a change, excluding the actor", async () => {

@@ -925,5 +925,17 @@
       "currentModeOrganizer": "Mode: Organizer",
       "switchToTraveler": "Traveler View"
     }
+  },
+  "pushNotifications": {
+    "label": "Push notifications",
+    "enabledHint": "Enabled on this device.",
+    "disabledHint": "Get an alert on your phone or browser when something changes, even with the app closed.",
+    "enable": "Enable",
+    "disable": "Disable",
+    "pending": "Please wait...",
+    "permissionDenied": "Notification permission denied by the browser.",
+    "enabledToast": "Push notifications enabled on this device.",
+    "disabledToast": "Push notifications disabled on this device.",
+    "errorToast": "Could not update push notifications. Please try again."
   }
 }

@@ -5,6 +5,7 @@ import * as Sentry from "@sentry/nextjs";
 import { buildOverdueTasksEmail, type OverdueTaskEmailItem } from "@/features/reminders/overdue-email";
 import { getTripRoleAudience } from "@/lib/trip-roles";
 import { sendEmail } from "@/lib/email";
+import { sendPushToUser } from "@/lib/push";
 import { todayInTimeZone } from "@/lib/timezone";
 
 type OverdueTrip = { id: string; destination: string; timezone: string };
@@ -138,6 +139,15 @@ export async function GET(request: NextRequest) {
   let skipped = 0;
 
   for (const group of groups.values()) {
+    // Push is its own channel (a subscription is the opt-in, #146), sent
+    // once per (trip, recipient) group per run regardless of the
+    // email-specific task_reminders_enabled preference below.
+    await sendPushToUser(supabase, group.recipientId, {
+      title: "Tarefas atrasadas",
+      body: `${group.tasks.length} tarefa${group.tasks.length === 1 ? "" : "s"} atrasada${group.tasks.length === 1 ? "" : "s"} em ${group.trip.destination}`,
+      url: `/trips/${group.trip.id}?tab=preparation`,
+    });
+
     if (!enabledRecipients.has(group.recipientId)) {
       skipped += group.tasks.length;
       continue;

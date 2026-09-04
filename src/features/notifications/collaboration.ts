@@ -1,5 +1,6 @@
 import type { createClient } from "@/lib/supabase/server";
 import { sendEmail } from "@/lib/email";
+import { sendPushToUser } from "@/lib/push";
 import { getTripRoleAudience } from "@/lib/trip-roles";
 import {
   buildCollaborationEmail,
@@ -83,6 +84,16 @@ export async function notifyTripCollaborators(input: NotifyTripCollaboratorsInpu
       p_body: copy.body,
       p_link_path: linkPath,
     });
+
+    // Push hangs off the same claimed event and recipient set as the
+    // in-app/email channels above (#146) - a subscription is itself the
+    // opt-in, so there's no extra preference to check here, and a stale
+    // or unconfigured device is a per-recipient no-op inside sendPushToUser.
+    await Promise.all(
+      recipientIds.map((recipientId) =>
+        sendPushToUser(supabase, recipientId, { title: copy.title, body: copy.body, url: linkPath }),
+      ),
+    );
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL;
     if (!appUrl) {
