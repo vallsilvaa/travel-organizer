@@ -10,6 +10,8 @@ const mocks = vi.hoisted(() => ({
     throw new Error(`NEXT_REDIRECT:${url}`);
   }),
   revalidatePath: vi.fn(),
+  rpc: vi.fn(),
+  single: vi.fn(),
   update: vi.fn(),
 }));
 
@@ -23,7 +25,7 @@ vi.mock("next-intl/server", async () => {
   };
 });
 
-import { createTask, setTaskCompletion, updateTask } from "./actions";
+import { createTask, setTaskCompletion, updatePrepTripItem, updateTask } from "./actions";
 
 const tripId = "27823996-ec50-4cc2-8506-a29d07b86f94";
 const taskId = "8f3f147b-8684-4ff1-b5c7-6814e4f57f73";
@@ -46,15 +48,17 @@ function validForm() {
 describe("task actions", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    const builder = { eq: mocks.eq, update: mocks.update };
+    const builder = { eq: mocks.eq, single: mocks.single, update: mocks.update };
     mocks.eq.mockReturnValue(builder);
     mocks.update.mockReturnValue(builder);
     mocks.insert.mockResolvedValue({ error: null });
-    mocks.from.mockReturnValue({ ...builder, insert: mocks.insert });
+    mocks.rpc.mockResolvedValue({ error: null });
+    mocks.from.mockReturnValue({ ...builder, insert: mocks.insert, select: mocks.from });
     mocks.getUser.mockResolvedValue({ data: { user: { id: "user-123" } } });
     mocks.createClient.mockResolvedValue({
       auth: { getUser: mocks.getUser },
       from: mocks.from,
+      rpc: mocks.rpc,
     });
   });
 
@@ -90,28 +94,55 @@ describe("task actions", () => {
     expect(result.success).toBe(true);
   });
 
-  it("completes and attributes a task to the current user", async () => {
-    mocks.eq.mockReturnValueOnce({ eq: mocks.eq }).mockResolvedValueOnce({ error: null });
+  it("completes a task through the complete_prep_item RPC", async () => {
     const formData = validForm();
     formData.set("completed", "true");
 
     await setTaskCompletion(formData);
 
-    expect(mocks.update).toHaveBeenCalledWith(
-      expect.objectContaining({ completed_by: "user-123" }),
-    );
+    expect(mocks.rpc).toHaveBeenCalledWith("complete_prep_item", {
+      p_task_id: taskId,
+      p_should_complete: true,
+    });
     expect(mocks.revalidatePath).toHaveBeenCalledWith(`/trips/${tripId}`);
   });
 
-  it("reopens a completed task", async () => {
-    mocks.eq.mockReturnValueOnce({ eq: mocks.eq }).mockResolvedValueOnce({ error: null });
+  it("reopens a completed task through the complete_prep_item RPC", async () => {
     const formData = validForm();
     formData.set("completed", "false");
 
     await setTaskCompletion(formData);
 
+    expect(mocks.rpc).toHaveBeenCalledWith("complete_prep_item", {
+      p_task_id: taskId,
+      p_should_complete: false,
+    });
+  });
+
+  it("recomputes the due date and saves a governed item's fields", async () => {
+    mocks.single.mockResolvedValueOnce({ data: { start_date: "2027-09-10" } });
+
+    const formData = validForm();
+    formData.set("itemType", "preparation");
+    formData.set("continent", "europe");
+    formData.set("country", "Portugal");
+    formData.set("classification", "required");
+    formData.set("dueOffsetDays", "10");
+    formData.set("assignedTo", ownerId);
+    formData.set("itineraryItemId", "none");
+
+    const result = await updatePrepTripItem({}, formData);
+
     expect(mocks.update).toHaveBeenCalledWith(
-      expect.objectContaining({ completed_at: null, completed_by: null }),
+      expect.objectContaining({
+        classification: "required",
+        is_critical: true,
+        due_offset_days: 10,
+        due_date: "2027-08-31",
+        owner_id: ownerId,
+        itinerary_item_id: null,
+      }),
     );
+    expect(result.success).toBe(true);
   });
 });

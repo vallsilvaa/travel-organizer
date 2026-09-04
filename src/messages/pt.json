@@ -173,7 +173,8 @@
       "active": "em andamento",
       "completed": "concluída",
       "archived": "arquivada"
-    }
+    },
+    "organizerPanelLink": "Painel do organizador"
   },
   "trip": {
     "backToDashboard": "← Voltar ao painel",
@@ -330,7 +331,10 @@
       "deleteTaskTitle": "Remover esta tarefa de preparação?",
       "deleteTaskDescription": "Isso vai remover permanentemente \"{title}\" da sua lista de preparação.",
       "removeTask": "Remover",
-      "empty": "Nenhuma tarefa de preparação corresponde a esses filtros. Adicione o checklist da Inglaterra ou crie uma tarefa personalizada."
+      "empty": "Nenhuma tarefa de preparação corresponde a esses filtros. Adicione o checklist da Inglaterra ou crie uma tarefa personalizada.",
+      "linkedItinerary": "Vinculado ao itinerário: {title}",
+      "expenseLinked": "Vinculado a um gasto na aba Gastos.",
+      "expenseWillLink": "Concluir este item vai adicioná-lo aos gastos da viagem."
     },
     "documents": {
       "title": "Documentos",
@@ -432,6 +436,24 @@
     "invitationRole": {
       "traveler": "Viajante",
       "organizer": "Organizador"
+    },
+    "continent": {
+      "africa": "África",
+      "antarctica": "Antártida",
+      "asia": "Ásia",
+      "europe": "Europa",
+      "north_america": "América do Norte",
+      "oceania": "Oceania",
+      "south_america": "América do Sul"
+    },
+    "classification": {
+      "required": "Obrigatório",
+      "recommended": "Recomendado",
+      "optional": "Opcional"
+    },
+    "prepItemType": {
+      "preparation": "Tarefa de preparação",
+      "document_request": "Solicitação de documento"
     }
   },
   "taskForm": {
@@ -696,5 +718,158 @@
     "connected": "Ao vivo",
     "reconnecting": "Reconectando...",
     "disconnected": "Desconectado"
+  },
+  "templateForm": {
+    "titleLabel": "Título",
+    "titlePlaceholder": "Verificar a validade do passaporte",
+    "itemTypeLabel": "Tipo de item",
+    "categoryLabel": "Categoria",
+    "classificationLabel": "Classificação",
+    "continentLabel": "Continente",
+    "continentPlaceholder": "Selecione um continente",
+    "countryLabel": "País",
+    "countryPlaceholder": "ex.: Portugal",
+    "cityLabel": "Cidade",
+    "cityPlaceholder": "ex.: Lisboa",
+    "optional": "(opcional)",
+    "dueOffsetDaysLabel": "Dias antes da partida",
+    "currencyLabel": "Moeda",
+    "estimatedAmountLabel": "Valor estimado",
+    "documentInstructionsLabel": "Instruções da documentação",
+    "documentInstructionsPlaceholder": "Explique o que o viajante precisa providenciar e como.",
+    "costsHint": "Itens com valor estimado e valor pago preenchidos podem compor os gastos da viagem quando concluídos.",
+    "savePending": "Salvando...",
+    "save": "Salvar alterações",
+    "add": "Adicionar modelo",
+    "toastUpdated": "Modelo atualizado.",
+    "toastAdded": "Modelo adicionado.",
+    "errors": {
+      "titleRequired": "Informe um título com até 200 caracteres.",
+      "itemTypeInvalid": "Escolha um tipo de item válido.",
+      "categoryInvalid": "Escolha uma categoria válida.",
+      "continentInvalid": "Escolha um continente válido.",
+      "countryRequired": "Informe um país com até 100 caracteres.",
+      "cityTooLong": "Use uma cidade com até 200 caracteres.",
+      "classificationInvalid": "Escolha uma classificação válida.",
+      "dueOffsetDaysInvalid": "Informe um número inteiro de dias entre 0 e 730.",
+      "currencyInvalid": "Informe um código de moeda válido com 3 letras.",
+      "estimatedAmountInvalid": "Informe um valor válido e não negativo.",
+      "documentInstructionsRequired": "Adicione instruções para esta solicitação de documento.",
+      "documentInstructionsTooLong": "Use instruções com até 2000 caracteres."
+    },
+    "actionErrors": {
+      "addFailed": "Não foi possível adicionar este modelo. Verifique os campos e tente novamente.",
+      "updateFailed": "Não foi possível atualizar este modelo.",
+      "identifyTemplate": "Não foi possível identificar este modelo."
+    }
+  },
+  "prepItemForm": {
+    "titleLabel": "Título",
+    "itemTypeLabel": "Tipo de item",
+    "categoryLabel": "Categoria",
+    "classificationLabel": "Classificação",
+    "continentLabel": "Continente",
+    "countryLabel": "País",
+    "cityLabel": "Cidade",
+    "optional": "(opcional)",
+    "dueOffsetDaysLabel": "Dias antes da partida",
+    "assignedToLabel": "Viajante responsável",
+    "assignedToNone": "Sem responsável",
+    "itineraryLinkLabel": "Item do itinerário vinculado",
+    "itineraryLinkNone": "Sem vínculo",
+    "currencyLabel": "Moeda",
+    "estimatedAmountLabel": "Valor estimado",
+    "paidAmountLabel": "Valor pago",
+    "documentInstructionsLabel": "Instruções da documentação",
+    "costsHint": "Itens com valor estimado e valor pago preenchidos podem compor os gastos da viagem quando concluídos.",
+    "savePending": "Salvando...",
+    "save": "Salvar alterações",
+    "toastUpdated": "Item atualizado.",
+    "errors": {
+      "titleRequired": "Informe um título com até 200 caracteres.",
+      "itemTypeInvalid": "Escolha um tipo de item válido.",
+      "categoryInvalid": "Escolha uma categoria válida.",
+      "continentInvalid": "Escolha um continente válido.",
+      "countryRequired": "Informe um país com até 100 caracteres.",
+      "cityTooLong": "Use uma cidade com até 200 caracteres.",
+      "classificationInvalid": "Escolha uma classificação válida.",
+      "dueOffsetDaysInvalid": "Informe um número inteiro de dias entre 0 e 730.",
+      "currencyInvalid": "Informe um código de moeda válido com 3 letras.",
+      "estimatedAmountInvalid": "Informe um valor válido e não negativo.",
+      "paidAmountInvalid": "Informe um valor válido e não negativo.",
+      "documentInstructionsRequired": "Adicione instruções para esta solicitação de documento.",
+      "documentInstructionsTooLong": "Use instruções com até 2000 caracteres.",
+      "assignedToInvalid": "Escolha um viajante válido.",
+      "itineraryItemInvalid": "Escolha um item de itinerário válido."
+    },
+    "actionErrors": {
+      "identifyItem": "Não foi possível identificar este item.",
+      "identifyTrip": "Não foi possível identificar a viagem.",
+      "updateFailed": "Não foi possível atualizar este item. Verifique os campos e seu acesso à viagem."
+    }
+  },
+  "organizerPanel": {
+    "eyebrow": "Painel do organizador",
+    "title": "Painel do organizador",
+    "description": "Crie viagens, gerencie seu catálogo reutilizável de preparação e aplique-o às viagens que você organiza.",
+    "backToDashboard": "Voltar ao painel principal",
+    "createTrip": {
+      "title": "Criar viagem",
+      "description": "Usa o mesmo fluxo de criação de viagem do painel principal."
+    },
+    "catalog": {
+      "title": "Catálogo reutilizável",
+      "description": "Tarefas de preparação e solicitações de documentos que você pode aplicar a qualquer viagem que organiza.",
+      "addTemplate": "Adicionar modelo",
+      "loadError": "Não foi possível carregar seu catálogo. Tente atualizar a página.",
+      "editTemplate": "Editar modelo",
+      "deleteTemplateTitle": "Remover este modelo?",
+      "deleteTemplateDescription": "Isso remove permanentemente \"{title}\" do seu catálogo. Itens já aplicados a viagens não são afetados.",
+      "removeTemplate": "Remover",
+      "empty": "Nenhum modelo ainda. Adicione o primeiro acima.",
+      "daysBeforeDeparture": "{count} dias antes da partida"
+    },
+    "trips": {
+      "title": "Suas viagens organizadas",
+      "description": "Selecione uma viagem para ver seus itens de preparação ou aplicar um modelo.",
+      "loadError": "Não foi possível carregar suas viagens. Tente atualizar a página.",
+      "empty": "Você ainda não organiza nenhuma viagem. Crie uma acima.",
+      "readiness": "{percent}% pronto",
+      "criticalOpen": "{count, plural, =0 {# críticos em aberto} =1 {# crítico em aberto} other {# críticos em aberto}}"
+    },
+    "tripDetail": {
+      "title": "{destination}",
+      "description": "Itens de preparação aplicados a esta viagem a partir do seu catálogo.",
+      "applyTitle": "Aplicar um modelo",
+      "itemsTitle": "Itens aplicados",
+      "loadError": "Não foi possível carregar os itens desta viagem. Tente atualizar a página.",
+      "badgeCompleted": "Concluído",
+      "dueDate": "Prazo: {date}",
+      "reopeningPending": "Reabrindo...",
+      "completingPending": "Concluindo...",
+      "reopen": "Reabrir",
+      "complete": "Concluir",
+      "editItem": "Editar item",
+      "deleteItemTitle": "Remover este item?",
+      "deleteItemDescription": "Isso remove permanentemente \"{title}\" da lista de preparação desta viagem.",
+      "removeItem": "Remover",
+      "empty": "Nenhum item do catálogo aplicado a esta viagem ainda."
+    },
+    "applyForm": {
+      "templateLabel": "Modelo",
+      "templatePlaceholder": "Escolha um modelo",
+      "assignedToLabel": "Viajante responsável",
+      "assignedToNone": "Sem responsável",
+      "itineraryLinkLabel": "Item do itinerário vinculado",
+      "itineraryLinkNone": "Sem vínculo",
+      "apply": "Aplicar à viagem",
+      "applyPending": "Aplicando...",
+      "toastApplied": "Modelo aplicado à viagem.",
+      "noTemplates": "Adicione um modelo ao seu catálogo primeiro.",
+      "identifyError": "Não foi possível identificar a viagem ou o modelo.",
+      "templateNotFound": "Modelo não encontrado.",
+      "tripNotFound": "Viagem não encontrada.",
+      "applyFailed": "Não foi possível aplicar este modelo. Verifique seu acesso à viagem."
+    }
   }
 }

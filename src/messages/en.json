@@ -173,7 +173,8 @@
       "active": "in progress",
       "completed": "completed",
       "archived": "archived"
-    }
+    },
+    "organizerPanelLink": "Organizer panel"
   },
   "trip": {
     "backToDashboard": "← Back to dashboard",
@@ -330,7 +331,10 @@
       "deleteTaskTitle": "Remove this preparation task?",
       "deleteTaskDescription": "This will permanently remove \"{title}\" from your preparation list.",
       "removeTask": "Remove",
-      "empty": "No preparation tasks match these filters. Add the England checklist or create a custom task."
+      "empty": "No preparation tasks match these filters. Add the England checklist or create a custom task.",
+      "linkedItinerary": "Linked to itinerary: {title}",
+      "expenseLinked": "Linked to an expense in the Expenses tab.",
+      "expenseWillLink": "Completing this item will add it to the trip's expenses."
     },
     "documents": {
       "title": "Documents",
@@ -432,6 +436,24 @@
     "invitationRole": {
       "traveler": "Traveler",
       "organizer": "Organizer"
+    },
+    "continent": {
+      "africa": "Africa",
+      "antarctica": "Antarctica",
+      "asia": "Asia",
+      "europe": "Europe",
+      "north_america": "North America",
+      "oceania": "Oceania",
+      "south_america": "South America"
+    },
+    "classification": {
+      "required": "Required",
+      "recommended": "Recommended",
+      "optional": "Optional"
+    },
+    "prepItemType": {
+      "preparation": "Preparation task",
+      "document_request": "Document request"
     }
   },
   "taskForm": {
@@ -696,5 +718,158 @@
     "connected": "Live",
     "reconnecting": "Reconnecting...",
     "disconnected": "Disconnected"
+  },
+  "templateForm": {
+    "titleLabel": "Title",
+    "titlePlaceholder": "Verify passport validity",
+    "itemTypeLabel": "Item type",
+    "categoryLabel": "Category",
+    "classificationLabel": "Classification",
+    "continentLabel": "Continent",
+    "continentPlaceholder": "Select a continent",
+    "countryLabel": "Country",
+    "countryPlaceholder": "e.g. Portugal",
+    "cityLabel": "City",
+    "cityPlaceholder": "e.g. Lisbon",
+    "optional": "(optional)",
+    "dueOffsetDaysLabel": "Days before departure",
+    "currencyLabel": "Currency",
+    "estimatedAmountLabel": "Estimated amount",
+    "documentInstructionsLabel": "Document instructions",
+    "documentInstructionsPlaceholder": "Explain what the traveler needs to provide and how.",
+    "costsHint": "Items with both an estimated and a paid amount filled in can show up in the trip's expenses once completed.",
+    "savePending": "Saving...",
+    "save": "Save changes",
+    "add": "Add template",
+    "toastUpdated": "Template updated.",
+    "toastAdded": "Template added.",
+    "errors": {
+      "titleRequired": "Enter a title with up to 200 characters.",
+      "itemTypeInvalid": "Choose a valid item type.",
+      "categoryInvalid": "Choose a valid category.",
+      "continentInvalid": "Choose a valid continent.",
+      "countryRequired": "Enter a country with up to 100 characters.",
+      "cityTooLong": "Use a city name with up to 200 characters.",
+      "classificationInvalid": "Choose a valid classification.",
+      "dueOffsetDaysInvalid": "Enter a whole number of days between 0 and 730.",
+      "currencyInvalid": "Enter a valid 3-letter currency code.",
+      "estimatedAmountInvalid": "Enter a valid, non-negative amount.",
+      "documentInstructionsRequired": "Add instructions for this document request.",
+      "documentInstructionsTooLong": "Use instructions with up to 2000 characters."
+    },
+    "actionErrors": {
+      "addFailed": "Could not add this template. Check the fields and try again.",
+      "updateFailed": "Could not update this template.",
+      "identifyTemplate": "Could not identify this template."
+    }
+  },
+  "prepItemForm": {
+    "titleLabel": "Title",
+    "itemTypeLabel": "Item type",
+    "categoryLabel": "Category",
+    "classificationLabel": "Classification",
+    "continentLabel": "Continent",
+    "countryLabel": "Country",
+    "cityLabel": "City",
+    "optional": "(optional)",
+    "dueOffsetDaysLabel": "Days before departure",
+    "assignedToLabel": "Assigned traveler",
+    "assignedToNone": "Unassigned",
+    "itineraryLinkLabel": "Linked itinerary item",
+    "itineraryLinkNone": "No linked item",
+    "currencyLabel": "Currency",
+    "estimatedAmountLabel": "Estimated amount",
+    "paidAmountLabel": "Paid amount",
+    "documentInstructionsLabel": "Document instructions",
+    "costsHint": "Items with both an estimated and a paid amount filled in can show up in the trip's expenses once completed.",
+    "savePending": "Saving...",
+    "save": "Save changes",
+    "toastUpdated": "Item updated.",
+    "errors": {
+      "titleRequired": "Enter a title with up to 200 characters.",
+      "itemTypeInvalid": "Choose a valid item type.",
+      "categoryInvalid": "Choose a valid category.",
+      "continentInvalid": "Choose a valid continent.",
+      "countryRequired": "Enter a country with up to 100 characters.",
+      "cityTooLong": "Use a city name with up to 200 characters.",
+      "classificationInvalid": "Choose a valid classification.",
+      "dueOffsetDaysInvalid": "Enter a whole number of days between 0 and 730.",
+      "currencyInvalid": "Enter a valid 3-letter currency code.",
+      "estimatedAmountInvalid": "Enter a valid, non-negative amount.",
+      "paidAmountInvalid": "Enter a valid, non-negative amount.",
+      "documentInstructionsRequired": "Add instructions for this document request.",
+      "documentInstructionsTooLong": "Use instructions with up to 2000 characters.",
+      "assignedToInvalid": "Choose a valid traveler.",
+      "itineraryItemInvalid": "Choose a valid itinerary item."
+    },
+    "actionErrors": {
+      "identifyItem": "Could not identify this item.",
+      "identifyTrip": "Could not identify the trip.",
+      "updateFailed": "Could not update this item. Check the fields and your access to the trip."
+    }
+  },
+  "organizerPanel": {
+    "eyebrow": "Organizer panel",
+    "title": "Organizer panel",
+    "description": "Create trips, manage your reusable preparation catalog, and apply it to the trips you organize.",
+    "backToDashboard": "Back to dashboard",
+    "createTrip": {
+      "title": "Create a trip",
+      "description": "Uses the same trip creation flow as the dashboard."
+    },
+    "catalog": {
+      "title": "Reusable catalog",
+      "description": "Preparation tasks and document requests you can apply to any trip you organize.",
+      "addTemplate": "Add a template",
+      "loadError": "Could not load your catalog. Try refreshing the page.",
+      "editTemplate": "Edit template",
+      "deleteTemplateTitle": "Remove this template?",
+      "deleteTemplateDescription": "This permanently removes \"{title}\" from your catalog. Items already applied to trips are not affected.",
+      "removeTemplate": "Remove",
+      "empty": "No templates yet. Add your first one above.",
+      "daysBeforeDeparture": "{count} days before departure"
+    },
+    "trips": {
+      "title": "Your organized trips",
+      "description": "Select a trip to review its preparation items or apply a template.",
+      "loadError": "Could not load your trips. Try refreshing the page.",
+      "empty": "You don't organize any trips yet. Create one above.",
+      "readiness": "{percent}% ready",
+      "criticalOpen": "{count, plural, one {# critical item open} other {# critical items open}}"
+    },
+    "tripDetail": {
+      "title": "{destination}",
+      "description": "Preparation items applied to this trip from your catalog.",
+      "applyTitle": "Apply a template",
+      "itemsTitle": "Applied items",
+      "loadError": "Could not load this trip's items. Try refreshing the page.",
+      "badgeCompleted": "Completed",
+      "dueDate": "Due {date}",
+      "reopeningPending": "Reopening...",
+      "completingPending": "Completing...",
+      "reopen": "Reopen",
+      "complete": "Complete",
+      "editItem": "Edit item",
+      "deleteItemTitle": "Remove this item?",
+      "deleteItemDescription": "This permanently removes \"{title}\" from this trip's preparation list.",
+      "removeItem": "Remove",
+      "empty": "No catalog items applied to this trip yet."
+    },
+    "applyForm": {
+      "templateLabel": "Template",
+      "templatePlaceholder": "Choose a template",
+      "assignedToLabel": "Assigned traveler",
+      "assignedToNone": "Unassigned",
+      "itineraryLinkLabel": "Linked itinerary item",
+      "itineraryLinkNone": "No linked item",
+      "apply": "Apply to trip",
+      "applyPending": "Applying...",
+      "toastApplied": "Template applied to the trip.",
+      "noTemplates": "Add a template to your catalog first.",
+      "identifyError": "Could not identify the trip or template.",
+      "templateNotFound": "Template not found.",
+      "tripNotFound": "Trip not found.",
+      "applyFailed": "Could not apply this template. Check your access to the trip."
+    }
   }
 }

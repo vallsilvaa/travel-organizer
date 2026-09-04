@@ -32,11 +32,20 @@ import {
   setTaskCompletion,
 } from "@/features/tasks/actions";
 import { TaskForm } from "@/features/tasks/task-form";
+import { PrepItemForm } from "@/features/tasks/prep-item-form";
 import {
   taskCategories,
   getTaskCategoryLabels,
   type TaskCategory,
 } from "@/features/tasks/templates";
+import {
+  getClassificationLabels,
+  getContinentLabels,
+  getPrepItemTypeLabels,
+  type Classification,
+  type Continent,
+  type PrepItemType,
+} from "@/features/prep-catalog/shared";
 import { localeTag } from "@/i18n/locale";
 import { createClient } from "@/lib/supabase/server";
 import { Badge } from "@/components/ui/badge";
@@ -168,6 +177,17 @@ type TripTask = {
   template_key: string | null;
   reference_label: string | null;
   reference_url: string | null;
+  item_type: PrepItemType;
+  continent: Continent | null;
+  country: string | null;
+  city: string | null;
+  classification: Classification | null;
+  currency: string | null;
+  estimated_amount: string | null;
+  paid_amount: string | null;
+  itinerary_item_id: string | null;
+  document_instructions: string | null;
+  expense_id: string | null;
 };
 
 const reservationBadgeVariant: Record<ReservationType, "default" | "secondary" | "outline"> = {
@@ -204,6 +224,9 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
   const reservationTypeLabels = getReservationTypeLabels(await getTranslations("categories.reservationType"));
   const itineraryPeriodLabels = getItineraryPeriodLabels(await getTranslations("categories.itineraryPeriod"));
   const invitationRoleLabels = getInvitationRoleLabels(await getTranslations("categories.invitationRole"));
+  const prepItemTypeLabels = getPrepItemTypeLabels(await getTranslations("categories.prepItemType"));
+  const classificationLabels = getClassificationLabels(await getTranslations("categories.classification"));
+  const continentLabels = getContinentLabels(await getTranslations("categories.continent"));
   const locale = await getLocale();
   const format = await getFormatter();
   const formatDate = (value: string) => format.dateTime(new Date(`${value}T00:00:00Z`), "long");
@@ -307,7 +330,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
         .order("created_at", { ascending: false }),
       supabase
         .from("trip_tasks")
-        .select("id, title, owner_id, due_date, due_offset_days, completed_at, created_at, category, is_critical, template_key, reference_label, reference_url")
+        .select("id, title, owner_id, due_date, due_offset_days, completed_at, created_at, category, is_critical, template_key, reference_label, reference_url, item_type, continent, country, city, classification, currency, estimated_amount, paid_amount, itinerary_item_id, document_instructions, expense_id")
         .eq("trip_id", trip.id)
         .order("due_date", { ascending: true, nullsFirst: false })
         .order("created_at", { ascending: true }),
@@ -1424,12 +1447,22 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                         {group.tasks.map((task) => {
                           const overdue = !task.completed_at && task.due_date && task.due_date < today;
                           const upcoming = !task.completed_at && task.due_date && task.due_date >= today;
+                          const isGovernedPrepItem = task.classification !== null;
+                          const linkedItineraryTitle = task.itinerary_item_id
+                            ? itineraryTitles.get(task.itinerary_item_id)
+                            : undefined;
                           return (
                             <li id={`task-${task.id}`} key={task.id} className={`rounded-2xl border p-5 ${task.completed_at ? "border-slate-200 bg-slate-50" : overdue ? "border-red-200 bg-red-50" : upcoming ? "border-sky-200 bg-sky-50" : "border-slate-200"}`}>
                               <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                                 <div>
                                   <div className="flex flex-wrap items-center gap-2">
                                     <h4 className={`font-semibold ${task.completed_at ? "text-slate-500 line-through" : "text-slate-950"}`}>{task.title}</h4>
+                                    {isGovernedPrepItem && task.item_type === "document_request" ? (
+                                      <Badge variant="outline">{prepItemTypeLabels.document_request}</Badge>
+                                    ) : null}
+                                    {isGovernedPrepItem && task.classification !== "required" ? (
+                                      <Badge variant="outline">{classificationLabels[task.classification as Exclude<Classification, "required">]}</Badge>
+                                    ) : null}
                                     {task.is_critical && !task.completed_at ? <Badge className="bg-amber-100 text-amber-900">{t("preparation.badgeCritical")}</Badge> : null}
                                     {overdue ? <Badge className="bg-red-100 text-red-800">{t("preparation.badgeOverdue")}</Badge> : null}
                                     {upcoming ? <Badge className="bg-sky-100 text-sky-800">{t("preparation.badgeUpcoming")}</Badge> : null}
@@ -1440,6 +1473,30 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                                     {task.due_date ? ` · ${t("preparation.dueDate", { date: formatDate(task.due_date) })}` : ` · ${t("preparation.noDueDate")}`}
                                     {task.due_offset_days !== null ? ` · ${t("preparation.daysBeforeDeparture", { count: task.due_offset_days })}` : ""}
                                   </p>
+                                  {isGovernedPrepItem ? (
+                                    <p className="mt-1 text-sm text-slate-600">
+                                      {[continentLabels[task.continent as Continent], task.country, task.city]
+                                        .filter(Boolean)
+                                        .join(" · ")}
+                                    </p>
+                                  ) : null}
+                                  {isGovernedPrepItem && task.item_type === "document_request" && task.document_instructions ? (
+                                    <p className="mt-2 rounded-xl bg-white p-3 text-sm text-slate-700">
+                                      {task.document_instructions}
+                                    </p>
+                                  ) : null}
+                                  {linkedItineraryTitle ? (
+                                    <p className="mt-2 text-sm text-slate-600">
+                                      {t("preparation.linkedItinerary", { title: linkedItineraryTitle })}
+                                    </p>
+                                  ) : null}
+                                  {isGovernedPrepItem && task.estimated_amount && task.paid_amount ? (
+                                    <p className="mt-2 text-xs text-slate-500">
+                                      {task.expense_id
+                                        ? t("preparation.expenseLinked")
+                                        : t("preparation.expenseWillLink")}
+                                    </p>
+                                  ) : null}
                                   {task.reference_url ? (
                                     <a href={task.reference_url} target="_blank" rel="noreferrer noopener" className="mt-3 inline-flex text-sm font-semibold text-sky-700 hover:text-sky-800">
                                       {task.reference_label ?? t("preparation.openReference")} ↗
@@ -1462,7 +1519,34 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                                     </form>
                                     <ItemActionsMenu
                                       editLabel={t("preparation.editTask")}
-                                      editForm={<TaskForm participants={tripParticipants} task={task} tripId={trip.id} />}
+                                      editForm={
+                                        isGovernedPrepItem ? (
+                                          <PrepItemForm
+                                            itineraryItems={itineraryItemOptions}
+                                            participants={tripParticipants}
+                                            task={{
+                                              id: task.id,
+                                              title: task.title,
+                                              item_type: task.item_type,
+                                              category: task.category,
+                                              continent: task.continent as Continent,
+                                              country: task.country ?? "",
+                                              city: task.city,
+                                              classification: task.classification as Classification,
+                                              due_offset_days: task.due_offset_days ?? 0,
+                                              currency: task.currency,
+                                              estimated_amount: task.estimated_amount,
+                                              paid_amount: task.paid_amount,
+                                              document_instructions: task.document_instructions,
+                                              owner_id: task.owner_id,
+                                              itinerary_item_id: task.itinerary_item_id,
+                                            }}
+                                            tripId={trip.id}
+                                          />
+                                        ) : (
+                                          <TaskForm participants={tripParticipants} task={task} tripId={trip.id} />
+                                        )
+                                      }
                                       deleteAction={deleteTask}
                                       deleteHiddenFields={{ tripId: trip.id, taskId: task.id }}
                                       deleteTitle={t("preparation.deleteTaskTitle")}
