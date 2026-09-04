@@ -37,6 +37,7 @@ import {
 
 type DashboardPageProps = {
   searchParams: Promise<{
+    error?: string;
     invitationError?: string;
     passwordError?: string;
     passwordMessage?: string;
@@ -112,7 +113,8 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     completed: t("tripStatus.completed"),
     archived: t("tripStatus.archived"),
   };
-  const [profileError, profileMessage, passwordError, passwordMessage] = await Promise.all([
+  const [generalError, profileError, profileMessage, passwordError, passwordMessage] = await Promise.all([
+    getAuthMessage(params.error),
     getAuthMessage(params.profileError),
     getAuthMessage(params.profileMessage),
     getAuthMessage(params.passwordError),
@@ -131,7 +133,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     await Promise.all([
       supabase
         .from("profiles")
-        .select("display_name, task_reminders_enabled, collaboration_emails_enabled")
+        .select("display_name, task_reminders_enabled, collaboration_emails_enabled, is_organizer")
         .eq("id", user.id)
         .single(),
       supabase
@@ -193,9 +195,11 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
               {t("welcomeDescription")}
             </CardDescription>
             <CardAction className="flex items-center gap-3">
-              <Link href="/organizer" className="text-sm font-semibold text-primary hover:text-primary/80">
-                {t("organizerPanelLink")}
-              </Link>
+              {profile?.is_organizer ? (
+                <Link href="/organizer" className="text-sm font-semibold text-primary hover:text-primary/80">
+                  {t("organizerPanelLink")}
+                </Link>
+              ) : null}
               <LanguageSwitcher />
               <ThemeToggle />
               <NotificationBell notifications={(notifications ?? []) as Notification[]} />
@@ -204,6 +208,13 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
               </form>
             </CardAction>
           </CardHeader>
+          {generalError ? (
+            <CardContent>
+              <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-800">
+                {generalError}
+              </p>
+            </CardContent>
+          ) : null}
         </Card>
 
         <Card className="[--card-spacing:--spacing(8)]">

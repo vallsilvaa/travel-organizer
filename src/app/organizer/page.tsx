@@ -20,9 +20,12 @@ import { TripForm } from "@/features/trips/trip-form";
 import { createClient } from "@/lib/supabase/server";
 import { Badge } from "@/components/ui/badge";
 import { ItemActionsMenu } from "@/components/item-actions-menu";
+import { LanguageSwitcher } from "@/components/language-switcher";
 import { SubmitButton } from "@/components/submit-button";
+import { ThemeToggle } from "@/components/theme-toggle";
 import {
   Card,
+  CardAction,
   CardContent,
   CardDescription,
   CardHeader,
@@ -103,6 +106,16 @@ export default async function OrganizerPage({ searchParams }: OrganizerPageProps
     redirect("/auth/sign-in?error=authentication_required");
   }
 
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("is_traveler, is_organizer")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (!profile?.is_organizer) {
+    redirect("/dashboard?error=organizer_access_required");
+  }
+
   const { data: organizerRows } = await supabase
     .from("trip_participants")
     .select("trip_id")
@@ -177,6 +190,18 @@ export default async function OrganizerPage({ searchParams }: OrganizerPageProps
             <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">{t("eyebrow")}</p>
             <CardTitle className="mt-2 text-3xl">{t("title")}</CardTitle>
             <CardDescription className="mt-2 text-base">{t("description")}</CardDescription>
+            <CardAction className="flex items-center gap-3">
+              <LanguageSwitcher />
+              <ThemeToggle />
+              {profile.is_traveler ? (
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline">{t("modeSwitcher.currentModeOrganizer")}</Badge>
+                  <Link href="/dashboard" className="text-sm font-semibold text-primary hover:text-primary/80">
+                    {t("modeSwitcher.switchToTraveler")}
+                  </Link>
+                </div>
+              ) : null}
+            </CardAction>
           </CardHeader>
           <CardContent>
             <Link href="/dashboard" className="text-sm font-semibold text-primary hover:text-primary/80">

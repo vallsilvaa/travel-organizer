@@ -106,6 +106,11 @@ describe("createTrip", () => {
       }),
     );
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/dashboard");
+
+    // Creating a trip is how an account becomes an organizer (#150).
+    expect(mocks.from).toHaveBeenCalledWith("profiles");
+    expect(mocks.update).toHaveBeenCalledWith({ is_organizer: true });
+    expect(mocks.updateEq).toHaveBeenCalledWith("id", "user-123");
   });
 
   it("returns validation errors without calling Supabase", async () => {

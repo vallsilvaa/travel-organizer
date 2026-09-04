@@ -4,9 +4,11 @@ const mocks = vi.hoisted(() => ({
   createClient: vi.fn(),
   eq: vi.fn(),
   from: vi.fn(),
+  maybeSingle: vi.fn(),
   redirect: vi.fn((url: string) => {
     throw new Error(`NEXT_REDIRECT:${url}`);
   }),
+  select: vi.fn(),
   signInWithPassword: vi.fn(),
   signOut: vi.fn(),
   signUp: vi.fn(),
@@ -37,13 +39,17 @@ import {
   signUp,
   updateDisplayName,
 } from "./actions";
+import { postSignInPath } from "./post-sign-in-path";
 
 describe("authentication actions", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.eq.mockResolvedValue({ error: null });
     mocks.update.mockReturnValue({ eq: mocks.eq });
-    mocks.from.mockReturnValue({ update: mocks.update });
+    mocks.maybeSingle.mockResolvedValue({ data: { is_traveler: true, is_organizer: false } });
+    mocks.select.mockReturnValue({ eq: () => ({ maybeSingle: mocks.maybeSingle }) });
+    mocks.from.mockReturnValue({ update: mocks.update, select: mocks.select });
+    mocks.signInWithPassword.mockResolvedValue({ data: { user: { id: "user-1" } }, error: null });
     mocks.createClient.mockResolvedValue({
       auth: {
         signInWithPassword: mocks.signInWithPassword,
@@ -76,8 +82,7 @@ describe("authentication actions", () => {
     });
   });
 
-  it("signs in with normalized credentials", async () => {
-    mocks.signInWithPassword.mockResolvedValue({ error: null });
+  it("signs in with normalized credentials and sends a traveler-only account to the dashboard", async () => {
     const formData = new FormData();
     formData.set("email", "VALERIA@example.com");
     formData.set("password", "safe-pass-123");
@@ -87,6 +92,24 @@ describe("authentication actions", () => {
       email: "valeria@example.com",
       password: "safe-pass-123",
     });
+  });
+
+  it("sends an organizer-only account straight to the organizer panel", async () => {
+    mocks.maybeSingle.mockResolvedValue({ data: { is_traveler: false, is_organizer: true } });
+    const formData = new FormData();
+    formData.set("email", "organizer@example.com");
+    formData.set("password", "safe-pass-123");
+
+    await expect(signIn(formData)).rejects.toThrow("NEXT_REDIRECT:/organizer");
+  });
+
+  it("sends a dual-role account to the mode selector", async () => {
+    mocks.maybeSingle.mockResolvedValue({ data: { is_traveler: true, is_organizer: true } });
+    const formData = new FormData();
+    formData.set("email", "both@example.com");
+    formData.set("password", "safe-pass-123");
+
+    await expect(signIn(formData)).rejects.toThrow("NEXT_REDIRECT:/auth/choose-mode");
   });
 
   it("signs out and returns to sign in", async () => {
@@ -240,5 +263,27 @@ describe("authentication actions", () => {
       "NEXT_REDIRECT:/auth/sign-in?error=authentication_required",
     );
     expect(mocks.from).not.toHaveBeenCalled();
+  });
+});
+
+describe("postSignInPath", () => {
+  it("sends a traveler-only profile to the dashboard", () => {
+    expect(postSignInPath({ is_traveler: true, is_organizer: false })).toBe("/dashboard");
+  });
+
+  it("sends an organizer-only profile to the organizer panel", () => {
+    expect(postSignInPath({ is_traveler: false, is_organizer: true })).toBe("/organizer");
+  });
+
+  it("sends a dual-role profile to the mode selector", () => {
+    expect(postSignInPath({ is_traveler: true, is_organizer: true })).toBe("/auth/choose-mode");
+  });
+
+  it("falls back to the dashboard when there is no role at all", () => {
+    expect(postSignInPath({ is_traveler: false, is_organizer: false })).toBe("/dashboard");
+  });
+
+  it("falls back to the dashboard when the profile could not be loaded", () => {
+    expect(postSignInPath(null)).toBe("/dashboard");
   });
 });

@@ -56,6 +56,12 @@ export async function createTrip(
     );
   }
 
+  // Creating a trip is how an account becomes an organizer (issue #150) -
+  // grants the global capability the same way it's always implicitly
+  // worked (anyone could create a trip and thereby organize it), just now
+  // also recorded so /organizer and the post-login redirect can use it.
+  await supabase.from("profiles").update({ is_organizer: true }).eq("id", user.id);
+
   revalidatePath("/dashboard");
   redirect(`/trips/${tripId}`);
 }

@@ -99,7 +99,14 @@
       "password_updated": "Senha atualizada com sucesso.",
       "invalid_display_name": "Informe um nome com pelo menos dois caracteres.",
       "profile_update_failed": "Não foi possível atualizar seu perfil. Tente novamente.",
-      "profile_updated": "Perfil atualizado com sucesso."
+      "profile_updated": "Perfil atualizado com sucesso.",
+      "organizer_access_required": "Você ainda não tem acesso ao Painel do Organizador. Crie uma viagem para se tornar organizador."
+    },
+    "chooseMode": {
+      "title": "Como você quer entrar?",
+      "description": "Sua conta tem acesso tanto ao painel de viagens quanto ao Painel do Organizador. Escolha uma experiência para continuar.",
+      "organizerView": "Organizer View",
+      "travelerView": "Traveler View"
     }
   },
   "dashboard": {
@@ -871,6 +878,10 @@
       "templateNotFound": "Modelo não encontrado.",
       "tripNotFound": "Viagem não encontrada.",
       "applyFailed": "Não foi possível aplicar este modelo. Verifique seu acesso à viagem."
+    },
+    "modeSwitcher": {
+      "currentModeOrganizer": "Modo: Organizador",
+      "switchToTraveler": "Traveler View"
     }
   }
 }

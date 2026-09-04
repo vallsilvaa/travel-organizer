@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
+import { postSignInPath } from "./post-sign-in-path";
 
 function formValue(formData: FormData, name: string) {
   return String(formData.get(name) ?? "").trim();
@@ -67,17 +68,24 @@ export async function signIn(formData: FormData) {
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
-  if (error) {
+  if (error || !data.user) {
     authRedirect(
       "/auth/sign-in",
       "error",
-      error.status === 429 ? "rate_limited" : "invalid_credentials",
+      error?.status === 429 ? "rate_limited" : "invalid_credentials",
     );
+    return;
   }
 
-  redirect("/dashboard");
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("is_traveler, is_organizer")
+    .eq("id", data.user.id)
+    .maybeSingle();
+
+  redirect(postSignInPath(profile));
 }
 
 export async function signOut() {
