@@ -461,7 +461,8 @@
     },
     "prepItemType": {
       "preparation": "Preparation task",
-      "document_request": "Document request"
+      "document_request": "Document request",
+      "itinerary_item": "Itinerary item"
     }
   },
   "taskForm": {
@@ -769,7 +770,11 @@
       "addFailed": "Could not add this template. Check the fields and try again.",
       "updateFailed": "Could not update this template.",
       "identifyTemplate": "Could not identify this template."
-    }
+    },
+    "continentNone": "No continent",
+    "dueOffsetDaysPlaceholder": "Select a lead time",
+    "timelineOffsetEve": "The day before",
+    "timelineOffsetDays": "{count} days before"
   },
   "prepItemForm": {
     "titleLabel": "Title",

@@ -26,6 +26,7 @@ import {
   getTaskCategoryLabels,
   prepItemTypes,
   taskCategories,
+  timelineOffsets,
   type Classification,
   type Continent,
   type PrepItemType,
@@ -38,11 +39,11 @@ type TemplateFormProps = {
     title: string;
     item_type: PrepItemType;
     category: TaskCategory;
-    continent: Continent;
+    continent: Continent | null;
     country: string;
     city: string | null;
     classification: Classification;
-    due_offset_days: number;
+    due_offset_days: number | null;
     currency: string | null;
     estimated_amount: string | null;
     document_instructions: string | null;
@@ -67,6 +68,12 @@ export function TemplateForm({ template }: TemplateFormProps) {
     initialState,
   );
   const [itemType, setItemType] = useState<PrepItemType>(template?.item_type ?? "preparation");
+  const timelineOffsetLabels: Record<number, string> = Object.fromEntries(
+    timelineOffsets.map((offset) => [
+      offset,
+      offset === 1 ? t("timelineOffsetEve") : t("timelineOffsetDays", { count: offset }),
+    ]),
+  );
 
   useEffect(() => {
     if (state.success) {
@@ -150,12 +157,19 @@ export function TemplateForm({ template }: TemplateFormProps) {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="template-continent">{t("continentLabel")}</Label>
-        <Select name="continent" defaultValue={template?.continent} items={continentLabels}>
+        <Label htmlFor="template-continent">
+          {t("continentLabel")} <span className="font-normal text-muted-foreground">{t("optional")}</span>
+        </Label>
+        <Select
+          name="continent"
+          defaultValue={template?.continent ?? "none"}
+          items={{ none: t("continentNone"), ...continentLabels }}
+        >
           <SelectTrigger id="template-continent" className="w-full">
             <SelectValue placeholder={t("continentPlaceholder")} />
           </SelectTrigger>
           <SelectContent>
+            <SelectItem value="none">{t("continentNone")}</SelectItem>
             {continents.map((continent) => (
               <SelectItem key={continent} value={continent}>{continentLabels[continent]}</SelectItem>
             ))}
@@ -191,20 +205,26 @@ export function TemplateForm({ template }: TemplateFormProps) {
         {state.errors?.city ? <p className="text-sm text-destructive">{state.errors.city}</p> : null}
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="template-dueOffsetDays">{t("dueOffsetDaysLabel")}</Label>
-        <Input
-          required
-          min={0}
-          max={730}
-          step={1}
-          type="number"
-          id="template-dueOffsetDays"
-          name="dueOffsetDays"
-          defaultValue={template?.due_offset_days}
-        />
-        {state.errors?.dueOffsetDays ? <p className="text-sm text-destructive">{state.errors.dueOffsetDays}</p> : null}
-      </div>
+      {itemType === "preparation" ? (
+        <div className="space-y-2">
+          <Label htmlFor="template-dueOffsetDays">{t("dueOffsetDaysLabel")}</Label>
+          <Select
+            name="dueOffsetDays"
+            defaultValue={template?.due_offset_days ? String(template.due_offset_days) : undefined}
+            items={Object.fromEntries(timelineOffsets.map((offset) => [String(offset), timelineOffsetLabels[offset]]))}
+          >
+            <SelectTrigger id="template-dueOffsetDays" className="w-full">
+              <SelectValue placeholder={t("dueOffsetDaysPlaceholder")} />
+            </SelectTrigger>
+            <SelectContent>
+              {timelineOffsets.map((offset) => (
+                <SelectItem key={offset} value={String(offset)}>{timelineOffsetLabels[offset]}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {state.errors?.dueOffsetDays ? <p className="text-sm text-destructive">{state.errors.dueOffsetDays}</p> : null}
+        </div>
+      ) : null}
 
       <div className="space-y-2">
         <Label htmlFor="template-currency">

@@ -145,6 +145,7 @@ export async function applyPrepTemplate(
   const assignedTo = rawAssignedTo && rawAssignedTo !== "none" ? rawAssignedTo : null;
   const rawItineraryItemId = String(formData.get("itineraryItemId") ?? "").trim();
   const itineraryItemId = rawItineraryItemId && rawItineraryItemId !== "none" ? rawItineraryItemId : null;
+  const rawItemDate = String(formData.get("itemDate") ?? "").trim();
 
   if (!isValidTemplateId(tripId) || !isValidTemplateId(templateId)) {
     return { message: t("identifyError") };
@@ -174,7 +175,50 @@ export async function applyPrepTemplate(
     return { message: t("tripNotFound") };
   }
 
-  const dueDate = dateBeforeTrip(trip.start_date, template.due_offset_days);
+  // "Item de roteiro" templates apply into the itinerary, not the
+  // preparation checklist (#149) - a structurally different target table,
+  // since itinerary_items has no notion of a relative lead time, only an
+  // absolute date. Until the dedicated apply UI (#152) collects one, this
+  // falls back to the trip's own start date.
+  if (template.item_type === "itinerary_item") {
+    const itemDate = /^\d{4}-\d{2}-\d{2}$/.test(rawItemDate) ? rawItemDate : trip.start_date;
+
+    const { data: createdItem, error: itineraryError } = await supabase
+      .from("itinerary_items")
+      .insert({
+        trip_id: tripId,
+        item_date: itemDate,
+        title: template.title,
+        location: template.city,
+        created_by: user.id,
+      })
+      .select("id")
+      .single();
+
+    if (itineraryError) {
+      return { message: t("applyFailed") };
+    }
+
+    revalidatePath(`/organizer?trip=${tripId}`);
+    revalidatePath(`/trips/${tripId}`);
+    after(() =>
+      notifyTripCollaborators({
+        supabase,
+        tripId,
+        actorId: user.id,
+        entityType: "itinerary_item",
+        entityId: createdItem.id,
+        action: "created",
+        itemLabel: template.title,
+        tab: "itinerary",
+      }),
+    );
+    return { success: true };
+  }
+
+  const dueDate = template.due_offset_days
+    ? dateBeforeTrip(trip.start_date, template.due_offset_days)
+    : null;
 
   const { data: created, error } = await supabase
     .from("trip_tasks")

@@ -107,4 +107,69 @@ describe("validateTemplateInput", () => {
       expect(result.errors.estimatedAmount).toBe("estimatedAmountInvalid");
     }
   });
+
+  it("requires a lead time for a preparation template", () => {
+    const formData = validForm();
+    formData.set("dueOffsetDays", "");
+
+    const result = validateTemplateInput(formData);
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.errors.dueOffsetDays).toBe("dueOffsetDaysInvalid");
+    }
+  });
+
+  it("rejects a lead time outside the fixed set, even within the old 0-730 range", () => {
+    const formData = validForm();
+    formData.set("dueOffsetDays", "45");
+
+    const result = validateTemplateInput(formData);
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.errors.dueOffsetDays).toBe("dueOffsetDaysInvalid");
+    }
+  });
+
+  it("accepts a véspera (1 day before) lead time", () => {
+    const formData = validForm();
+    formData.set("dueOffsetDays", "1");
+
+    const result = validateTemplateInput(formData);
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.dueOffsetDays).toBe(1);
+    }
+  });
+
+  it("does not require a lead time or a continent for an itinerary_item template", () => {
+    const formData = validForm();
+    formData.set("itemType", "itinerary_item");
+    formData.delete("dueOffsetDays");
+    formData.delete("continent");
+
+    const result = validateTemplateInput(formData);
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.dueOffsetDays).toBeNull();
+      expect(result.data.continent).toBeNull();
+    }
+  });
+
+  it("does not require a lead time for a document_request template", () => {
+    const formData = validForm();
+    formData.set("itemType", "document_request");
+    formData.set("documentInstructions", "Upload a scan of your visa page.");
+    formData.delete("dueOffsetDays");
+
+    const result = validateTemplateInput(formData);
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.dueOffsetDays).toBeNull();
+    }
+  });
 });
