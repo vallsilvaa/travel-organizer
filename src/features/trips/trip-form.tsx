@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useRef } from "react";
+import { useActionState, useEffect, useRef, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
@@ -21,9 +21,10 @@ type TripFormProps = {
     end_date: string | null;
     timezone: string;
   };
+  cancelSlot?: ReactNode;
 };
 
-export function TripForm({ trip }: TripFormProps = {}) {
+export function TripForm({ trip, cancelSlot }: TripFormProps = {}) {
   const t = useTranslations("trip.editForm");
   const tCommon = useTranslations("common");
   const [state, formAction, pending] = useActionState(
@@ -141,12 +142,13 @@ export function TripForm({ trip }: TripFormProps = {}) {
         ) : null}
       </div>
 
-      <div className="sm:col-span-2">
+      <div className="flex items-center gap-3 sm:col-span-2">
         <Button type="submit" disabled={pending} size="lg">
           {pending
             ? trip ? t("savePending") : t("createPending")
             : trip ? t("save") : t("create")}
         </Button>
+        {cancelSlot}
       </div>
     </form>
   );

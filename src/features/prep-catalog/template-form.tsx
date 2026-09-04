@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useEffect, useState, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
@@ -48,11 +48,13 @@ type TemplateFormProps = {
     estimated_amount: string | null;
     document_instructions: string | null;
   };
+  onSuccess?: () => void;
+  cancelSlot?: ReactNode;
 };
 
 const initialState: TemplateActionState = {};
 
-export function TemplateForm({ template }: TemplateFormProps) {
+export function TemplateForm({ template, onSuccess, cancelSlot }: TemplateFormProps) {
   const t = useTranslations("templateForm");
   const tPrepItemType = useTranslations("categories.prepItemType");
   const tClassification = useTranslations("categories.classification");
@@ -78,10 +80,11 @@ export function TemplateForm({ template }: TemplateFormProps) {
   useEffect(() => {
     if (state.success) {
       toast.success(template ? t("toastUpdated") : t("toastAdded"));
+      onSuccess?.();
     } else if (state.message) {
       toast.error(state.message);
     }
-  }, [state, template, t]);
+  }, [state, template, t, onSuccess]);
 
   return (
     <form action={formAction} className="grid gap-4 sm:grid-cols-2">
@@ -276,9 +279,12 @@ export function TemplateForm({ template }: TemplateFormProps) {
 
       <p className="text-sm text-muted-foreground sm:col-span-2">{t("costsHint")}</p>
 
-      <Button type="submit" disabled={pending} size="lg" className="sm:col-span-2 sm:justify-self-start">
-        {pending ? t("savePending") : template ? t("save") : t("add")}
-      </Button>
+      <div className="flex items-center gap-3 sm:col-span-2">
+        <Button type="submit" disabled={pending} size="lg">
+          {pending ? t("savePending") : template ? t("save") : t("add")}
+        </Button>
+        {cancelSlot}
+      </div>
     </form>
   );
 }

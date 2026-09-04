@@ -2,8 +2,8 @@ import { getFormatter, getTranslations } from "next-intl/server";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { ApplyTemplateForm } from "@/features/prep-catalog/apply-template-form";
 import { deleteTemplate } from "@/features/prep-catalog/actions";
+import { NewTaskModal } from "@/features/prep-catalog/new-task-modal";
 import { TemplateForm } from "@/features/prep-catalog/template-form";
 import {
   getClassificationLabels,
@@ -14,14 +14,11 @@ import {
   type PrepItemType,
 } from "@/features/prep-catalog/shared";
 import { getTaskCategoryLabels, type TaskCategory } from "@/features/tasks/templates";
-import { deleteTask, setTaskCompletion } from "@/features/tasks/actions";
-import { PrepItemForm } from "@/features/tasks/prep-item-form";
-import { TripForm } from "@/features/trips/trip-form";
+import { NewTripModal } from "@/features/trips/new-trip-modal";
 import { createClient } from "@/lib/supabase/server";
 import { Badge } from "@/components/ui/badge";
 import { ItemActionsMenu } from "@/components/item-actions-menu";
 import { LanguageSwitcher } from "@/components/language-switcher";
-import { SubmitButton } from "@/components/submit-button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import {
   Card,
@@ -31,10 +28,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-
-type OrganizerPageProps = {
-  searchParams: Promise<{ trip?: string }>;
-};
 
 type OrganizedTrip = {
   id: string;
@@ -65,30 +58,7 @@ type Template = {
   document_instructions: string | null;
 };
 
-type GovernedTask = {
-  id: string;
-  title: string;
-  owner_id: string | null;
-  due_date: string | null;
-  due_offset_days: number | null;
-  completed_at: string | null;
-  category: TaskCategory;
-  is_critical: boolean;
-  item_type: PrepItemType;
-  continent: Continent;
-  country: string;
-  city: string | null;
-  classification: Classification;
-  currency: string | null;
-  estimated_amount: string | null;
-  paid_amount: string | null;
-  itinerary_item_id: string | null;
-  document_instructions: string | null;
-  expense_id: string | null;
-};
-
-export default async function OrganizerPage({ searchParams }: OrganizerPageProps) {
-  const { trip: selectedTripId } = await searchParams;
+export default async function OrganizerPage() {
   const t = await getTranslations("organizerPanel");
   const taskCategoryLabels = getTaskCategoryLabels(await getTranslations("categories.task"));
   const prepItemTypeLabels = getPrepItemTypeLabels(await getTranslations("categories.prepItemType"));
@@ -151,37 +121,6 @@ export default async function OrganizerPage({ searchParams }: OrganizerPageProps
   );
   const templateList = (templates ?? []) as Template[];
 
-  const selectedTrip = selectedTripId
-    ? trips.find((trip) => trip.id === selectedTripId)
-    : undefined;
-
-  let governedTasks: GovernedTask[] = [];
-  let tasksError: unknown = null;
-  let tripParticipants: { user_id: string; display_name: string; role: string }[] = [];
-  let itineraryItemOptions: { id: string; title: string }[] = [];
-
-  if (selectedTrip) {
-    const [tasksResult, participantsResult, itineraryResult] = await Promise.all([
-      supabase
-        .from("trip_tasks")
-        .select(
-          "id, title, owner_id, due_date, due_offset_days, completed_at, category, is_critical, item_type, continent, country, city, classification, currency, estimated_amount, paid_amount, itinerary_item_id, document_instructions, expense_id",
-        )
-        .eq("trip_id", selectedTrip.id)
-        .not("classification", "is", null)
-        .order("due_date", { ascending: true, nullsFirst: false }),
-      supabase.rpc("get_trip_participants", { requested_trip_id: selectedTrip.id }),
-      supabase
-        .from("itinerary_items")
-        .select("id, title")
-        .eq("trip_id", selectedTrip.id),
-    ]);
-    governedTasks = (tasksResult.data ?? []) as GovernedTask[];
-    tasksError = tasksResult.error;
-    tripParticipants = participantsResult.data ?? [];
-    itineraryItemOptions = itineraryResult.data ?? [];
-  }
-
   return (
     <main className="min-h-screen bg-slate-50 px-6 py-12">
       <div className="mx-auto max-w-5xl space-y-8">
@@ -204,7 +143,11 @@ export default async function OrganizerPage({ searchParams }: OrganizerPageProps
             </CardAction>
           </CardHeader>
           <CardContent>
-            <Link href="/dashboard" className="text-sm font-semibold text-primary hover:text-primary/80">
+            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+              <NewTripModal />
+              <NewTaskModal />
+            </div>
+            <Link href="/dashboard" className="mt-4 inline-block text-sm font-semibold text-primary hover:text-primary/80">
               {t("backToDashboard")}
             </Link>
           </CardContent>
@@ -212,33 +155,19 @@ export default async function OrganizerPage({ searchParams }: OrganizerPageProps
 
         <Card className="[--card-spacing:--spacing(8)]">
           <CardHeader>
-            <CardTitle className="text-2xl">{t("createTrip.title")}</CardTitle>
-            <CardDescription>{t("createTrip.description")}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <TripForm />
-          </CardContent>
-        </Card>
-
-        <Card className="[--card-spacing:--spacing(8)]">
-          <CardHeader>
             <CardTitle className="text-2xl">{t("catalog.title")}</CardTitle>
             <CardDescription>{t("catalog.description")}</CardDescription>
+            <CardAction>
+              <NewTaskModal triggerLabel={t("catalog.addTemplate")} triggerVariant="outline" triggerSize="default" />
+            </CardAction>
           </CardHeader>
           <CardContent>
-            <details className="rounded-2xl bg-slate-50 p-5" open={!templateList.length}>
-              <summary className="cursor-pointer font-semibold text-slate-900">{t("catalog.addTemplate")}</summary>
-              <div className="mt-5">
-                <TemplateForm />
-              </div>
-            </details>
-
             {templatesError ? (
-              <p role="alert" className="mt-5 rounded-xl bg-red-50 p-4 text-sm text-red-800">
+              <p role="alert" className="rounded-xl bg-red-50 p-4 text-sm text-red-800">
                 {t("catalog.loadError")}
               </p>
             ) : templateList.length ? (
-              <ul className="mt-6 space-y-4">
+              <ul className="space-y-4">
                 {templateList.map((template) => (
                   <li key={template.id} className="rounded-2xl border border-slate-200 p-5">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -278,7 +207,7 @@ export default async function OrganizerPage({ searchParams }: OrganizerPageProps
                 ))}
               </ul>
             ) : (
-              <p className="mt-5 rounded-2xl border border-dashed border-slate-300 p-6 text-sm text-slate-600">
+              <p className="rounded-2xl border border-dashed border-slate-300 p-6 text-sm text-slate-600">
                 {t("catalog.empty")}
               </p>
             )}
@@ -297,14 +226,11 @@ export default async function OrganizerPage({ searchParams }: OrganizerPageProps
               <ul className="grid gap-4 sm:grid-cols-2">
                 {trips.map((trip) => {
                   const stats = tripStatsByTripId.get(trip.id);
-                  const isSelected = selectedTrip?.id === trip.id;
                   return (
                     <li key={trip.id}>
                       <Link
-                        href={`/organizer?trip=${trip.id}`}
-                        className={`block h-full rounded-2xl border p-5 transition hover:border-sky-300 hover:bg-sky-50 ${
-                          isSelected ? "border-sky-400 bg-sky-50" : "border-slate-200"
-                        }`}
+                        href={`/trips/${trip.id}`}
+                        className="block h-full rounded-2xl border border-slate-200 p-5 transition hover:border-sky-300 hover:bg-sky-50"
                       >
                         <h3 className="text-lg font-semibold text-slate-950">{trip.destination}</h3>
                         <p className="mt-2 text-sm text-slate-600">
@@ -318,6 +244,8 @@ export default async function OrganizerPage({ searchParams }: OrganizerPageProps
                             <span className={stats.critical_open_count ? "font-semibold text-amber-800" : undefined}>
                               {t("trips.criticalOpen", { count: stats.critical_open_count })}
                             </span>
+                            <span aria-hidden="true">·</span>
+                            <span>{t("trips.participants", { count: stats.participant_count })}</span>
                           </div>
                         ) : null}
                       </Link>
@@ -332,97 +260,6 @@ export default async function OrganizerPage({ searchParams }: OrganizerPageProps
             )}
           </CardContent>
         </Card>
-
-        {selectedTrip ? (
-          <Card className="[--card-spacing:--spacing(8)]">
-            <CardHeader>
-              <CardTitle className="text-2xl">{t("tripDetail.title", { destination: selectedTrip.destination })}</CardTitle>
-              <CardDescription>{t("tripDetail.description")}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <h3 className="text-lg font-semibold text-slate-950">{t("tripDetail.applyTitle")}</h3>
-              <div className="mt-4">
-                <ApplyTemplateForm
-                  itineraryItems={itineraryItemOptions}
-                  participants={tripParticipants}
-                  templates={templateList}
-                  tripId={selectedTrip.id}
-                />
-              </div>
-
-              <div className="mt-8 border-t border-slate-200 pt-8">
-                <h3 className="text-lg font-semibold text-slate-950">{t("tripDetail.itemsTitle")}</h3>
-                {tasksError ? (
-                  <p role="alert" className="mt-4 rounded-xl bg-red-50 p-4 text-sm text-red-800">
-                    {t("tripDetail.loadError")}
-                  </p>
-                ) : governedTasks.length ? (
-                  <ul className="mt-4 space-y-4">
-                    {governedTasks.map((task) => (
-                      <li key={task.id} className="rounded-2xl border border-slate-200 p-5">
-                        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                          <div>
-                            <div className="flex flex-wrap items-center gap-2">
-                              <h4 className={`font-semibold ${task.completed_at ? "text-slate-500 line-through" : "text-slate-950"}`}>
-                                {task.title}
-                              </h4>
-                              <Badge variant="outline">{prepItemTypeLabels[task.item_type]}</Badge>
-                              <Badge variant="outline">{classificationLabels[task.classification]}</Badge>
-                              {task.completed_at ? (
-                                <Badge className="bg-emerald-100 text-emerald-800">{t("tripDetail.badgeCompleted")}</Badge>
-                              ) : null}
-                            </div>
-                            <p className="mt-2 text-sm text-slate-600">
-                              {continentLabels[task.continent]} · {task.country}
-                              {task.city ? ` · ${task.city}` : ""}
-                            </p>
-                            {task.due_date ? (
-                              <p className="mt-1 text-sm text-slate-600">{t("tripDetail.dueDate", { date: formatDate(task.due_date) })}</p>
-                            ) : null}
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <form action={setTaskCompletion}>
-                              <input type="hidden" name="tripId" value={selectedTrip.id} />
-                              <input type="hidden" name="taskId" value={task.id} />
-                              <input type="hidden" name="completed" value={task.completed_at ? "false" : "true"} />
-                              <SubmitButton
-                                pendingLabel={task.completed_at ? t("tripDetail.reopeningPending") : t("tripDetail.completingPending")}
-                                variant="outline"
-                                size="sm"
-                              >
-                                {task.completed_at ? t("tripDetail.reopen") : t("tripDetail.complete")}
-                              </SubmitButton>
-                            </form>
-                            <ItemActionsMenu
-                              editLabel={t("tripDetail.editItem")}
-                              editForm={
-                                <PrepItemForm
-                                  itineraryItems={itineraryItemOptions}
-                                  participants={tripParticipants}
-                                  task={task}
-                                  tripId={selectedTrip.id}
-                                />
-                              }
-                              deleteAction={deleteTask}
-                              deleteHiddenFields={{ tripId: selectedTrip.id, taskId: task.id }}
-                              deleteTitle={t("tripDetail.deleteItemTitle")}
-                              deleteDescription={t("tripDetail.deleteItemDescription", { title: task.title })}
-                              deleteLabel={t("tripDetail.removeItem")}
-                            />
-                          </div>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="mt-4 rounded-2xl border border-dashed border-slate-300 p-6 text-sm text-slate-600">
-                    {t("tripDetail.empty")}
-                  </p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        ) : null}
       </div>
     </main>
   );

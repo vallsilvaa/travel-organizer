@@ -395,6 +395,7 @@
       "save": "Save changes",
       "createPending": "Creating trip...",
       "create": "Create trip",
+      "cancel": "Cancel",
       "errors": {
         "destinationRequired": "Destination is required.",
         "destinationTooLong": "Destination must be up to 200 characters.",
@@ -760,7 +761,7 @@
       "countryRequired": "Enter a country with up to 100 characters.",
       "cityTooLong": "Use a city name with up to 200 characters.",
       "classificationInvalid": "Choose a valid classification.",
-      "dueOffsetDaysInvalid": "Enter a whole number of days between 0 and 730.",
+      "dueOffsetDaysInvalid": "Choose one of the available lead times (180, 120, 90, 60, 30, 7 days before, or the day before).",
       "currencyInvalid": "Enter a valid 3-letter currency code.",
       "estimatedAmountInvalid": "Enter a valid, non-negative amount.",
       "documentInstructionsRequired": "Add instructions for this document request.",
@@ -774,7 +775,11 @@
     "continentNone": "No continent",
     "dueOffsetDaysPlaceholder": "Select a lead time",
     "timelineOffsetEve": "The day before",
-    "timelineOffsetDays": "{count} days before"
+    "timelineOffsetDays": "{count} days before",
+    "newTaskTrigger": "Create New Task",
+    "newTaskTitle": "Create New Task",
+    "newTaskDescription": "Add a new template to your reusable task catalog.",
+    "cancel": "Cancel"
   },
   "prepItemForm": {
     "titleLabel": "Title",
@@ -827,6 +832,7 @@
     "description": "Create trips, manage your reusable preparation catalog, and apply it to the trips you organize.",
     "backToDashboard": "Back to dashboard",
     "createTrip": {
+      "triggerLabel": "Create New Trip",
       "title": "Create a trip",
       "description": "Uses the same trip creation flow as the dashboard."
     },
@@ -844,11 +850,12 @@
     },
     "trips": {
       "title": "Your organized trips",
-      "description": "Select a trip to review its preparation items or apply a template.",
+      "description": "Click a trip to open it in organizer view.",
       "loadError": "Could not load your trips. Try refreshing the page.",
       "empty": "You don't organize any trips yet. Create one above.",
       "readiness": "{percent}% ready",
-      "criticalOpen": "{count, plural, one {# critical item open} other {# critical items open}}"
+      "criticalOpen": "{count, plural, one {# critical item open} other {# critical items open}}",
+      "participants": "{count, plural, one {# participant} other {# participants}}"
     },
     "tripDetail": {
       "title": "{destination}",
