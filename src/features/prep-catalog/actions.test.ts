@@ -12,6 +12,11 @@ const mocks = vi.hoisted(() => ({
 vi.mock("@/lib/supabase/server", () => ({ createClient: mocks.createClient }));
 vi.mock("next/cache", () => ({ revalidatePath: mocks.revalidatePath }));
 vi.mock("next/navigation", () => ({ redirect: mocks.redirect }));
+vi.mock("next/server", () => ({
+  after: (fn: () => unknown) => {
+    fn();
+  },
+}));
 vi.mock("next-intl/server", async () => {
   const { createTranslator } = await import("@/i18n/test-mocks");
   return {
@@ -123,7 +128,11 @@ describe("applyPrepTemplate", () => {
     const tripEq = vi.fn().mockReturnValue({ single: tripSingle });
     const tripSelect = vi.fn().mockReturnValue({ eq: tripEq });
 
-    const insert = vi.fn().mockResolvedValue({ error: null });
+    const insert = vi.fn().mockReturnValue({
+      select: () => ({
+        single: async () => ({ data: { id: "new-task-id" }, error: null }),
+      }),
+    });
 
     const from = vi.fn((table: string) => {
       if (table === "prep_item_templates") return { select: templateSelect };

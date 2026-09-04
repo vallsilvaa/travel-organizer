@@ -26,6 +26,12 @@ vi.mock("next/navigation", () => ({
   redirect: mocks.redirect,
 }));
 
+vi.mock("next/server", () => ({
+  after: (fn: () => unknown) => {
+    fn();
+  },
+}));
+
 vi.mock("next-intl/server", async () => {
   const { createTranslator } = await import("@/i18n/test-mocks");
   return {
@@ -71,7 +77,11 @@ describe("reservation actions", () => {
     mocks.delete.mockReturnValue(builder);
     mocks.eq.mockReturnValue(builder);
     mocks.update.mockReturnValue(builder);
-    mocks.insert.mockResolvedValue({ error: null });
+    mocks.insert.mockReturnValue({
+      select: () => ({
+        single: async () => ({ data: { id: reservationId }, error: null }),
+      }),
+    });
     mocks.from.mockReturnValue({ ...builder, insert: mocks.insert });
     mocks.getUser.mockResolvedValue({ data: { user: { id: "user-123" } } });
     mocks.createClient.mockResolvedValue({
@@ -118,7 +128,9 @@ describe("reservation actions", () => {
   });
 
   it("deletes only the requested reservation within its trip", async () => {
-    mocks.eq.mockReturnValueOnce({ eq: mocks.eq }).mockResolvedValueOnce({ error: null });
+    mocks.eq.mockReturnValueOnce({ eq: mocks.eq }).mockReturnValueOnce({
+      select: () => ({ maybeSingle: async () => ({ data: { title: "Outbound flight" } }) }),
+    });
 
     await deleteReservation(validForm());
 

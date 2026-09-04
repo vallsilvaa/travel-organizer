@@ -18,6 +18,11 @@ const mocks = vi.hoisted(() => ({
 vi.mock("@/lib/supabase/server", () => ({ createClient: mocks.createClient }));
 vi.mock("next/cache", () => ({ revalidatePath: mocks.revalidatePath }));
 vi.mock("next/navigation", () => ({ redirect: mocks.redirect }));
+vi.mock("next/server", () => ({
+  after: (fn: () => unknown) => {
+    fn();
+  },
+}));
 vi.mock("next-intl/server", async () => {
   const { createTranslator } = await import("@/i18n/test-mocks");
   return {
@@ -51,7 +56,11 @@ describe("task actions", () => {
     const builder = { eq: mocks.eq, single: mocks.single, update: mocks.update };
     mocks.eq.mockReturnValue(builder);
     mocks.update.mockReturnValue(builder);
-    mocks.insert.mockResolvedValue({ error: null });
+    mocks.insert.mockReturnValue({
+      select: () => ({
+        single: async () => ({ data: { id: taskId }, error: null }),
+      }),
+    });
     mocks.rpc.mockResolvedValue({ error: null });
     mocks.from.mockReturnValue({ ...builder, insert: mocks.insert, select: mocks.from });
     mocks.getUser.mockResolvedValue({ data: { user: { id: "user-123" } } });

@@ -52,16 +52,24 @@ select public.create_collaboration_notifications(
   '/trips/92aaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa?tab=itinerary'
 );
 
+reset role;
+
+-- notifications' own RLS only lets a user read their own rows, so
+-- verifying delivery means reading back as the recipient, not the actor.
+set local role authenticated;
+set local request.jwt.claim.sub = '92222222-2222-4222-8222-222222222222';
+set local request.jwt.claims = '{"sub":"92222222-2222-4222-8222-222222222222","email":"traveler@example.com","role":"authenticated"}';
+
 select is(
   (select count(*) from public.notifications where trip_id = '92aaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'),
   1::bigint,
-  'only the actual trip participant received a notification, not the outsider'
+  'the traveler received exactly one notification (the outsider was never a recipient)'
 );
 
 select is(
   (select user_id from public.notifications where trip_id = '92aaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' limit 1),
   '92222222-2222-4222-8222-222222222222'::uuid,
-  'the notification went to the traveler'
+  'the notification is addressed to the traveler'
 );
 
 -- get_trip_participant_emails resolves emails (and the email preference)
@@ -108,9 +116,13 @@ set local role authenticated;
 set local request.jwt.claim.sub = '92222222-2222-4222-8222-222222222222';
 set local request.jwt.claims = '{"sub":"92222222-2222-4222-8222-222222222222","email":"traveler@example.com","role":"authenticated"}';
 
-select is(
-  (select count(*) from public.collaboration_notification_events),
-  0::bigint,
+-- No grant at all exists for authenticated on this table (only the RPCs,
+-- run as security definer, ever touch it), so a direct select is a hard
+-- permission error, not merely an RLS-filtered empty result.
+select throws_ok(
+  $$ select count(*) from public.collaboration_notification_events $$,
+  '42501',
+  null,
   'the collaboration_notification_events ledger has no direct read access, even for participants'
 );
 

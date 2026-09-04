@@ -16,6 +16,11 @@ const mocks = vi.hoisted(() => ({
 vi.mock("@/lib/supabase/server", () => ({ createClient: mocks.createClient }));
 vi.mock("next/cache", () => ({ revalidatePath: mocks.revalidatePath }));
 vi.mock("next/navigation", () => ({ redirect: mocks.redirect }));
+vi.mock("next/server", () => ({
+  after: (fn: () => unknown) => {
+    fn();
+  },
+}));
 vi.mock("next-intl/server", async () => {
   const { createTranslator } = await import("@/i18n/test-mocks");
   return {
@@ -50,7 +55,7 @@ describe("expense actions", () => {
     const builder = { delete: mocks.delete, eq: mocks.eq };
     mocks.delete.mockReturnValue(builder);
     mocks.eq.mockReturnValue(builder);
-    mocks.rpc.mockResolvedValue({ error: null });
+    mocks.rpc.mockResolvedValue({ data: expenseId, error: null });
     mocks.from.mockReturnValue(builder);
     mocks.getUser.mockResolvedValue({ data: { user: { id: "user-123" } } });
     mocks.createClient.mockResolvedValue({
@@ -137,7 +142,9 @@ describe("expense actions", () => {
   });
 
   it("deletes only the selected trip expense", async () => {
-    mocks.eq.mockReturnValueOnce({ eq: mocks.eq }).mockResolvedValueOnce({ error: null });
+    mocks.eq.mockReturnValueOnce({ eq: mocks.eq }).mockReturnValueOnce({
+      select: () => ({ maybeSingle: async () => ({ data: { description: "Dinner reservation" } }) }),
+    });
 
     await deleteExpense(validForm());
 
