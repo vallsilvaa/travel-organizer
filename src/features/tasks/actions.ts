@@ -11,10 +11,21 @@ import {
   validateTaskInput,
   type TaskFieldErrors,
 } from "./validation";
-import { buildEnglandPreparationTasks } from "./templates";
+import { buildEnglandPreparationTasks, dateBeforeTrip } from "./templates";
+import {
+  isValidPrepItemId,
+  validatePrepItemInput,
+  type PrepItemFieldErrors,
+} from "./prep-item-validation";
 
 export type TaskActionState = {
   errors?: TaskFieldErrors;
+  message?: string;
+  success?: boolean;
+};
+
+export type PrepItemActionState = {
+  errors?: PrepItemFieldErrors;
   message?: string;
   success?: boolean;
 };
@@ -157,15 +168,75 @@ export async function setTaskCompletion(formData: FormData) {
     return;
   }
 
-  const { supabase, user } = await authenticatedClient();
-  await supabase
+  const { supabase } = await authenticatedClient();
+  // Completion (and any linked-expense creation/cleanup) is atomic and
+  // authorization-checked inside this RPC - see
+  // 20260904020000_complete_prep_item_and_expense_link.sql. Works for plain
+  // ad-hoc tasks too: expense linking is a no-op when there's no
+  // estimated/paid amount on the row.
+  await supabase.rpc("complete_prep_item", {
+    p_task_id: taskId,
+    p_should_complete: shouldComplete,
+  });
+  revalidatePath(`/trips/${tripId}`);
+}
+
+export async function updatePrepTripItem(
+  _previousState: PrepItemActionState,
+  formData: FormData,
+): Promise<PrepItemActionState> {
+  const t = await getTranslations("prepItemForm");
+  const tripId = String(formData.get("tripId") ?? "");
+  const taskId = String(formData.get("taskId") ?? "");
+  const validation = validatePrepItemInput(formData);
+
+  if (!isValidPrepItemId(tripId) || !isValidPrepItemId(taskId)) {
+    return { message: t("actionErrors.identifyItem") };
+  }
+  if (!validation.success) {
+    return { errors: translateFieldErrors(t, validation.errors) };
+  }
+
+  const { supabase } = await authenticatedClient();
+  const { data: trip } = await supabase
+    .from("trips")
+    .select("start_date")
+    .eq("id", tripId)
+    .single();
+
+  if (!trip) {
+    return { message: t("actionErrors.identifyTrip") };
+  }
+
+  const { error } = await supabase
     .from("trip_tasks")
     .update({
-      completed_at: shouldComplete ? new Date().toISOString() : null,
-      completed_by: shouldComplete ? user.id : null,
+      title: validation.data.title,
+      owner_id: validation.data.assignedTo,
+      item_type: validation.data.itemType,
+      category: validation.data.category,
+      continent: validation.data.continent,
+      country: validation.data.country,
+      city: validation.data.city,
+      classification: validation.data.classification,
+      is_critical: validation.data.classification === "required",
+      due_offset_days: validation.data.dueOffsetDays,
+      due_date: dateBeforeTrip(trip.start_date, validation.data.dueOffsetDays),
+      currency: validation.data.currency,
+      estimated_amount: validation.data.estimatedAmount,
+      paid_amount: validation.data.paidAmount,
+      document_instructions: validation.data.documentInstructions,
+      itinerary_item_id: validation.data.itineraryItemId,
       updated_at: new Date().toISOString(),
     })
     .eq("id", taskId)
     .eq("trip_id", tripId);
+
+  if (error) {
+    return { message: t("actionErrors.updateFailed") };
+  }
+
   revalidatePath(`/trips/${tripId}`);
+  revalidatePath(`/organizer?trip=${tripId}`);
+  return { success: true };
 }

@@ -192,6 +192,9 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
               {t("welcomeDescription")}
             </CardDescription>
             <CardAction className="flex items-center gap-3">
+              <Link href="/organizer" className="text-sm font-semibold text-primary hover:text-primary/80">
+                {t("organizerPanelLink")}
+              </Link>
               <LanguageSwitcher />
               <ThemeToggle />
               <NotificationBell notifications={(notifications ?? []) as Notification[]} />
