@@ -12,9 +12,13 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock("@/lib/supabase/server", () => ({ createClient: mocks.createClient }));
-vi.mock("next/navigation", () => ({ redirect: mocks.redirect }));
+vi.mock("next/navigation", () => ({
+  redirect: mocks.redirect,
+  useRouter: () => ({ refresh: vi.fn() }),
+}));
 vi.mock("next-intl", () => ({
   useTranslations: (namespace?: string) => createTranslator(namespace),
+  useLocale: () => "pt",
 }));
 vi.mock("next-intl/server", async () => {
   const { createFormatter, createTranslator } = await import("@/i18n/test-mocks");
