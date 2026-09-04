@@ -17,6 +17,11 @@ const mocks = vi.hoisted(() => ({
 vi.mock("@/lib/supabase/server", () => ({ createClient: mocks.createClient }));
 vi.mock("next/cache", () => ({ revalidatePath: mocks.revalidatePath }));
 vi.mock("next/navigation", () => ({ redirect: mocks.redirect }));
+vi.mock("next/server", () => ({
+  after: (fn: () => unknown) => {
+    fn();
+  },
+}));
 vi.mock("next-intl/server", async () => {
   const { createTranslator } = await import("@/i18n/test-mocks");
   return {
@@ -47,7 +52,11 @@ describe("comment actions", () => {
     mocks.delete.mockReturnValue(builder);
     mocks.eq.mockReturnValue(builder);
     mocks.update.mockReturnValue(builder);
-    mocks.insert.mockResolvedValue({ error: null });
+    mocks.insert.mockReturnValue({
+      select: () => ({
+        single: async () => ({ data: { id: commentId }, error: null }),
+      }),
+    });
     mocks.from.mockReturnValue({ ...builder, insert: mocks.insert });
     mocks.getUser.mockResolvedValue({ data: { user: { id: "user-123" } } });
     mocks.createClient.mockResolvedValue({
@@ -75,7 +84,9 @@ describe("comment actions", () => {
     mocks.eq
       .mockReturnValueOnce({ eq: mocks.eq })
       .mockReturnValueOnce({ eq: mocks.eq })
-      .mockResolvedValueOnce({ error: null });
+      .mockReturnValueOnce({
+        select: () => ({ maybeSingle: async () => ({ data: { item_type: "itinerary" } }) }),
+      });
 
     const result = await updateComment({}, validForm());
 
@@ -89,7 +100,11 @@ describe("comment actions", () => {
     mocks.eq
       .mockReturnValueOnce({ eq: mocks.eq })
       .mockReturnValueOnce({ eq: mocks.eq })
-      .mockResolvedValueOnce({ error: null });
+      .mockReturnValueOnce({
+        select: () => ({
+          maybeSingle: async () => ({ data: { item_type: "itinerary", body: "Meet by the main entrance." } }),
+        }),
+      });
 
     await deleteComment(validForm());
 

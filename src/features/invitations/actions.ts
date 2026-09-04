@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 
+import { sendEmail } from "@/lib/email";
 import { createClient } from "@/lib/supabase/server";
 import { buildInvitationEmail } from "./email";
 import {
@@ -33,43 +34,22 @@ async function authenticatedClient() {
 }
 
 async function sendInvitationEmail(email: string, tripDestination: string, invitedByName: string, role: InvitationRole) {
-  const resendApiKey = process.env.RESEND_API_KEY;
-  const emailFrom = process.env.REMINDER_EMAIL_FROM;
   const appUrl = process.env.NEXT_PUBLIC_APP_URL;
 
-  if (!resendApiKey || !emailFrom || !appUrl) {
+  if (!appUrl) {
     console.error("Invitation email not sent: email service is not configured");
     return false;
   }
 
   const message = buildInvitationEmail({ appUrl, tripDestination, invitedByName, role });
+  const result = await sendEmail({ to: email, subject: message.subject, html: message.html, text: message.text });
 
-  try {
-    const response = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${resendApiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        from: emailFrom,
-        to: [email],
-        subject: message.subject,
-        html: message.html,
-        text: message.text,
-      }),
-    });
-
-    if (!response.ok) {
-      console.error("Invitation email delivery failed", { status: response.status });
-      return false;
-    }
-
-    return true;
-  } catch {
-    console.error("Invitation email delivery failed", { code: "network_error" });
+  if (!result.success) {
+    console.error("Invitation email delivery failed", { code: result.error });
     return false;
   }
+
+  return true;
 }
 
 export async function inviteParticipant(

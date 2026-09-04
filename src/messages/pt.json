@@ -119,7 +119,8 @@
       "description": "Receba um lembrete quando uma tarefa atribuída vencer nos próximos três dias.",
       "checkboxLabel": "Enviar lembretes de prazos de tarefas",
       "savePending": "Salvando...",
-      "save": "Salvar preferência"
+      "save": "Salvar preferência",
+      "collaborationCheckboxLabel": "Enviar e-mails quando organizadores ou viajantes fizerem alterações relevantes"
     },
     "changePassword": {
       "title": "Alterar senha",

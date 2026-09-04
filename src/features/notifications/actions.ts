@@ -47,3 +47,16 @@ export async function markAllNotificationsRead() {
 
   revalidatePath("/dashboard");
 }
+
+export async function updateCollaborationEmailPreference(formData: FormData) {
+  const { supabase, user } = await authenticatedClient();
+  await supabase
+    .from("profiles")
+    .update({
+      collaboration_emails_enabled: formData.get("collaborationEmailsEnabled") === "on",
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", user.id);
+
+  revalidatePath("/dashboard");
+}

@@ -1,10 +1,12 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 
 import { translateFieldErrors } from "@/i18n/translate-field-errors";
+import { notifyTripCollaborators } from "@/features/notifications/collaboration";
 import { createClient } from "@/lib/supabase/server";
 import {
   isValidTaskId,
@@ -57,24 +59,40 @@ export async function createTask(
   }
 
   const { supabase, user } = await authenticatedClient();
-  const { error } = await supabase.from("trip_tasks").insert({
-    trip_id: tripId,
-    title: validation.data.title,
-    owner_id: validation.data.ownerId,
-    due_date: validation.data.dueDate,
-    due_offset_days: null,
-    category: validation.data.category,
-    is_critical: validation.data.isCritical,
-    reference_label: validation.data.referenceLabel,
-    reference_url: validation.data.referenceUrl,
-    created_by: user.id,
-  });
+  const { data: created, error } = await supabase
+    .from("trip_tasks")
+    .insert({
+      trip_id: tripId,
+      title: validation.data.title,
+      owner_id: validation.data.ownerId,
+      due_date: validation.data.dueDate,
+      due_offset_days: null,
+      category: validation.data.category,
+      is_critical: validation.data.isCritical,
+      reference_label: validation.data.referenceLabel,
+      reference_url: validation.data.referenceUrl,
+      created_by: user.id,
+    })
+    .select("id")
+    .single();
 
   if (error) {
     return { message: t("actionErrors.addFailed") };
   }
 
   revalidatePath(`/trips/${tripId}`);
+  after(() =>
+    notifyTripCollaborators({
+      supabase,
+      tripId,
+      actorId: user.id,
+      entityType: "trip_task",
+      entityId: created.id,
+      action: "created",
+      itemLabel: validation.data.title,
+      tab: "preparation",
+    }),
+  );
   return { success: true };
 }
 
@@ -94,7 +112,7 @@ export async function updateTask(
     return { errors: translateFieldErrors(t, validation.errors) };
   }
 
-  const { supabase } = await authenticatedClient();
+  const { supabase, user } = await authenticatedClient();
   const { error } = await supabase
     .from("trip_tasks")
     .update({
@@ -116,6 +134,18 @@ export async function updateTask(
   }
 
   revalidatePath(`/trips/${tripId}`);
+  after(() =>
+    notifyTripCollaborators({
+      supabase,
+      tripId,
+      actorId: user.id,
+      entityType: "trip_task",
+      entityId: taskId,
+      action: "updated",
+      itemLabel: validation.data.title,
+      tab: "preparation",
+    }),
+  );
   return { success: true };
 }
 
@@ -127,9 +157,30 @@ export async function deleteTask(formData: FormData) {
     return;
   }
 
-  const { supabase } = await authenticatedClient();
-  await supabase.from("trip_tasks").delete().eq("id", taskId).eq("trip_id", tripId);
+  const { supabase, user } = await authenticatedClient();
+  const { data: deleted } = await supabase
+    .from("trip_tasks")
+    .delete()
+    .eq("id", taskId)
+    .eq("trip_id", tripId)
+    .select("title")
+    .maybeSingle();
   revalidatePath(`/trips/${tripId}`);
+
+  if (deleted) {
+    after(() =>
+      notifyTripCollaborators({
+        supabase,
+        tripId,
+        actorId: user.id,
+        entityType: "trip_task",
+        entityId: taskId,
+        action: "deleted",
+        itemLabel: deleted.title,
+        tab: "preparation",
+      }),
+    );
+  }
 }
 
 export async function addEnglandPreparationChecklist(formData: FormData) {
@@ -197,7 +248,7 @@ export async function updatePrepTripItem(
     return { errors: translateFieldErrors(t, validation.errors) };
   }
 
-  const { supabase } = await authenticatedClient();
+  const { supabase, user } = await authenticatedClient();
   const { data: trip } = await supabase
     .from("trips")
     .select("start_date")
@@ -238,5 +289,17 @@ export async function updatePrepTripItem(
 
   revalidatePath(`/trips/${tripId}`);
   revalidatePath(`/organizer?trip=${tripId}`);
+  after(() =>
+    notifyTripCollaborators({
+      supabase,
+      tripId,
+      actorId: user.id,
+      entityType: "trip_task",
+      entityId: taskId,
+      action: "updated",
+      itemLabel: validation.data.title,
+      tab: "preparation",
+    }),
+  );
   return { success: true };
 }

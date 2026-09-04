@@ -1,9 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 
+import { notifyTripCollaborators } from "@/features/notifications/collaboration";
 import { createClient } from "@/lib/supabase/server";
 import {
   isCommentItemType,
@@ -25,6 +27,10 @@ async function authenticatedClient() {
   }
 
   return { supabase, user };
+}
+
+function tabForCommentItemType(itemType: string) {
+  return itemType === "task" ? "preparation" : "itinerary";
 }
 
 export async function createComment(
@@ -49,20 +55,36 @@ export async function createComment(
   }
 
   const { supabase, user } = await authenticatedClient();
-  const { error } = await supabase.from("item_comments").insert({
-    trip_id: tripId,
-    item_type: itemType,
-    itinerary_item_id: itemType === "itinerary" ? itemId : null,
-    task_id: itemType === "task" ? itemId : null,
-    body: validation.body,
-    author_id: user.id,
-  });
+  const { data: created, error } = await supabase
+    .from("item_comments")
+    .insert({
+      trip_id: tripId,
+      item_type: itemType,
+      itinerary_item_id: itemType === "itinerary" ? itemId : null,
+      task_id: itemType === "task" ? itemId : null,
+      body: validation.body,
+      author_id: user.id,
+    })
+    .select("id")
+    .single();
 
   if (error) {
     return { error: t("addFailed") };
   }
 
   revalidatePath(`/trips/${tripId}`);
+  after(() =>
+    notifyTripCollaborators({
+      supabase,
+      tripId,
+      actorId: user.id,
+      entityType: "item_comment",
+      entityId: created.id,
+      action: "created",
+      itemLabel: validation.body.slice(0, 140),
+      tab: tabForCommentItemType(itemType),
+    }),
+  );
   return { success: true };
 }
 
@@ -83,18 +105,34 @@ export async function updateComment(
   }
 
   const { supabase, user } = await authenticatedClient();
-  const { error } = await supabase
+  const { data: updated, error } = await supabase
     .from("item_comments")
     .update({ body: validation.body, updated_at: new Date().toISOString() })
     .eq("id", commentId)
     .eq("trip_id", tripId)
-    .eq("author_id", user.id);
+    .eq("author_id", user.id)
+    .select("item_type")
+    .maybeSingle();
 
   if (error) {
     return { error: t("updateFailed") };
   }
 
   revalidatePath(`/trips/${tripId}`);
+  if (updated) {
+    after(() =>
+      notifyTripCollaborators({
+        supabase,
+        tripId,
+        actorId: user.id,
+        entityType: "item_comment",
+        entityId: commentId,
+        action: "updated",
+        itemLabel: validation.body.slice(0, 140),
+        tab: tabForCommentItemType(updated.item_type),
+      }),
+    );
+  }
   return { success: true };
 }
 
@@ -107,11 +145,28 @@ export async function deleteComment(formData: FormData) {
   }
 
   const { supabase, user } = await authenticatedClient();
-  await supabase
+  const { data: deleted } = await supabase
     .from("item_comments")
     .delete()
     .eq("id", commentId)
     .eq("trip_id", tripId)
-    .eq("author_id", user.id);
+    .eq("author_id", user.id)
+    .select("item_type, body")
+    .maybeSingle();
   revalidatePath(`/trips/${tripId}`);
+
+  if (deleted) {
+    after(() =>
+      notifyTripCollaborators({
+        supabase,
+        tripId,
+        actorId: user.id,
+        entityType: "item_comment",
+        entityId: commentId,
+        action: "deleted",
+        itemLabel: deleted.body.slice(0, 140),
+        tab: tabForCommentItemType(deleted.item_type),
+      }),
+    );
+  }
 }

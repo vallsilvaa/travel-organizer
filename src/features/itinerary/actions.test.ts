@@ -26,6 +26,12 @@ vi.mock("next/navigation", () => ({
   redirect: mocks.redirect,
 }));
 
+vi.mock("next/server", () => ({
+  after: (fn: () => unknown) => {
+    fn();
+  },
+}));
+
 vi.mock("next-intl/server", async () => {
   const { createTranslator } = await import("@/i18n/test-mocks");
   return {
@@ -67,7 +73,11 @@ describe("itinerary actions", () => {
     mocks.delete.mockReturnValue(builder);
     mocks.eq.mockReturnValue(builder);
     mocks.update.mockReturnValue(builder);
-    mocks.insert.mockResolvedValue({ error: null });
+    mocks.insert.mockReturnValue({
+      select: () => ({
+        single: async () => ({ data: { id: itemId }, error: null }),
+      }),
+    });
     mocks.from.mockReturnValue({ ...builder, insert: mocks.insert });
     mocks.getUser.mockResolvedValue({ data: { user: { id: "user-123" } } });
     mocks.createClient.mockResolvedValue({
@@ -109,7 +119,9 @@ describe("itinerary actions", () => {
   });
 
   it("deletes only the requested item within its trip", async () => {
-    mocks.eq.mockReturnValueOnce({ eq: mocks.eq }).mockResolvedValueOnce({ error: null });
+    mocks.eq.mockReturnValueOnce({ eq: mocks.eq }).mockReturnValueOnce({
+      select: () => ({ maybeSingle: async () => ({ data: { title: "Museum visit" } }) }),
+    });
 
     await deleteItineraryItem(validForm());
 

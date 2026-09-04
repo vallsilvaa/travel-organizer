@@ -8,6 +8,7 @@ import { getInvitationRoleLabels } from "@/features/invitations/validation";
 import { getAuthMessage } from "@/features/auth/messages";
 import { NotificationBell, type Notification } from "@/features/notifications/notification-bell";
 import { updateReminderPreference } from "@/features/reminders/actions";
+import { updateCollaborationEmailPreference } from "@/features/notifications/actions";
 import { TripForm } from "@/features/trips/trip-form";
 import { createClient } from "@/lib/supabase/server";
 import { Badge } from "@/components/ui/badge";
@@ -130,7 +131,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     await Promise.all([
       supabase
         .from("profiles")
-        .select("display_name, task_reminders_enabled")
+        .select("display_name, task_reminders_enabled, collaboration_emails_enabled")
         .eq("id", user.id)
         .single(),
       supabase
@@ -260,6 +261,21 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                   className="h-5 w-5 rounded border-input accent-primary"
                 />
                 {t("reminders.checkboxLabel")}
+              </label>
+              <SubmitButton pendingLabel={t("reminders.savePending")} variant="outline">{t("reminders.save")}</SubmitButton>
+            </form>
+            <form
+              action={updateCollaborationEmailPreference}
+              className="mt-4 flex flex-col gap-4 border-t border-slate-200 pt-4 sm:flex-row sm:items-center sm:justify-between"
+            >
+              <label className="flex items-center gap-3 text-sm font-medium">
+                <input
+                  type="checkbox"
+                  name="collaborationEmailsEnabled"
+                  defaultChecked={profile?.collaboration_emails_enabled ?? true}
+                  className="h-5 w-5 rounded border-input accent-primary"
+                />
+                {t("reminders.collaborationCheckboxLabel")}
               </label>
               <SubmitButton pendingLabel={t("reminders.savePending")} variant="outline">{t("reminders.save")}</SubmitButton>
             </form>
