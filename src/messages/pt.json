@@ -395,6 +395,7 @@
       "save": "Salvar alterações",
       "createPending": "Criando viagem...",
       "create": "Criar viagem",
+      "cancel": "Cancelar",
       "errors": {
         "destinationRequired": "O destino é obrigatório.",
         "destinationTooLong": "O destino deve ter no máximo 200 caracteres.",
@@ -760,7 +761,7 @@
       "countryRequired": "Informe um país com até 100 caracteres.",
       "cityTooLong": "Use uma cidade com até 200 caracteres.",
       "classificationInvalid": "Escolha uma classificação válida.",
-      "dueOffsetDaysInvalid": "Informe um número inteiro de dias entre 0 e 730.",
+      "dueOffsetDaysInvalid": "Escolha um dos prazos disponíveis (180, 120, 90, 60, 30, 7 dias antes ou véspera).",
       "currencyInvalid": "Informe um código de moeda válido com 3 letras.",
       "estimatedAmountInvalid": "Informe um valor válido e não negativo.",
       "documentInstructionsRequired": "Adicione instruções para esta solicitação de documento.",
@@ -774,7 +775,11 @@
     "continentNone": "Sem continente",
     "dueOffsetDaysPlaceholder": "Selecione o prazo",
     "timelineOffsetEve": "Véspera",
-    "timelineOffsetDays": "{count} dias antes"
+    "timelineOffsetDays": "{count} dias antes",
+    "newTaskTrigger": "Criar Nova Tarefa",
+    "newTaskTitle": "Criar Nova Tarefa",
+    "newTaskDescription": "Adicione um novo modelo ao seu catálogo reutilizável de tarefas.",
+    "cancel": "Cancelar"
   },
   "prepItemForm": {
     "titleLabel": "Título",
@@ -827,6 +832,7 @@
     "description": "Crie viagens, gerencie seu catálogo reutilizável de preparação e aplique-o às viagens que você organiza.",
     "backToDashboard": "Voltar ao painel principal",
     "createTrip": {
+      "triggerLabel": "Criar Nova Viagem",
       "title": "Criar viagem",
       "description": "Usa o mesmo fluxo de criação de viagem do painel principal."
     },
@@ -844,11 +850,12 @@
     },
     "trips": {
       "title": "Suas viagens organizadas",
-      "description": "Selecione uma viagem para ver seus itens de preparação ou aplicar um modelo.",
+      "description": "Clique em uma viagem para abri-la na visão de organizador.",
       "loadError": "Não foi possível carregar suas viagens. Tente atualizar a página.",
       "empty": "Você ainda não organiza nenhuma viagem. Crie uma acima.",
       "readiness": "{percent}% pronto",
-      "criticalOpen": "{count, plural, =0 {# críticos em aberto} =1 {# crítico em aberto} other {# críticos em aberto}}"
+      "criticalOpen": "{count, plural, =0 {# críticos em aberto} =1 {# crítico em aberto} other {# críticos em aberto}}",
+      "participants": "{count, plural, =0 {# participantes} =1 {# participante} other {# participantes}}"
     },
     "tripDetail": {
       "title": "{destination}",
