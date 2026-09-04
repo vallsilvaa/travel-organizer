@@ -306,8 +306,8 @@
       "eyebrow": "Antes do itinerário",
       "title": "Preparação pré-viagem",
       "description": "Complete documentos, reservas, dinheiro, saúde, conectividade e bagagem antes da partida.",
-      "addingEnglandChecklistPending": "Adicionando checklist...",
-      "addEnglandChecklist": "Adicionar checklist da Inglaterra",
+      "addTaskFromCatalog": "Add Tarefa",
+      "createTask": "Criar Tarefa",
       "addCustomTask": "Adicionar tarefa personalizada",
       "criticalOnly": "Só críticas",
       "overdueOnly": "Em atraso",
@@ -339,10 +339,28 @@
       "deleteTaskTitle": "Remover esta tarefa de preparação?",
       "deleteTaskDescription": "Isso vai remover permanentemente \"{title}\" da sua lista de preparação.",
       "removeTask": "Remover",
-      "empty": "Nenhuma tarefa de preparação corresponde a esses filtros. Adicione o checklist da Inglaterra ou crie uma tarefa personalizada.",
+      "empty": "Nenhuma tarefa de preparação corresponde a esses filtros. Adicione uma tarefa do catálogo ou crie uma nova.",
       "linkedItinerary": "Vinculado ao itinerário: {title}",
       "expenseLinked": "Vinculado a um gasto na aba Gastos.",
-      "expenseWillLink": "Concluir este item vai adicioná-lo aos gastos da viagem."
+      "expenseWillLink": "Concluir este item vai adicioná-lo aos gastos da viagem.",
+      "catalogModal": {
+        "title": "Adicionar tarefa do catálogo",
+        "description": "Escolha um modelo do seu catálogo reutilizável para adicionar a esta viagem.",
+        "searchLabel": "Buscar",
+        "searchPlaceholder": "Buscar por nome, categoria ou país",
+        "noResults": "Nenhum modelo encontrado para esta busca.",
+        "noTemplates": "Você ainda não tem modelos no catálogo. Use \"Criar Tarefa\" para criar o primeiro.",
+        "back": "Voltar à busca",
+        "cancel": "Cancelar",
+        "confirm": "Adicionar à viagem",
+        "confirmPending": "Adicionando...",
+        "toastApplied": "Tarefa adicionada à viagem.",
+        "assignedToLabel": "Viajante responsável",
+        "assignedToNone": "Sem responsável",
+        "itineraryLinkLabel": "Item do itinerário vinculado",
+        "itineraryLinkNone": "Sem vínculo",
+        "daysBeforeDeparture": "{count} dias antes da partida"
+      }
     },
     "documents": {
       "title": "Documentos",
@@ -770,7 +788,8 @@
     "actionErrors": {
       "addFailed": "Não foi possível adicionar este modelo. Verifique os campos e tente novamente.",
       "updateFailed": "Não foi possível atualizar este modelo.",
-      "identifyTemplate": "Não foi possível identificar este modelo."
+      "identifyTemplate": "Não foi possível identificar este modelo.",
+      "addedButApplyFailed": "Modelo salvo no catálogo, mas não foi possível adicioná-lo a esta viagem."
     },
     "continentNone": "Sem continente",
     "dueOffsetDaysPlaceholder": "Selecione o prazo",

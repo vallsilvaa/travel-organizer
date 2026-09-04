@@ -88,4 +88,35 @@ describe("TemplateForm", () => {
 
     expect(screen.queryByLabelText(/dias antes da partida/i)).toBeNull();
   });
+
+  it("carries a tripId as a hidden field for a new template, but not when editing", () => {
+    const { container, unmount } = render(
+      <TemplateForm tripId="27823996-ec50-4cc2-8506-a29d07b86f94" />,
+    );
+    expect((container.querySelector('input[name="tripId"]') as HTMLInputElement).value).toBe(
+      "27823996-ec50-4cc2-8506-a29d07b86f94",
+    );
+    unmount();
+
+    render(
+      <TemplateForm
+        tripId="27823996-ec50-4cc2-8506-a29d07b86f94"
+        template={{
+          id: "8f3f147b-8684-4ff1-b5c7-6814e4f57f73",
+          title: "Check passport validity",
+          item_type: "preparation",
+          category: "documents",
+          continent: "europe",
+          country: "Portugal",
+          city: null,
+          classification: "required",
+          due_offset_days: 180,
+          currency: null,
+          estimated_amount: null,
+          document_instructions: null,
+        }}
+      />,
+    );
+    expect(document.querySelector('input[name="tripId"]')).toBeNull();
+  });
 });
