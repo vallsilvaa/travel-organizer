@@ -125,9 +125,17 @@ describe("DashboardPage", () => {
   it("renders every dashboard form action as a submit control", async () => {
     render(await DashboardPage({ searchParams: Promise.resolve({}) }));
 
-    const submitButtonNames = [/sair/i, /salvar preferência/i, /aceitar/i, /recusar/i, /criar viagem/i];
+    const submitButtonNames = [/sair/i, /aceitar/i, /recusar/i, /criar viagem/i];
     for (const name of submitButtonNames) {
       const button = screen.getByRole("button", { name });
+      expect(button.getAttribute("type")).toBe("submit");
+    }
+
+    // Two independent preference forms (task reminders, collaboration
+    // emails) share the same "Salvar preferência" label.
+    const preferenceButtons = screen.getAllByRole("button", { name: /salvar preferência/i });
+    expect(preferenceButtons).toHaveLength(2);
+    for (const button of preferenceButtons) {
       expect(button.getAttribute("type")).toBe("submit");
     }
   });

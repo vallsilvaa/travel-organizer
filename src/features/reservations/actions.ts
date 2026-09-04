@@ -1,10 +1,12 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 
 import { translateFieldErrors } from "@/i18n/translate-field-errors";
+import { notifyTripCollaborators } from "@/features/notifications/collaboration";
 import { createClient } from "@/lib/supabase/server";
 import {
   isValidReservationId,
@@ -47,28 +49,44 @@ export async function createReservation(
   }
 
   const { supabase, user } = await authenticatedClient();
-  const { error } = await supabase.from("trip_reservations").insert({
-    trip_id: tripId,
-    reservation_type: validation.data.reservationType,
-    title: validation.data.title,
-    provider: validation.data.provider,
-    confirmation_code: validation.data.confirmationCode,
-    start_date: validation.data.startDate,
-    start_time: validation.data.startTime,
-    end_date: validation.data.endDate,
-    end_time: validation.data.endTime,
-    location: validation.data.location,
-    destination_location: validation.data.destinationLocation,
-    notes: validation.data.notes,
-    itinerary_item_id: validation.data.itineraryItemId,
-    created_by: user.id,
-  });
+  const { data: created, error } = await supabase
+    .from("trip_reservations")
+    .insert({
+      trip_id: tripId,
+      reservation_type: validation.data.reservationType,
+      title: validation.data.title,
+      provider: validation.data.provider,
+      confirmation_code: validation.data.confirmationCode,
+      start_date: validation.data.startDate,
+      start_time: validation.data.startTime,
+      end_date: validation.data.endDate,
+      end_time: validation.data.endTime,
+      location: validation.data.location,
+      destination_location: validation.data.destinationLocation,
+      notes: validation.data.notes,
+      itinerary_item_id: validation.data.itineraryItemId,
+      created_by: user.id,
+    })
+    .select("id")
+    .single();
 
   if (error) {
     return { message: t("actionErrors.addFailed") };
   }
 
   revalidatePath(`/trips/${tripId}`);
+  after(() =>
+    notifyTripCollaborators({
+      supabase,
+      tripId,
+      actorId: user.id,
+      entityType: "reservation",
+      entityId: created.id,
+      action: "created",
+      itemLabel: validation.data.title,
+      tab: "itinerary",
+    }),
+  );
   return { success: true };
 }
 
@@ -88,7 +106,7 @@ export async function updateReservation(
     return { errors: translateFieldErrors(t, validation.errors) };
   }
 
-  const { supabase } = await authenticatedClient();
+  const { supabase, user } = await authenticatedClient();
   const { error } = await supabase
     .from("trip_reservations")
     .update({
@@ -114,6 +132,18 @@ export async function updateReservation(
   }
 
   revalidatePath(`/trips/${tripId}`);
+  after(() =>
+    notifyTripCollaborators({
+      supabase,
+      tripId,
+      actorId: user.id,
+      entityType: "reservation",
+      entityId: reservationId,
+      action: "updated",
+      itemLabel: validation.data.title,
+      tab: "itinerary",
+    }),
+  );
   return { success: true };
 }
 
@@ -125,11 +155,28 @@ export async function deleteReservation(formData: FormData) {
     return;
   }
 
-  const { supabase } = await authenticatedClient();
-  await supabase
+  const { supabase, user } = await authenticatedClient();
+  const { data: deleted } = await supabase
     .from("trip_reservations")
     .delete()
     .eq("id", reservationId)
-    .eq("trip_id", tripId);
+    .eq("trip_id", tripId)
+    .select("title")
+    .maybeSingle();
   revalidatePath(`/trips/${tripId}`);
+
+  if (deleted) {
+    after(() =>
+      notifyTripCollaborators({
+        supabase,
+        tripId,
+        actorId: user.id,
+        entityType: "reservation",
+        entityId: reservationId,
+        action: "deleted",
+        itemLabel: deleted.title,
+        tab: "itinerary",
+      }),
+    );
+  }
 }

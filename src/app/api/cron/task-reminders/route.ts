@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import * as Sentry from "@sentry/nextjs";
 
 import { buildReminderEmail, getReminderWindow, isWithinReminderWindow } from "@/features/reminders/email";
+import { sendEmail } from "@/lib/email";
 
 type ReminderTrip = { destination: string; timezone: string };
 
@@ -162,62 +163,41 @@ export async function GET(request: NextRequest) {
       tripId: task.trip_id,
     });
 
-    try {
-      const response = await fetch("https://api.resend.com/emails", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${resendApiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          from: emailFrom,
-          to: [email],
-          subject: message.subject,
-          html: message.html,
-          text: message.text,
-        }),
-      });
-      const responseBody = response.ok
-        ? (await response.json()) as { id?: string }
-        : null;
+    const result = await sendEmail({
+      to: email,
+      subject: message.subject,
+      html: message.html,
+      text: message.text,
+    });
 
-      if (!response.ok) {
-        throw new Error(`http_${response.status}`);
-      }
-
+    if (result.success) {
       sent += 1;
       await supabase
         .from("task_reminder_deliveries")
         .update({
           status: "sent",
-          provider_message_id: responseBody?.id ?? null,
+          provider_message_id: result.messageId,
           attempted_at: new Date().toISOString(),
         })
         .eq("id", claimed.id);
-    } catch (deliveryError) {
+    } else {
       failed += 1;
-      const code = deliveryError instanceof Error && /^http_\d+$/.test(deliveryError.message)
-        ? deliveryError.message
-        : "network_error";
       await supabase
         .from("task_reminder_deliveries")
         .update({
           status: "failed",
-          failure_code: code,
+          failure_code: result.error,
           attempted_at: new Date().toISOString(),
         })
         .eq("id", claimed.id);
       console.error("Task reminder delivery failed", {
         deliveryId: claimed.id,
-        code,
+        code: result.error,
       });
-      Sentry.captureException(
-        deliveryError instanceof Error ? deliveryError : new Error(code),
-        {
-          tags: { route: "cron/task-reminders", code },
-          extra: { deliveryId: claimed.id },
-        },
-      );
+      Sentry.captureException(new Error(result.error), {
+        tags: { route: "cron/task-reminders", code: result.error },
+        extra: { deliveryId: claimed.id },
+      });
     }
   }
 

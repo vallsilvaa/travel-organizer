@@ -1,10 +1,12 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 
 import { translateFieldErrors } from "@/i18n/translate-field-errors";
+import { notifyTripCollaborators } from "@/features/notifications/collaboration";
 import { createClient } from "@/lib/supabase/server";
 import { dateBeforeTrip } from "@/features/tasks/templates";
 import {
@@ -174,26 +176,30 @@ export async function applyPrepTemplate(
 
   const dueDate = dateBeforeTrip(trip.start_date, template.due_offset_days);
 
-  const { error } = await supabase.from("trip_tasks").insert({
-    trip_id: tripId,
-    title: template.title,
-    owner_id: assignedTo,
-    due_date: dueDate,
-    due_offset_days: template.due_offset_days,
-    item_type: template.item_type,
-    category: template.category,
-    continent: template.continent,
-    country: template.country,
-    city: template.city,
-    classification: template.classification,
-    is_critical: template.classification === "required",
-    currency: template.currency,
-    estimated_amount: template.estimated_amount,
-    document_instructions: template.document_instructions,
-    itinerary_item_id: itineraryItemId,
-    template_id: template.id,
-    created_by: user.id,
-  });
+  const { data: created, error } = await supabase
+    .from("trip_tasks")
+    .insert({
+      trip_id: tripId,
+      title: template.title,
+      owner_id: assignedTo,
+      due_date: dueDate,
+      due_offset_days: template.due_offset_days,
+      item_type: template.item_type,
+      category: template.category,
+      continent: template.continent,
+      country: template.country,
+      city: template.city,
+      classification: template.classification,
+      is_critical: template.classification === "required",
+      currency: template.currency,
+      estimated_amount: template.estimated_amount,
+      document_instructions: template.document_instructions,
+      itinerary_item_id: itineraryItemId,
+      template_id: template.id,
+      created_by: user.id,
+    })
+    .select("id")
+    .single();
 
   if (error) {
     return { message: t("applyFailed") };
@@ -201,5 +207,17 @@ export async function applyPrepTemplate(
 
   revalidatePath(`/organizer?trip=${tripId}`);
   revalidatePath(`/trips/${tripId}`);
+  after(() =>
+    notifyTripCollaborators({
+      supabase,
+      tripId,
+      actorId: user.id,
+      entityType: "trip_task",
+      entityId: created.id,
+      action: "created",
+      itemLabel: template.title,
+      tab: "preparation",
+    }),
+  );
   return { success: true };
 }

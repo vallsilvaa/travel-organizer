@@ -119,7 +119,8 @@
       "description": "Get a reminder when an assigned task's deadline is coming up within three days.",
       "checkboxLabel": "Send task deadline reminders",
       "savePending": "Saving...",
-      "save": "Save preference"
+      "save": "Save preference",
+      "collaborationCheckboxLabel": "Send emails when organizers or travelers make relevant changes"
     },
     "changePassword": {
       "title": "Change password",
