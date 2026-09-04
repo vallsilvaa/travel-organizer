@@ -27,7 +27,6 @@ import { deleteReservation } from "@/features/reservations/actions";
 import { ReservationForm } from "@/features/reservations/reservation-form";
 import { getReservationTypeLabels, type ReservationType } from "@/features/reservations/validation";
 import {
-  addEnglandPreparationChecklist,
   deleteTask,
   setTaskCompletion,
 } from "@/features/tasks/actions";
@@ -38,6 +37,8 @@ import {
   getTaskCategoryLabels,
   type TaskCategory,
 } from "@/features/tasks/templates";
+import { AddTaskFromCatalogModal } from "@/features/prep-catalog/add-task-from-catalog-modal";
+import { NewTaskModal } from "@/features/prep-catalog/new-task-modal";
 import {
   getClassificationLabels,
   getContinentLabels,
@@ -84,6 +85,21 @@ type TripParticipant = {
   user_id: string;
   display_name: string;
   role: string;
+};
+
+type CatalogTemplate = {
+  id: string;
+  title: string;
+  item_type: PrepItemType;
+  category: TaskCategory;
+  continent: Continent | null;
+  country: string;
+  city: string | null;
+  classification: Classification;
+  due_offset_days: number | null;
+  currency: string | null;
+  estimated_amount: string | null;
+  document_instructions: string | null;
 };
 
 type TripComment = ItemComment & {
@@ -309,6 +325,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
     { data: expenseShares },
     { data: expenseBalances },
     invitationResult,
+    templatesResult,
   ] =
     await Promise.all([
       supabase
@@ -358,8 +375,17 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
             .eq("trip_id", trip.id)
             .order("created_at", { ascending: false })
         : Promise.resolve({ data: [] }),
+      isCreator
+        ? supabase
+            .from("prep_item_templates")
+            .select(
+              "id, title, item_type, category, continent, country, city, classification, due_offset_days, currency, estimated_amount, document_instructions",
+            )
+            .order("created_at", { ascending: false })
+        : Promise.resolve({ data: [] }),
     ]);
   const invitations = invitationResult.data;
+  const catalogTemplates = (templatesResult.data ?? []) as CatalogTemplate[];
   const tripParticipants = (participants ?? []) as TripParticipant[];
   const participantNames = new Map<string, string>(
     tripParticipants.map((participant) => [
@@ -1308,11 +1334,20 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                     {t("preparation.description")}
                   </p>
                 </div>
-                {!isArchived ? (
-                  <form action={addEnglandPreparationChecklist}>
-                    <input type="hidden" name="tripId" value={trip.id} />
-                    <SubmitButton pendingLabel={t("preparation.addingEnglandChecklistPending")} size="lg">{t("preparation.addEnglandChecklist")}</SubmitButton>
-                  </form>
+                {!isArchived && isCreator ? (
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                    <AddTaskFromCatalogModal
+                      templates={catalogTemplates}
+                      tripId={trip.id}
+                      participants={tripParticipants}
+                      itineraryItems={itineraryItemOptions}
+                      taskCategoryLabels={taskCategoryLabels}
+                      prepItemTypeLabels={prepItemTypeLabels}
+                      classificationLabels={classificationLabels}
+                      continentLabels={continentLabels}
+                    />
+                    <NewTaskModal triggerLabel={t("preparation.createTask")} tripId={trip.id} />
+                  </div>
                 ) : null}
               </div>
 

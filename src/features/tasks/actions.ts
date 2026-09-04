@@ -13,7 +13,7 @@ import {
   validateTaskInput,
   type TaskFieldErrors,
 } from "./validation";
-import { buildEnglandPreparationTasks, dateBeforeTrip } from "./templates";
+import { dateBeforeTrip } from "./templates";
 import {
   isValidPrepItemId,
   validatePrepItemInput,
@@ -181,33 +181,6 @@ export async function deleteTask(formData: FormData) {
       }),
     );
   }
-}
-
-export async function addEnglandPreparationChecklist(formData: FormData) {
-  const tripId = String(formData.get("tripId") ?? "");
-
-  if (!isValidTaskId(tripId)) {
-    return;
-  }
-
-  const { supabase, user } = await authenticatedClient();
-  const { data: trip } = await supabase
-    .from("trips")
-    .select("id, start_date")
-    .eq("id", tripId)
-    .single();
-
-  if (!trip) {
-    return;
-  }
-
-  await supabase
-    .from("trip_tasks")
-    .upsert(buildEnglandPreparationTasks(trip.id, trip.start_date, user.id), {
-      ignoreDuplicates: true,
-      onConflict: "trip_id,template_key",
-    });
-  revalidatePath(`/trips/${tripId}`);
 }
 
 export async function setTaskCompletion(formData: FormData) {

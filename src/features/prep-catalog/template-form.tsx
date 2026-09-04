@@ -50,11 +50,12 @@ type TemplateFormProps = {
   };
   onSuccess?: () => void;
   cancelSlot?: ReactNode;
+  tripId?: string;
 };
 
 const initialState: TemplateActionState = {};
 
-export function TemplateForm({ template, onSuccess, cancelSlot }: TemplateFormProps) {
+export function TemplateForm({ template, onSuccess, cancelSlot, tripId }: TemplateFormProps) {
   const t = useTranslations("templateForm");
   const tPrepItemType = useTranslations("categories.prepItemType");
   const tClassification = useTranslations("categories.classification");
@@ -78,7 +79,10 @@ export function TemplateForm({ template, onSuccess, cancelSlot }: TemplateFormPr
   );
 
   useEffect(() => {
-    if (state.success) {
+    if (state.success && state.message) {
+      toast.warning(state.message);
+      onSuccess?.();
+    } else if (state.success) {
       toast.success(template ? t("toastUpdated") : t("toastAdded"));
       onSuccess?.();
     } else if (state.message) {
@@ -89,6 +93,7 @@ export function TemplateForm({ template, onSuccess, cancelSlot }: TemplateFormPr
   return (
     <form action={formAction} className="grid gap-4 sm:grid-cols-2">
       {template ? <input type="hidden" name="templateId" value={template.id} /> : null}
+      {!template && tripId ? <input type="hidden" name="tripId" value={tripId} /> : null}
 
       <div className="space-y-2 sm:col-span-2">
         <Label htmlFor="template-title">{t("titleLabel")}</Label>

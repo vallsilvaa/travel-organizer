@@ -306,8 +306,8 @@
       "eyebrow": "Before the itinerary",
       "title": "Pre-trip preparation",
       "description": "Complete documents, reservations, money, health, connectivity, and packing before departure.",
-      "addingEnglandChecklistPending": "Adding checklist...",
-      "addEnglandChecklist": "Add England checklist",
+      "addTaskFromCatalog": "Add Task",
+      "createTask": "Create New Task",
       "addCustomTask": "Add custom task",
       "criticalOnly": "Critical only",
       "overdueOnly": "Overdue",
@@ -339,10 +339,28 @@
       "deleteTaskTitle": "Remove this preparation task?",
       "deleteTaskDescription": "This will permanently remove \"{title}\" from your preparation list.",
       "removeTask": "Remove",
-      "empty": "No preparation tasks match these filters. Add the England checklist or create a custom task.",
+      "empty": "No preparation tasks match these filters. Add one from the catalog or create a new one.",
       "linkedItinerary": "Linked to itinerary: {title}",
       "expenseLinked": "Linked to an expense in the Expenses tab.",
-      "expenseWillLink": "Completing this item will add it to the trip's expenses."
+      "expenseWillLink": "Completing this item will add it to the trip's expenses.",
+      "catalogModal": {
+        "title": "Add a task from the catalog",
+        "description": "Choose a template from your reusable catalog to add to this trip.",
+        "searchLabel": "Search",
+        "searchPlaceholder": "Search by name, category, or country",
+        "noResults": "No templates match this search.",
+        "noTemplates": "You don't have any catalog templates yet. Use \"Create New Task\" to add the first one.",
+        "back": "Back to search",
+        "cancel": "Cancel",
+        "confirm": "Add to trip",
+        "confirmPending": "Adding...",
+        "toastApplied": "Task added to the trip.",
+        "assignedToLabel": "Traveler responsible",
+        "assignedToNone": "Unassigned",
+        "itineraryLinkLabel": "Linked itinerary item",
+        "itineraryLinkNone": "No link",
+        "daysBeforeDeparture": "{count} days before departure"
+      }
     },
     "documents": {
       "title": "Documents",
@@ -770,7 +788,8 @@
     "actionErrors": {
       "addFailed": "Could not add this template. Check the fields and try again.",
       "updateFailed": "Could not update this template.",
-      "identifyTemplate": "Could not identify this template."
+      "identifyTemplate": "Could not identify this template.",
+      "addedButApplyFailed": "Template saved to your catalog, but it could not be added to this trip."
     },
     "continentNone": "No continent",
     "dueOffsetDaysPlaceholder": "Select a lead time",

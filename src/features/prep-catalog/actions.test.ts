@@ -52,7 +52,25 @@ beforeEach(() => {
 
 describe("template CRUD actions", () => {
   it("creates a template owned by the current user", async () => {
-    const insert = vi.fn().mockResolvedValue({ error: null });
+    const createdTemplate = {
+      id: templateId,
+      title: "Check passport validity",
+      item_type: "preparation",
+      category: "documents",
+      continent: "europe",
+      country: "Portugal",
+      city: "Lisbon",
+      classification: "required",
+      due_offset_days: 180,
+      currency: "EUR",
+      estimated_amount: "50.00",
+      document_instructions: null,
+    };
+    const insert = vi.fn().mockReturnValue({
+      select: () => ({
+        single: async () => ({ data: createdTemplate, error: null }),
+      }),
+    });
     const from = vi.fn().mockReturnValue({ insert });
     mocks.createClient.mockResolvedValue({ auth: { getUser: mocks.getUser }, from });
 
@@ -69,6 +87,59 @@ describe("template CRUD actions", () => {
       }),
     );
     expect(result.success).toBe(true);
+    expect(result.message).toBeUndefined();
+  });
+
+  it("also applies the new template to a trip when a tripId is provided", async () => {
+    const createdTemplate = {
+      id: templateId,
+      title: "Check passport validity",
+      item_type: "preparation",
+      category: "documents",
+      continent: "europe",
+      country: "Portugal",
+      city: "Lisbon",
+      classification: "required",
+      due_offset_days: 180,
+      currency: "EUR",
+      estimated_amount: "50.00",
+      document_instructions: null,
+    };
+    const insert = vi.fn().mockReturnValue({
+      select: () => ({
+        single: async () => ({ data: createdTemplate, error: null }),
+      }),
+    });
+
+    const trip = { id: tripId, start_date: "2027-09-10" };
+    const tripSingle = vi.fn().mockResolvedValue({ data: trip, error: null });
+    const tripEq = vi.fn().mockReturnValue({ single: tripSingle });
+    const tripSelect = vi.fn().mockReturnValue({ eq: tripEq });
+
+    const taskInsert = vi.fn().mockReturnValue({
+      select: () => ({
+        single: async () => ({ data: { id: "new-task-id" }, error: null }),
+      }),
+    });
+
+    const from = vi.fn((table: string) => {
+      if (table === "prep_item_templates") return { insert };
+      if (table === "trips") return { select: tripSelect };
+      if (table === "trip_tasks") return { insert: taskInsert };
+      throw new Error(`unexpected table ${table}`);
+    });
+    mocks.createClient.mockResolvedValue({ auth: { getUser: mocks.getUser }, from });
+
+    const formData = validForm();
+    formData.set("tripId", tripId);
+
+    const result = await createTemplate({}, formData);
+
+    expect(taskInsert).toHaveBeenCalledWith(
+      expect.objectContaining({ trip_id: tripId, template_id: templateId, title: "Check passport validity" }),
+    );
+    expect(result.success).toBe(true);
+    expect(result.message).toBeUndefined();
   });
 
   it("only updates a template owned by the current user", async () => {

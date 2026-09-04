@@ -8,12 +8,13 @@ import { redirect } from "next/navigation";
 import { translateFieldErrors } from "@/i18n/translate-field-errors";
 import { notifyTripCollaborators } from "@/features/notifications/collaboration";
 import { createClient } from "@/lib/supabase/server";
-import { dateBeforeTrip } from "@/features/tasks/templates";
+import { dateBeforeTrip, type TaskCategory } from "@/features/tasks/templates";
 import {
   isValidTemplateId,
   validateTemplateInput,
   type TemplateFieldErrors,
 } from "./validation";
+import type { Classification, Continent, PrepItemType } from "./shared";
 
 export type TemplateActionState = {
   errors?: TemplateFieldErrors;
@@ -24,6 +25,23 @@ export type TemplateActionState = {
 export type ApplyTemplateActionState = {
   message?: string;
   success?: boolean;
+};
+
+type SupabaseServerClient = Awaited<ReturnType<typeof createClient>>;
+
+type TemplateRow = {
+  id: string;
+  title: string;
+  item_type: PrepItemType;
+  category: TaskCategory;
+  continent: Continent | null;
+  country: string;
+  city: string | null;
+  classification: Classification;
+  due_offset_days: number | null;
+  currency: string | null;
+  estimated_amount: string | null;
+  document_instructions: string | null;
 };
 
 async function authenticatedClient() {
@@ -39,6 +57,125 @@ async function authenticatedClient() {
   return { supabase, user };
 }
 
+type ApplyResult = { ok: true } | { ok: false; reason: "trip_not_found" | "insert_failed" };
+
+async function applyTemplateRowToTrip({
+  supabase,
+  userId,
+  template,
+  tripId,
+  assignedTo,
+  itineraryItemId,
+  rawItemDate,
+}: {
+  supabase: SupabaseServerClient;
+  userId: string;
+  template: TemplateRow;
+  tripId: string;
+  assignedTo: string | null;
+  itineraryItemId: string | null;
+  rawItemDate: string;
+}): Promise<ApplyResult> {
+  const { data: trip, error: tripError } = await supabase
+    .from("trips")
+    .select("id, start_date")
+    .eq("id", tripId)
+    .single();
+
+  if (tripError || !trip) {
+    return { ok: false, reason: "trip_not_found" };
+  }
+
+  // "Item de roteiro" templates apply into the itinerary, not the
+  // preparation checklist (#149) - a structurally different target table,
+  // since itinerary_items has no notion of a relative lead time, only an
+  // absolute date.
+  if (template.item_type === "itinerary_item") {
+    const itemDate = /^\d{4}-\d{2}-\d{2}$/.test(rawItemDate) ? rawItemDate : trip.start_date;
+
+    const { data: createdItem, error: itineraryError } = await supabase
+      .from("itinerary_items")
+      .insert({
+        trip_id: tripId,
+        item_date: itemDate,
+        title: template.title,
+        location: template.city,
+        created_by: userId,
+      })
+      .select("id")
+      .single();
+
+    if (itineraryError) {
+      return { ok: false, reason: "insert_failed" };
+    }
+
+    revalidatePath("/organizer");
+    revalidatePath(`/trips/${tripId}`);
+    after(() =>
+      notifyTripCollaborators({
+        supabase,
+        tripId,
+        actorId: userId,
+        entityType: "itinerary_item",
+        entityId: createdItem.id,
+        action: "created",
+        itemLabel: template.title,
+        tab: "itinerary",
+      }),
+    );
+    return { ok: true };
+  }
+
+  const dueDate = template.due_offset_days
+    ? dateBeforeTrip(trip.start_date, template.due_offset_days)
+    : null;
+
+  const { data: created, error } = await supabase
+    .from("trip_tasks")
+    .insert({
+      trip_id: tripId,
+      title: template.title,
+      owner_id: assignedTo,
+      due_date: dueDate,
+      due_offset_days: template.due_offset_days,
+      item_type: template.item_type,
+      category: template.category,
+      continent: template.continent,
+      country: template.country,
+      city: template.city,
+      classification: template.classification,
+      is_critical: template.classification === "required",
+      currency: template.currency,
+      estimated_amount: template.estimated_amount,
+      document_instructions: template.document_instructions,
+      itinerary_item_id: itineraryItemId,
+      template_id: template.id,
+      created_by: userId,
+    })
+    .select("id")
+    .single();
+
+  if (error) {
+    return { ok: false, reason: "insert_failed" };
+  }
+
+  revalidatePath("/organizer");
+  revalidatePath(`/trips/${tripId}`);
+  after(() =>
+    notifyTripCollaborators({
+      supabase,
+      tripId,
+      actorId: userId,
+      entityType: "trip_task",
+      entityId: created.id,
+      action: "created",
+      itemLabel: template.title,
+      tab: "preparation",
+    }),
+  );
+  return { ok: true };
+}
+
 export async function createTemplate(
   _previousState: TemplateActionState,
   formData: FormData,
@@ -51,26 +188,56 @@ export async function createTemplate(
   }
 
   const { supabase, user } = await authenticatedClient();
-  const { error } = await supabase.from("prep_item_templates").insert({
-    owner_id: user.id,
-    title: validation.data.title,
-    item_type: validation.data.itemType,
-    category: validation.data.category,
-    continent: validation.data.continent,
-    country: validation.data.country,
-    city: validation.data.city,
-    classification: validation.data.classification,
-    due_offset_days: validation.data.dueOffsetDays,
-    currency: validation.data.currency,
-    estimated_amount: validation.data.estimatedAmount,
-    document_instructions: validation.data.documentInstructions,
-  });
+  const { data: created, error } = await supabase
+    .from("prep_item_templates")
+    .insert({
+      owner_id: user.id,
+      title: validation.data.title,
+      item_type: validation.data.itemType,
+      category: validation.data.category,
+      continent: validation.data.continent,
+      country: validation.data.country,
+      city: validation.data.city,
+      classification: validation.data.classification,
+      due_offset_days: validation.data.dueOffsetDays,
+      currency: validation.data.currency,
+      estimated_amount: validation.data.estimatedAmount,
+      document_instructions: validation.data.documentInstructions,
+    })
+    .select(
+      "id, title, item_type, category, continent, country, city, classification, due_offset_days, currency, estimated_amount, document_instructions",
+    )
+    .single();
 
-  if (error) {
+  if (error || !created) {
     return { message: t("actionErrors.addFailed") };
   }
 
   revalidatePath("/organizer");
+
+  // Creating a task from within a trip (#152) both saves it to the
+  // catalog above and adds a copy to that trip in the same action -
+  // "sem duplicação" means one submit, not a create-then-separately-apply
+  // round trip. The template itself is still saved even if this second
+  // step fails, so that's surfaced as a distinct partial-success message
+  // rather than losing the catalog save.
+  const tripId = String(formData.get("tripId") ?? "").trim();
+  if (isValidTemplateId(tripId)) {
+    const applied = await applyTemplateRowToTrip({
+      supabase,
+      userId: user.id,
+      template: created as TemplateRow,
+      tripId,
+      assignedTo: null,
+      itineraryItemId: null,
+      rawItemDate: "",
+    });
+
+    if (!applied.ok) {
+      return { success: true, message: t("actionErrors.addedButApplyFailed") };
+    }
+  }
+
   return { success: true };
 }
 
@@ -165,103 +332,19 @@ export async function applyPrepTemplate(
     return { message: t("templateNotFound") };
   }
 
-  const { data: trip, error: tripError } = await supabase
-    .from("trips")
-    .select("id, start_date")
-    .eq("id", tripId)
-    .single();
+  const applied = await applyTemplateRowToTrip({
+    supabase,
+    userId: user.id,
+    template: template as TemplateRow,
+    tripId,
+    assignedTo,
+    itineraryItemId,
+    rawItemDate,
+  });
 
-  if (tripError || !trip) {
-    return { message: t("tripNotFound") };
+  if (!applied.ok) {
+    return { message: applied.reason === "trip_not_found" ? t("tripNotFound") : t("applyFailed") };
   }
 
-  // "Item de roteiro" templates apply into the itinerary, not the
-  // preparation checklist (#149) - a structurally different target table,
-  // since itinerary_items has no notion of a relative lead time, only an
-  // absolute date. Until the dedicated apply UI (#152) collects one, this
-  // falls back to the trip's own start date.
-  if (template.item_type === "itinerary_item") {
-    const itemDate = /^\d{4}-\d{2}-\d{2}$/.test(rawItemDate) ? rawItemDate : trip.start_date;
-
-    const { data: createdItem, error: itineraryError } = await supabase
-      .from("itinerary_items")
-      .insert({
-        trip_id: tripId,
-        item_date: itemDate,
-        title: template.title,
-        location: template.city,
-        created_by: user.id,
-      })
-      .select("id")
-      .single();
-
-    if (itineraryError) {
-      return { message: t("applyFailed") };
-    }
-
-    revalidatePath(`/organizer?trip=${tripId}`);
-    revalidatePath(`/trips/${tripId}`);
-    after(() =>
-      notifyTripCollaborators({
-        supabase,
-        tripId,
-        actorId: user.id,
-        entityType: "itinerary_item",
-        entityId: createdItem.id,
-        action: "created",
-        itemLabel: template.title,
-        tab: "itinerary",
-      }),
-    );
-    return { success: true };
-  }
-
-  const dueDate = template.due_offset_days
-    ? dateBeforeTrip(trip.start_date, template.due_offset_days)
-    : null;
-
-  const { data: created, error } = await supabase
-    .from("trip_tasks")
-    .insert({
-      trip_id: tripId,
-      title: template.title,
-      owner_id: assignedTo,
-      due_date: dueDate,
-      due_offset_days: template.due_offset_days,
-      item_type: template.item_type,
-      category: template.category,
-      continent: template.continent,
-      country: template.country,
-      city: template.city,
-      classification: template.classification,
-      is_critical: template.classification === "required",
-      currency: template.currency,
-      estimated_amount: template.estimated_amount,
-      document_instructions: template.document_instructions,
-      itinerary_item_id: itineraryItemId,
-      template_id: template.id,
-      created_by: user.id,
-    })
-    .select("id")
-    .single();
-
-  if (error) {
-    return { message: t("applyFailed") };
-  }
-
-  revalidatePath(`/organizer?trip=${tripId}`);
-  revalidatePath(`/trips/${tripId}`);
-  after(() =>
-    notifyTripCollaborators({
-      supabase,
-      tripId,
-      actorId: user.id,
-      entityType: "trip_task",
-      entityId: created.id,
-      action: "created",
-      itemLabel: template.title,
-      tab: "preparation",
-    }),
-  );
   return { success: true };
 }

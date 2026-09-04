@@ -130,11 +130,21 @@ describe("TripPage", () => {
       }),
     );
 
-    const addChecklistButton = screen.getByRole("button", { name: /adicionar checklist da inglaterra/i });
-    expect(addChecklistButton.getAttribute("type")).toBe("submit");
-
     const completeButton = screen.getByRole("button", { name: /concluir/i });
     expect(completeButton.getAttribute("type")).toBe("submit");
+  });
+
+  it("shows the catalog task actions to the creator and not the England checklist button", async () => {
+    render(
+      await TripPage({
+        params: Promise.resolve({ tripId }),
+        searchParams: Promise.resolve({ tab: "preparation" }),
+      }),
+    );
+
+    expect(screen.getByRole("button", { name: "Add Tarefa" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Criar Tarefa" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /checklist da inglaterra/i })).toBeNull();
   });
 
   it("shows edit and confirmed deletion controls to the creator", async () => {

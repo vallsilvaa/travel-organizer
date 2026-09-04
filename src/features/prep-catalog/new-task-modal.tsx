@@ -20,9 +20,10 @@ type NewTaskModalProps = {
   triggerLabel?: string;
   triggerVariant?: ComponentProps<typeof Button>["variant"];
   triggerSize?: ComponentProps<typeof Button>["size"];
+  tripId?: string;
 };
 
-export function NewTaskModal({ triggerLabel, triggerVariant, triggerSize = "lg" }: NewTaskModalProps) {
+export function NewTaskModal({ triggerLabel, triggerVariant, triggerSize = "lg", tripId }: NewTaskModalProps) {
   const t = useTranslations("templateForm");
   const [open, setOpen] = useState(false);
 
@@ -37,6 +38,7 @@ export function NewTaskModal({ triggerLabel, triggerVariant, triggerSize = "lg" 
           <DialogDescription>{t("newTaskDescription")}</DialogDescription>
         </DialogHeader>
         <TemplateForm
+          tripId={tripId}
           onSuccess={() => setOpen(false)}
           cancelSlot={
             <DialogClose render={<Button type="button" variant="outline" size="lg" />}>
