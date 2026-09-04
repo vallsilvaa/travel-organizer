@@ -29,7 +29,7 @@ export type ApplyTemplateActionState = {
 
 type SupabaseServerClient = Awaited<ReturnType<typeof createClient>>;
 
-type TemplateRow = {
+export type TemplateRow = {
   id: string;
   title: string;
   item_type: PrepItemType;
@@ -57,9 +57,9 @@ async function authenticatedClient() {
   return { supabase, user };
 }
 
-type ApplyResult = { ok: true } | { ok: false; reason: "trip_not_found" | "insert_failed" };
+export type ApplyResult = { ok: true } | { ok: false; reason: "trip_not_found" | "insert_failed" };
 
-async function applyTemplateRowToTrip({
+export async function applyTemplateRowToTrip({
   supabase,
   userId,
   template,

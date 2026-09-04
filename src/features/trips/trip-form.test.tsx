@@ -57,4 +57,10 @@ describe("TripForm", () => {
     expect((screen.getByLabelText("Fuso horário") as HTMLSelectElement).value).toBe("Europe/Lisbon");
     expect(screen.getByRole("button", { name: /salvar alterações/i }).getAttribute("type")).toBe("submit");
   });
+
+  it("renders extraFields inside the same form", () => {
+    render(<TripForm extraFields={<p>extra field marker</p>} />);
+
+    expect(screen.getByText("extra field marker")).toBeTruthy();
+  });
 });

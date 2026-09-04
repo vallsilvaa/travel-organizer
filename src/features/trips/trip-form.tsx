@@ -22,9 +22,11 @@ type TripFormProps = {
     timezone: string;
   };
   cancelSlot?: ReactNode;
+  extraFields?: ReactNode;
+  onSuccess?: () => void;
 };
 
-export function TripForm({ trip, cancelSlot }: TripFormProps = {}) {
+export function TripForm({ trip, cancelSlot, extraFields, onSuccess }: TripFormProps = {}) {
   const t = useTranslations("trip.editForm");
   const tCommon = useTranslations("common");
   const [state, formAction, pending] = useActionState(
@@ -52,12 +54,15 @@ export function TripForm({ trip, cancelSlot }: TripFormProps = {}) {
   }, [trip]);
 
   useEffect(() => {
-    if (state.success && state.message) {
-      toast.success(state.message);
+    if (state.success) {
+      if (state.message) {
+        toast.success(state.message);
+      }
+      onSuccess?.();
     } else if (state.message) {
       toast.error(state.message);
     }
-  }, [state]);
+  }, [state, onSuccess]);
 
   return (
     <form action={formAction} className="mt-6 grid gap-5 sm:grid-cols-2">
@@ -141,6 +146,8 @@ export function TripForm({ trip, cancelSlot }: TripFormProps = {}) {
           </p>
         ) : null}
       </div>
+
+      {extraFields}
 
       <div className="flex items-center gap-3 sm:col-span-2">
         <Button type="submit" disabled={pending} size="lg">

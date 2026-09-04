@@ -426,7 +426,10 @@
         "identifyTrip": "Could not identify the trip.",
         "createFailed": "Could not create the trip. Please try again.",
         "onlyCreatorCanEdit": "Only the trip's creator can edit this data.",
-        "updated": "Trip updated successfully."
+        "updated": "Trip updated successfully.",
+        "created": "Trip created successfully.",
+        "createdWithIssues": "Trip created, but with some issues:",
+        "taskApplyFailed": "Could not add the task \"{title}\"."
       }
     }
   },
@@ -853,7 +856,15 @@
     "createTrip": {
       "triggerLabel": "Create New Trip",
       "title": "Create a trip",
-      "description": "Uses the same trip creation flow as the dashboard."
+      "description": "Uses the same trip creation flow as the dashboard.",
+      "extras": {
+        "tasksLabel": "Add tasks (optional)",
+        "tasksEmpty": "You don't have any catalog templates yet.",
+        "tasksSearchPlaceholder": "Search catalog tasks",
+        "inviteLabel": "Add a traveler (optional)",
+        "invitePlaceholder": "email@example.com",
+        "inviteHint": "Invites this person as a traveler on this trip."
+      }
     },
     "catalog": {
       "title": "Reusable catalog",
