@@ -25,6 +25,7 @@ function fakeSupabase(subscriptions: { id: string; endpoint: string; p256dh: str
       }),
       delete: () => ({ eq: deleteEq }),
     })),
+    deleteEq,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } as any & { deleteEq: typeof deleteEq };
 }
