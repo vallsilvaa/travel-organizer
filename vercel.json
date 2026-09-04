@@ -1,6 +1,10 @@
 {
   "crons": [
     {
+      "path": "/api/cron/overdue-tasks",
+      "schedule": "0 8 * * *"
+    },
+    {
       "path": "/api/cron/task-reminders",
       "schedule": "0 9 * * *"
     }
