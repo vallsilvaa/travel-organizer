@@ -121,7 +121,6 @@ describe("task actions", () => {
 
   it("recomputes the due date and saves a governed item's fields", async () => {
     mocks.single.mockResolvedValueOnce({ data: { start_date: "2027-09-10" } });
-    mocks.eq.mockReturnValueOnce({ eq: mocks.eq }).mockResolvedValueOnce({ error: null });
 
     const formData = validForm();
     formData.set("itemType", "preparation");

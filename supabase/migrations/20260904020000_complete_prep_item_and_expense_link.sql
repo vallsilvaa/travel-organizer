@@ -98,7 +98,15 @@ grant execute on function public.complete_prep_item(uuid, boolean) to authentica
 -- orphaned either; runs as security definer since authenticated has no
 -- direct delete grant on trip_expenses (revoked in
 -- 20260821040000_split_expenses_among_participants.sql).
-create function private.delete_linked_expense_before_task_delete()
+--
+-- This must be an AFTER trigger, not BEFORE: trip_tasks.expense_id has an
+-- "on delete set null" FK action, so deleting the linked trip_expenses row
+-- while the trip_tasks row is still mid-delete (i.e. from a BEFORE trigger)
+-- makes that FK action try to update the very row Postgres is currently
+-- deleting, raising "tuple to be deleted was already modified by an
+-- operation triggered by the current command". Running AFTER the delete
+-- has committed avoids that self-conflict entirely.
+create function private.delete_linked_expense_after_task_delete()
 returns trigger
 language plpgsql
 security definer
@@ -113,6 +121,6 @@ end;
 $$;
 
 create trigger trip_tasks_delete_linked_expense
-before delete on public.trip_tasks
+after delete on public.trip_tasks
 for each row
-execute function private.delete_linked_expense_before_task_delete();
+execute function private.delete_linked_expense_after_task_delete();

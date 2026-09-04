@@ -316,9 +316,7 @@ insert into public.trip_tasks (
   '91111111-1111-4111-8111-111111111111'
 );
 
-update public.trip_tasks
-set completed_at = now(), completed_by = '91111111-1111-4111-8111-111111111111'
-where id = '91f00000-0000-4000-8000-000000000005';
+select public.complete_prep_item('91f00000-0000-4000-8000-000000000005', true);
 
 update public.trips set start_date = '2027-09-06' where id = '91aaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
 
