@@ -52,4 +52,16 @@ describe("ExpenseForm", () => {
     const submitButton = screen.getByRole("button", { name: /adicionar despesa/i });
     expect(submitButton.hasAttribute("disabled")).toBe(true);
   });
+
+  it("hides the split section and does not require amount/payer once marked to_pay (#171)", () => {
+    const { container } = render(<ExpenseForm participants={[alice, bob]} tripId={tripId} />);
+
+    fireEvent.click(screen.getByText("A pagar"));
+
+    expect(screen.queryByText("Dividir despesa entre participantes")).toBeNull();
+    const amountInput = container.querySelector("#amount") as HTMLInputElement;
+    expect(amountInput.required).toBe(false);
+    const submitButton = screen.getByRole("button", { name: /adicionar despesa/i });
+    expect(submitButton.hasAttribute("disabled")).toBe(false);
+  });
 });

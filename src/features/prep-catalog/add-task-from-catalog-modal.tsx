@@ -59,6 +59,7 @@ type AddTaskFromCatalogModalProps = Labels & {
   tripId: string;
   participants: Participant[];
   itineraryItems: ItineraryItemOption[];
+  appliedTemplateIds: string[];
 };
 
 export function AddTaskFromCatalogModal({
@@ -66,8 +67,10 @@ export function AddTaskFromCatalogModal({
   tripId,
   participants,
   itineraryItems,
+  appliedTemplateIds,
   ...labels
 }: AddTaskFromCatalogModalProps) {
+  const appliedIds = new Set(appliedTemplateIds);
   const t = useTranslations("trip.preparation.catalogModal");
   const tTrigger = useTranslations("trip.preparation");
   const [open, setOpen] = useState(false);
@@ -146,25 +149,30 @@ export function AddTaskFromCatalogModal({
               <p className="text-sm text-muted-foreground">{t("noResults")}</p>
             ) : (
               <ul className="max-h-80 space-y-2 overflow-y-auto">
-                {filtered.map((template) => (
-                  <li key={template.id}>
-                    <button
-                      type="button"
-                      onClick={() => setSelected(template)}
-                      className="flex w-full flex-col items-start gap-1 rounded-2xl border border-slate-200 p-4 text-left transition hover:border-sky-300 hover:bg-sky-50"
-                    >
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-semibold text-slate-950">{template.title}</span>
-                        <Badge variant="outline">{labels.prepItemTypeLabels[template.item_type]}</Badge>
-                      </div>
-                      <span className="text-sm text-slate-600">
-                        {[labels.taskCategoryLabels[template.category], template.country, template.city]
-                          .filter(Boolean)
-                          .join(" · ")}
-                      </span>
-                    </button>
-                  </li>
-                ))}
+                {filtered.map((template) => {
+                  const alreadyAdded = appliedIds.has(template.id);
+                  return (
+                    <li key={template.id}>
+                      <button
+                        type="button"
+                        disabled={alreadyAdded}
+                        onClick={() => setSelected(template)}
+                        className="flex w-full flex-col items-start gap-1 rounded-2xl border border-slate-200 p-4 text-left transition hover:border-sky-300 hover:bg-sky-50 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:border-slate-200 disabled:hover:bg-transparent"
+                      >
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="font-semibold text-slate-950">{template.title}</span>
+                          <Badge variant="outline">{labels.prepItemTypeLabels[template.item_type]}</Badge>
+                          {alreadyAdded ? <Badge>{t("alreadyAdded")}</Badge> : null}
+                        </div>
+                        <span className="text-sm text-slate-600">
+                          {[labels.taskCategoryLabels[template.category], template.country, template.city]
+                            .filter(Boolean)
+                            .join(" · ")}
+                        </span>
+                      </button>
+                    </li>
+                  );
+                })}
               </ul>
             )}
 

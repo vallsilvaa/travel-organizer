@@ -77,9 +77,54 @@ describe("expense actions", () => {
       p_expense_date: "2026-10-12",
       p_payer_id: payerId,
       p_shares: [],
+      p_payment_status: "paid",
+      p_estimated_amount: null,
     });
     expect(result.success).toBe(true);
     expect(mocks.revalidatePath).toHaveBeenCalledWith(`/trips/${tripId}`);
+  });
+
+  it("creates a to_pay expense with only an estimate and no shares (#171)", async () => {
+    const formData = new FormData();
+    formData.set("tripId", tripId);
+    formData.set("description", "Planned museum tickets");
+    formData.set("paymentStatus", "to_pay");
+    formData.set("estimatedAmount", "40");
+    formData.set("currency", "BRL");
+    formData.set("category", "activities");
+    formData.set("date", "2026-10-12");
+    formData.set("participantIds", `${payerId},${otherParticipantId}`);
+
+    const result = await createExpense({}, formData);
+
+    expect(mocks.rpc).toHaveBeenCalledWith("create_expense_with_shares", {
+      p_trip_id: tripId,
+      p_description: "Planned museum tickets",
+      p_amount: null,
+      p_currency: "BRL",
+      p_category: "activities",
+      p_expense_date: "2026-10-12",
+      p_payer_id: null,
+      p_shares: [],
+      p_payment_status: "to_pay",
+      p_estimated_amount: "40.00",
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects a to_pay expense with neither an amount nor an estimate", async () => {
+    const formData = new FormData();
+    formData.set("tripId", tripId);
+    formData.set("description", "Nothing yet");
+    formData.set("paymentStatus", "to_pay");
+    formData.set("currency", "BRL");
+    formData.set("category", "activities");
+    formData.set("date", "2026-10-12");
+
+    const result = await createExpense({}, formData);
+
+    expect(result.errors?.amount).toBeTruthy();
+    expect(mocks.createClient).not.toHaveBeenCalled();
   });
 
   it("creates an expense with a matching split", async () => {
@@ -137,6 +182,8 @@ describe("expense actions", () => {
       p_expense_date: "2026-10-12",
       p_payer_id: payerId,
       p_shares: [],
+      p_payment_status: "paid",
+      p_estimated_amount: null,
     });
     expect(result.success).toBe(true);
   });

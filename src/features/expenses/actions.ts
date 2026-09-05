@@ -72,11 +72,9 @@ export async function createExpense(
     return { errors: translateFieldErrors(t, validation.errors) };
   }
 
-  const { shares, error: sharesError } = parseExpenseShares(
-    formData,
-    participantIdsFrom(formData),
-    validation.data.amount,
-  );
+  const { shares, error: sharesError } = validation.data.amount
+    ? parseExpenseShares(formData, participantIdsFrom(formData), validation.data.amount)
+    : { shares: [], error: undefined };
   if (sharesError) {
     return { errors: translateFieldErrors(t, { split: sharesError }) };
   }
@@ -94,6 +92,8 @@ export async function createExpense(
       user_id: share.userId,
       share_amount: share.shareAmount,
     })),
+    p_payment_status: validation.data.paymentStatus,
+    p_estimated_amount: validation.data.estimatedAmount,
   });
 
   if (error) {
@@ -132,11 +132,9 @@ export async function updateExpense(
     return { errors: translateFieldErrors(t, validation.errors) };
   }
 
-  const { shares, error: sharesError } = parseExpenseShares(
-    formData,
-    participantIdsFrom(formData),
-    validation.data.amount,
-  );
+  const { shares, error: sharesError } = validation.data.amount
+    ? parseExpenseShares(formData, participantIdsFrom(formData), validation.data.amount)
+    : { shares: [], error: undefined };
   if (sharesError) {
     return { errors: translateFieldErrors(t, { split: sharesError }) };
   }
@@ -155,6 +153,8 @@ export async function updateExpense(
       user_id: share.userId,
       share_amount: share.shareAmount,
     })),
+    p_payment_status: validation.data.paymentStatus,
+    p_estimated_amount: validation.data.estimatedAmount,
   });
 
   if (error) {

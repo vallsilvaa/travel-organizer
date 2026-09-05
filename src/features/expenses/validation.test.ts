@@ -25,13 +25,78 @@ describe("validateExpenseInput", () => {
       success: true,
       data: {
         description: "Dinner reservation",
+        paymentStatus: "paid",
         amount: "125.50",
+        estimatedAmount: null,
         currency: "BRL",
         category: "food",
         date: "2026-10-12",
         payerId,
       },
     });
+  });
+
+  it("allows a to_pay expense with only an estimate and no amount/payer (#171)", () => {
+    const formData = new FormData();
+    formData.set("description", "Planned excursion");
+    formData.set("paymentStatus", "to_pay");
+    formData.set("estimatedAmount", "80");
+    formData.set("currency", "brl");
+    formData.set("category", "activities");
+    formData.set("date", "2026-10-12");
+
+    const result = validateExpenseInput(formData);
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.amount).toBeNull();
+      expect(result.data.estimatedAmount).toBe("80.00");
+      expect(result.data.payerId).toBeNull();
+    }
+  });
+
+  it("requires an amount when paymentStatus is paid", () => {
+    const formData = new FormData();
+    formData.set("description", "Dinner reservation");
+    formData.set("currency", "BRL");
+    formData.set("category", "food");
+    formData.set("date", "2026-10-12");
+    formData.set("payerId", payerId);
+
+    const result = validateExpenseInput(formData);
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.errors.amount).toBe("amountRequiredWhenPaid");
+    }
+  });
+
+  it("requires a payer when paymentStatus is paid", () => {
+    const formData = validForm();
+    formData.delete("payerId");
+
+    const result = validateExpenseInput(formData);
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.errors.payer).toBe("payerRequiredWhenPaid");
+    }
+  });
+
+  it("rejects a to_pay expense with neither amount nor estimate", () => {
+    const formData = new FormData();
+    formData.set("description", "Nothing yet");
+    formData.set("paymentStatus", "to_pay");
+    formData.set("currency", "BRL");
+    formData.set("category", "food");
+    formData.set("date", "2026-10-12");
+
+    const result = validateExpenseInput(formData);
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.errors.amount).toBe("amountOrEstimateRequired");
+    }
   });
 
   it.each(["0", "-5", "12.345", "not-a-number"])(

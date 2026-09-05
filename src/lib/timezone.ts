@@ -34,6 +34,15 @@ export function todayInTimeZone(timeZone: string, now = new Date()) {
   }).format(now);
 }
 
+/** `date` (YYYY-MM-DD) shifted forward by `days` whole calendar days, via
+ * UTC midnight date-string arithmetic - the same style as daysUntil, for
+ * generating a trip's day-by-day itinerary timeline. */
+export function addDays(date: string, days: number) {
+  const shifted = new Date(`${date}T00:00:00Z`);
+  shifted.setUTCDate(shifted.getUTCDate() + days);
+  return shifted.toISOString().slice(0, 10);
+}
+
 /** Whole calendar days from `today` until `targetDate` (both YYYY-MM-DD).
  * Pure date-string arithmetic at UTC midnight, the same pattern already used
  * for ICS export math - timezone-awareness belongs to whoever produced

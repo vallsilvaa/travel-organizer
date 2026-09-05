@@ -57,7 +57,9 @@ async function authenticatedClient() {
   return { supabase, user };
 }
 
-export type ApplyResult = { ok: true } | { ok: false; reason: "trip_not_found" | "insert_failed" };
+export type ApplyResult =
+  | { ok: true }
+  | { ok: false; reason: "trip_not_found" | "insert_failed" | "duplicate" };
 
 export async function applyTemplateRowToTrip({
   supabase,
@@ -156,7 +158,10 @@ export async function applyTemplateRowToTrip({
     .single();
 
   if (error) {
-    return { ok: false, reason: "insert_failed" };
+    // The template is already active on this trip (#171) - the partial
+    // unique index on (trip_id, template_id) is the source of truth for
+    // this, catching concurrent/racing applies the UI check can't.
+    return { ok: false, reason: error.code === "23505" ? "duplicate" : "insert_failed" };
   }
 
   revalidatePath("/organizer");
@@ -343,7 +348,13 @@ export async function applyPrepTemplate(
   });
 
   if (!applied.ok) {
-    return { message: applied.reason === "trip_not_found" ? t("tripNotFound") : t("applyFailed") };
+    const message =
+      applied.reason === "trip_not_found"
+        ? t("tripNotFound")
+        : applied.reason === "duplicate"
+          ? t("alreadyAdded")
+          : t("applyFailed");
+    return { message };
   }
 
   return { success: true };

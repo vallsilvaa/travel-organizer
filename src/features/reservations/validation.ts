@@ -2,6 +2,8 @@ const uuidPattern =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const datePattern = /^\d{4}-\d{2}-\d{2}$/;
 const timePattern = /^([01]\d|2[0-3]):[0-5]\d$/;
+const amountPattern = /^\d{1,12}(?:\.\d{1,2})?$/;
+const currencyPattern = /^[A-Z]{3}$/;
 
 export const reservationTypes = ["flight", "lodging", "transport"] as const;
 export type ReservationType = (typeof reservationTypes)[number];
@@ -25,7 +27,10 @@ export type ReservationFieldErrors = Partial<
     | "location"
     | "destinationLocation"
     | "notes"
-    | "itineraryItemId",
+    | "itineraryItemId"
+    | "paidAmount"
+    | "currency"
+    | "payerId",
     string
   >
 >;
@@ -43,6 +48,9 @@ export type ReservationInput = {
   destinationLocation: string | null;
   notes: string | null;
   itineraryItemId: string | null;
+  paidAmount: string | null;
+  currency: string | null;
+  payerId: string | null;
 };
 
 function optionalValue(value: FormDataEntryValue | null) {
@@ -74,6 +82,10 @@ export function validateReservationInput(formData: FormData):
   const notes = optionalValue(formData.get("notes"));
   const rawItineraryItemId = optionalValue(formData.get("itineraryItemId"));
   const itineraryItemId = rawItineraryItemId === "none" ? null : rawItineraryItemId;
+  const rawPaidAmount = optionalValue(formData.get("paidAmount"));
+  const currency = optionalValue(formData.get("currency"))?.toUpperCase() ?? null;
+  const rawPayerId = optionalValue(formData.get("payerId"));
+  const payerId = rawPayerId === "none" ? null : rawPayerId;
   const errors: ReservationFieldErrors = {};
 
   if (itineraryItemId && !uuidPattern.test(itineraryItemId)) {
@@ -118,6 +130,30 @@ export function validateReservationInput(formData: FormData):
     errors.notes = "notesTooLong";
   }
 
+  // Paid amount, currency, and payer travel together: either all three are
+  // present (the reservation has been paid for) or none are (#171) - the
+  // same all-or-nothing shape the database constraint enforces.
+  let paidAmount: string | null = null;
+  if (rawPaidAmount) {
+    if (!amountPattern.test(rawPaidAmount) || Number(rawPaidAmount) <= 0) {
+      errors.paidAmount = "paidAmountInvalid";
+    } else {
+      paidAmount = Number(rawPaidAmount).toFixed(2);
+    }
+  }
+  if (currency && !currencyPattern.test(currency)) {
+    errors.currency = "currencyInvalid";
+  }
+  if (payerId && !uuidPattern.test(payerId)) {
+    errors.payerId = "payerInvalid";
+  }
+  if (paidAmount && !currency) {
+    errors.currency = "currencyRequiredWithPaidAmount";
+  }
+  if (paidAmount && !payerId) {
+    errors.payerId = "payerRequiredWithPaidAmount";
+  }
+
   return Object.keys(errors).length
     ? { success: false, errors }
     : {
@@ -135,6 +171,9 @@ export function validateReservationInput(formData: FormData):
           destinationLocation,
           notes,
           itineraryItemId,
+          paidAmount,
+          currency: paidAmount ? currency : null,
+          payerId: paidAmount ? payerId : null,
         },
       };
 }

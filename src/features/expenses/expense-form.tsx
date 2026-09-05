@@ -29,11 +29,13 @@ type ExpenseFormProps = {
   expense?: {
     id: string;
     description: string;
-    amount: string;
+    amount: string | null;
     currency: string;
     category: string;
     expense_date: string;
-    payer_id: string;
+    payer_id: string | null;
+    payment_status: "paid" | "to_pay";
+    estimated_amount: string | null;
   };
   existingShares?: ExpenseShare[];
   participants: Participant[];
@@ -54,6 +56,7 @@ export function ExpenseForm({
   tripId,
 }: ExpenseFormProps) {
   const t = useTranslations("expenseForm");
+  const tCommon = useTranslations("common");
   const tCategories = useTranslations("categories.expense");
   const expenseCategoryLabels = getExpenseCategoryLabels(tCategories);
   const [state, formAction, pending] = useActionState(
@@ -62,6 +65,7 @@ export function ExpenseForm({
   );
 
   const [amount, setAmount] = useState(expense?.amount ?? "");
+  const [paymentStatus, setPaymentStatus] = useState<"paid" | "to_pay">(expense?.payment_status ?? "paid");
   const [splitEnabled, setSplitEnabled] = useState(existingShares.length > 0);
   const [splitMode, setSplitMode] = useState<"equal" | "custom">("equal");
   const [selected, setSelected] = useState<Set<string>>(
@@ -135,10 +139,56 @@ export function ExpenseForm({
         />
         {state.errors?.description ? <p className="text-sm text-destructive">{state.errors.description}</p> : null}
       </div>
+
+      <div className="space-y-2 sm:col-span-2">
+        <Label>{t("paymentStatusLabel")}</Label>
+        <div className="flex gap-4 text-sm">
+          <label className="flex items-center gap-1.5">
+            <input
+              type="radio"
+              name="paymentStatus"
+              value="paid"
+              checked={paymentStatus === "paid"}
+              onChange={() => setPaymentStatus("paid")}
+            />
+            {t("paymentStatusPaid")}
+          </label>
+          <label className="flex items-center gap-1.5">
+            <input
+              type="radio"
+              name="paymentStatus"
+              value="to_pay"
+              checked={paymentStatus === "to_pay"}
+              onChange={() => setPaymentStatus("to_pay")}
+            />
+            {t("paymentStatusToPay")}
+          </label>
+        </div>
+      </div>
+
       <div className="space-y-2">
-        <Label htmlFor="amount">{t("amountLabel")}</Label>
+        <Label htmlFor="estimatedAmount">
+          {t("estimatedAmountLabel")} <span className="font-normal text-muted-foreground">{tCommon("optional")}</span>
+        </Label>
         <Input
-          required
+          min="0.01"
+          max="999999999999.99"
+          step="0.01"
+          id="estimatedAmount"
+          name="estimatedAmount"
+          type="number"
+          inputMode="decimal"
+          defaultValue={expense?.estimated_amount ?? ""}
+        />
+        {state.errors?.estimatedAmount ? <p className="text-sm text-destructive">{state.errors.estimatedAmount}</p> : null}
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="amount">
+          {t("amountLabel")} {paymentStatus === "to_pay" ? <span className="font-normal text-muted-foreground">{tCommon("optional")}</span> : null}
+        </Label>
+        <Input
+          required={paymentStatus === "paid"}
           min="0.01"
           max="999999999999.99"
           step="0.01"
@@ -185,11 +235,13 @@ export function ExpenseForm({
         {state.errors?.date ? <p className="text-sm text-destructive">{state.errors.date}</p> : null}
       </div>
       <div className="space-y-2 sm:col-span-2">
-        <Label htmlFor="payerId">{t("payerLabel")}</Label>
+        <Label htmlFor="payerId">
+          {t("payerLabel")} {paymentStatus === "to_pay" ? <span className="font-normal text-muted-foreground">{tCommon("optional")}</span> : null}
+        </Label>
         <Select
-          required
+          required={paymentStatus === "paid"}
           name="payerId"
-          defaultValue={expense?.payer_id}
+          defaultValue={expense?.payer_id ?? undefined}
           items={Object.fromEntries(
             participants.map((participant) => [participant.user_id, `${participant.display_name} (${participant.role})`]),
           )}
@@ -208,6 +260,7 @@ export function ExpenseForm({
         {state.errors?.payer ? <p className="text-sm text-destructive">{state.errors.payer}</p> : null}
       </div>
 
+      {paymentStatus === "paid" ? (
       <div className="space-y-3 rounded-2xl border border-slate-200 p-4 sm:col-span-2">
         <label className="flex items-center gap-2 text-sm font-medium text-slate-800">
           <input
@@ -294,10 +347,11 @@ export function ExpenseForm({
           </div>
         ) : null}
       </div>
+      ) : null}
 
       <Button
         type="submit"
-        disabled={pending || !splitMatches}
+        disabled={pending || (paymentStatus === "paid" && !splitMatches)}
         size="lg"
         className="sm:col-span-2 sm:justify-self-start"
       >
