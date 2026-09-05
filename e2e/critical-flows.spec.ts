@@ -154,7 +154,17 @@ test("traveler completes the critical collaborative planning journey", async ({
     });
     await expect(taskItem).toBeVisible();
     await taskItem.getByRole("button", { name: "Concluir" }).click();
-    await expect(taskItem.getByText("Concluída")).toBeVisible();
+
+    // Completing a task removes it from the default "Em aberto" view (#171) -
+    // switch to "Todos os status" to confirm it now shows as done.
+    await page.getByRole("combobox", { name: "Status" }).click();
+    await page.getByRole("option", { name: "Todos os status" }).click();
+    await page.getByRole("button", { name: "Aplicar filtros" }).click();
+
+    const completedTaskItem = page.locator("li").filter({
+      has: page.getByRole("heading", { name: taskTitle }),
+    });
+    await expect(completedTaskItem.getByText("Concluída")).toBeVisible();
   });
 
   await test.step("invite and accept an organizer", async () => {
