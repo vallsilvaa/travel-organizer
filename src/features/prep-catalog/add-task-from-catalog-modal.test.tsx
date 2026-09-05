@@ -48,13 +48,14 @@ const labels = {
   continentLabels: { europe: "Europa" } as Record<string, string>,
 };
 
-function renderModal(templates = [passportTemplate, colosseumTemplate]) {
+function renderModal(templates = [passportTemplate, colosseumTemplate], appliedTemplateIds: string[] = []) {
   render(
     <AddTaskFromCatalogModal
       templates={templates as never}
       tripId="27823996-ec50-4cc2-8506-a29d07b86f94"
       participants={[{ user_id: "user-1", display_name: "Alice", role: "traveler" }]}
       itineraryItems={[{ id: "item-1", title: "City walk" }]}
+      appliedTemplateIds={appliedTemplateIds}
       {...labels}
     />,
   );
@@ -127,5 +128,16 @@ describe("AddTaskFromCatalogModal", () => {
     fireEvent.click(screen.getByRole("button", { name: "Cancelar" }));
 
     expect(screen.queryByLabelText("Buscar")).toBeNull();
+  });
+
+  it("disables an already-applied template and marks it, but leaves the others selectable (#171)", () => {
+    renderModal([passportTemplate, colosseumTemplate], [passportTemplate.id]);
+
+    const passportButton = screen.getByText("Check passport validity").closest("button") as HTMLButtonElement;
+    expect(passportButton.disabled).toBe(true);
+    expect(screen.getByText("Já adicionada")).toBeTruthy();
+
+    const colosseumButton = screen.getByText("Visit the Colosseum").closest("button") as HTMLButtonElement;
+    expect(colosseumButton.disabled).toBe(false);
   });
 });

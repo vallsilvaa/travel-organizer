@@ -20,8 +20,18 @@ export type ExpenseCategory = (typeof expenseCategories)[number];
 export function getExpenseCategoryLabels(t: (category: ExpenseCategory) => string): Record<ExpenseCategory, string> {
   return Object.fromEntries(expenseCategories.map((category) => [category, t(category)])) as Record<ExpenseCategory, string>;
 }
+export const paymentStatuses = ["paid", "to_pay"] as const;
+export type PaymentStatus = (typeof paymentStatuses)[number];
+
+export function isPaymentStatus(value: string): value is PaymentStatus {
+  return (paymentStatuses as readonly string[]).includes(value);
+}
+
 export type ExpenseFieldErrors = Partial<
-  Record<"description" | "amount" | "currency" | "category" | "date" | "payer" | "split", string>
+  Record<
+    "description" | "amount" | "currency" | "category" | "date" | "payer" | "split" | "estimatedAmount",
+    string
+  >
 >;
 
 export type ExpenseShare = { userId: string; shareAmount: string };
@@ -110,19 +120,47 @@ export function isValidExpenseId(value: string) {
 
 export function validateExpenseInput(formData: FormData) {
   const description = String(formData.get("description") ?? "").trim();
+  const rawPaymentStatus = String(formData.get("paymentStatus") ?? "paid");
+  const paymentStatus: PaymentStatus = isPaymentStatus(rawPaymentStatus) ? rawPaymentStatus : "paid";
   const rawAmount = String(formData.get("amount") ?? "").trim();
+  const rawEstimatedAmount = String(formData.get("estimatedAmount") ?? "").trim();
   const currency = String(formData.get("currency") ?? "").trim().toUpperCase();
   const category = String(formData.get("category") ?? "");
   const date = String(formData.get("date") ?? "").trim();
-  const payerId = String(formData.get("payerId") ?? "").trim();
+  const rawPayerId = String(formData.get("payerId") ?? "").trim();
   const errors: ExpenseFieldErrors = {};
 
   if (!description || description.length > 200) {
     errors.description = "descriptionRequired";
   }
-  if (!amountPattern.test(rawAmount) || Number(rawAmount) <= 0) {
-    errors.amount = "amountInvalid";
+
+  // A "paid" expense needs the real numbers now; a "to_pay" one may still
+  // only have an estimate (#171) - amount and payer become required
+  // exactly when it's marked paid, not before.
+  let amount: string | null = null;
+  if (rawAmount) {
+    if (!amountPattern.test(rawAmount) || Number(rawAmount) <= 0) {
+      errors.amount = "amountInvalid";
+    } else {
+      amount = Number(rawAmount).toFixed(2);
+    }
+  } else if (paymentStatus === "paid") {
+    errors.amount = "amountRequiredWhenPaid";
   }
+
+  let estimatedAmount: string | null = null;
+  if (rawEstimatedAmount) {
+    if (!amountPattern.test(rawEstimatedAmount) || Number(rawEstimatedAmount) <= 0) {
+      errors.estimatedAmount = "estimatedAmountInvalid";
+    } else {
+      estimatedAmount = Number(rawEstimatedAmount).toFixed(2);
+    }
+  }
+
+  if (!amount && !estimatedAmount) {
+    errors.amount = errors.amount ?? "amountOrEstimateRequired";
+  }
+
   if (!currencyPattern.test(currency)) {
     errors.currency = "currencyInvalid";
   }
@@ -132,8 +170,16 @@ export function validateExpenseInput(formData: FormData) {
   if (!datePattern.test(date) || Number.isNaN(Date.parse(`${date}T00:00:00Z`))) {
     errors.date = "dateInvalid";
   }
-  if (!isValidExpenseId(payerId)) {
-    errors.payer = "payerInvalid";
+
+  let payerId: string | null = null;
+  if (rawPayerId) {
+    if (!isValidExpenseId(rawPayerId)) {
+      errors.payer = "payerInvalid";
+    } else {
+      payerId = rawPayerId;
+    }
+  } else if (paymentStatus === "paid") {
+    errors.payer = "payerRequiredWhenPaid";
   }
 
   return Object.keys(errors).length
@@ -142,7 +188,9 @@ export function validateExpenseInput(formData: FormData) {
         success: true as const,
         data: {
           description,
-          amount: Number(rawAmount).toFixed(2),
+          paymentStatus,
+          amount,
+          estimatedAmount,
           currency,
           category: category as ExpenseCategory,
           date,

@@ -75,7 +75,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { daysUntil, todayInTimeZone } from "@/lib/timezone";
+import { addDays, daysUntil, todayInTimeZone } from "@/lib/timezone";
 
 type TripPageProps = {
   params: Promise<{ tripId: string }>;
@@ -112,11 +112,13 @@ type TripComment = ItemComment & {
 type TripExpense = {
   id: string;
   description: string;
-  amount: string;
+  amount: string | null;
   currency: string;
   category: string;
   expense_date: string;
-  payer_id: string;
+  payer_id: string | null;
+  payment_status: "paid" | "to_pay";
+  estimated_amount: string | null;
 };
 
 type ExpenseShare = {
@@ -132,6 +134,13 @@ type ExpenseBalanceRow = {
   total_paid: string;
   total_owed: string;
   net_balance: string;
+};
+
+type ExpenseSummaryRow = {
+  currency: string;
+  estimated_total: string;
+  paid_total: string;
+  to_pay_total: string;
 };
 
 type TripAttachment = {
@@ -179,6 +188,10 @@ type TripReservation = {
   destination_location: string | null;
   notes: string | null;
   itinerary_item_id: string | null;
+  paid_amount: string | null;
+  currency: string | null;
+  payer_id: string | null;
+  expense_id: string | null;
 };
 
 type TripTask = {
@@ -192,6 +205,7 @@ type TripTask = {
   category: TaskCategory;
   is_critical: boolean;
   template_key: string | null;
+  template_id: string | null;
   reference_label: string | null;
   reference_url: string | null;
   item_type: PrepItemType;
@@ -305,9 +319,12 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
 
   const isCreator = trip.created_by === user.id;
   const isArchived = Boolean(trip.archived_at);
-  const statusFilter = filters.status === "completed" || filters.status === "open"
+  // "Em aberto" is the default (#171) - "all" only applies when the URL
+  // explicitly asks for it, so landing on the tab with no query params
+  // never shows completed tasks mixed in.
+  const statusFilter = filters.status === "completed" || filters.status === "all"
     ? filters.status
-    : "all";
+    : "open";
   const ownerFilter = filters.owner ?? "all";
   const categoryFilter = taskCategories.includes(filters.category as TaskCategory)
     ? filters.category as TaskCategory
@@ -335,6 +352,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
     { data: expenses, error: expensesError },
     { data: expenseShares },
     { data: expenseBalances },
+    { data: expenseSummary },
     invitationResult,
     templatesResult,
   ] =
@@ -347,7 +365,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
         .order("start_time", { ascending: true, nullsFirst: false }),
       supabase
         .from("trip_reservations")
-        .select("id, reservation_type, title, provider, confirmation_code, start_date, start_time, end_date, end_time, location, destination_location, notes, itinerary_item_id")
+        .select("id, reservation_type, title, provider, confirmation_code, start_date, start_time, end_date, end_time, location, destination_location, notes, itinerary_item_id, paid_amount, currency, payer_id, expense_id")
         .eq("trip_id", trip.id)
         .order("start_date", { ascending: true })
         .order("start_time", { ascending: true, nullsFirst: false }),
@@ -358,10 +376,11 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
         .order("created_at", { ascending: false }),
       supabase
         .from("trip_tasks")
-        .select("id, title, owner_id, due_date, due_offset_days, completed_at, created_at, category, is_critical, template_key, reference_label, reference_url, item_type, continent, country, city, classification, currency, estimated_amount, paid_amount, itinerary_item_id, document_instructions, expense_id")
+        .select("id, title, owner_id, due_date, due_offset_days, completed_at, created_at, category, is_critical, template_key, template_id, reference_label, reference_url, item_type, continent, country, city, classification, currency, estimated_amount, paid_amount, itinerary_item_id, document_instructions, expense_id")
         .eq("trip_id", trip.id)
         .order("due_date", { ascending: true, nullsFirst: false })
-        .order("created_at", { ascending: true }),
+        .order("created_at", { ascending: true })
+        .order("id", { ascending: true }),
       supabase.rpc("get_trip_participants", { requested_trip_id: trip.id }),
       supabase
         .from("item_comments")
@@ -370,7 +389,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
         .order("created_at", { ascending: true }),
       supabase
         .from("trip_expenses")
-        .select("id, description, amount, currency, category, expense_date, payer_id")
+        .select("id, description, amount, currency, category, expense_date, payer_id, payment_status, estimated_amount")
         .eq("trip_id", trip.id)
         .order("expense_date", { ascending: false })
         .order("created_at", { ascending: false }),
@@ -379,6 +398,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
         .select("expense_id, user_id, share_amount")
         .eq("trip_id", trip.id),
       supabase.rpc("get_trip_expense_balances", { requested_trip_id: trip.id }),
+      supabase.rpc("get_trip_expense_summary", { requested_trip_id: trip.id }),
       isCreator
         ? supabase
             .from("trip_invitations")
@@ -415,6 +435,9 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
         ? t("countdown.inProgress")
         : null;
   const allTasks = (tasks ?? []) as TripTask[];
+  const appliedTemplateIds = allTasks
+    .map((task) => task.template_id)
+    .filter((templateId): templateId is string => Boolean(templateId));
   const filteredTasks = allTasks.filter((task) => {
     const matchesStatus = statusFilter === "all"
       || (statusFilter === "completed" ? Boolean(task.completed_at) : !task.completed_at);
@@ -433,12 +456,14 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
     : 0;
   const criticalOpenCount = allTasks.filter((task) => task.is_critical && !task.completed_at).length;
   const overdueTaskCount = allTasks.filter((task) => !task.completed_at && task.due_date && task.due_date < today).length;
-  const tasksByCategory = taskCategories
-    .map((category) => ({
-      category,
-      tasks: filteredTasks.filter((task) => task.category === category),
-    }))
-    .filter((group) => group.tasks.length);
+  // The DB query already sorts open tasks by due_date asc (nulls last),
+  // then created_at, then id - most overdue first, then soonest-due, then
+  // furthest out, with no-deadline tasks trailing (#171). Viewing
+  // completed tasks instead uses the opposite, most-recently-finished
+  // priority, so it's resorted here rather than at the query level.
+  const sortedTasks = statusFilter === "completed"
+    ? [...filteredTasks].sort((a, b) => (b.completed_at ?? "").localeCompare(a.completed_at ?? ""))
+    : filteredTasks;
   const tripComments = (comments ?? []) as TripComment[];
   const tripReservations = (reservations ?? []) as TripReservation[];
   const rawAttachments = (attachments ?? []) as TripAttachment[];
@@ -478,20 +503,41 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
     const matchesPeriod = itineraryPeriodFilter === "all" || item.period === itineraryPeriodFilter;
     return matchesCity && matchesPeriod;
   });
-  const itineraryGroups = (() => {
-    type ItineraryGroup = { city: string | null; items: typeof filteredItineraryItems };
-    const groups = new Map<string, ItineraryGroup>();
-    for (const item of filteredItineraryItems) {
-      const key = item.city ?? "";
-      const group: ItineraryGroup = groups.get(key) ?? { city: item.city, items: [] };
-      group.items.push(item);
-      groups.set(key, group);
-    }
-    return Array.from(groups.values()).sort(
-      (a, b) => (a.items[0]?.item_date ?? "") < (b.items[0]?.item_date ?? "") ? -1 : 1,
-    );
-  })();
+  // A trip without an end_date only has a single valid day, its
+  // start_date (#171) - same rule the server-side date-range check uses.
+  const tripLastDay = trip.end_date ?? trip.start_date;
+  const tripDayDates: string[] = [];
+  for (let cursor = trip.start_date; cursor <= tripLastDay; cursor = addDays(cursor, 1)) {
+    tripDayDates.push(cursor);
+  }
+  const itemsByDate = new Map<string, typeof filteredItineraryItems>();
+  for (const item of filteredItineraryItems) {
+    const list = itemsByDate.get(item.item_date) ?? [];
+    list.push(item);
+    itemsByDate.set(item.item_date, list);
+  }
+  const itineraryDayGroups = tripDayDates.map((date, index) => ({
+    date,
+    dayNumber: index + 1,
+    items: itemsByDate.get(date) ?? [],
+  }));
+  // Shortening/moving the trip's dates after items already exist must
+  // surface those items for correction, never silently drop or move them
+  // (#171) - so anything outside the *current* range is shown separately
+  // rather than folded into (or hidden from) the day-by-day timeline above.
+  const outOfRangeItineraryItems = filteredItineraryItems.filter(
+    (item) => item.item_date < trip.start_date || item.item_date > tripLastDay,
+  );
   const taskTitles = new Map((tasks ?? []).map((task) => [task.id, task.title]));
+  const tasksByItineraryItemId = new Map<string, { id: string; title: string; completed_at: string | null }[]>();
+  for (const task of (tasks ?? []) as TripTask[]) {
+    if (!task.itinerary_item_id) {
+      continue;
+    }
+    const list = tasksByItineraryItemId.get(task.itinerary_item_id) ?? [];
+    list.push({ id: task.id, title: task.title, completed_at: task.completed_at });
+    tasksByItineraryItemId.set(task.itinerary_item_id, list);
+  }
   const reservationTitles = new Map(tripReservations.map((reservation) => [reservation.id, reservation.title]));
   const itineraryItemOptions = (itineraryItems ?? []).map((item) => ({
     id: item.id,
@@ -508,6 +554,12 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
     reservationsByItineraryItemId.set(reservation.itinerary_item_id, list);
   }
   const tripExpenses = (expenses ?? []) as TripExpense[];
+  const reservationForExpense = new Map(
+    tripReservations.filter((r) => r.expense_id).map((r) => [r.expense_id as string, r]),
+  );
+  const taskForExpense = new Map(
+    allTasks.filter((task) => task.expense_id).map((task) => [task.expense_id as string, task]),
+  );
   const sharesByExpense = new Map<string, ExpenseShare[]>();
   for (const share of (expenseShares ?? []) as ExpenseShare[]) {
     const shares = sharesByExpense.get(share.expense_id) ?? [];
@@ -524,6 +576,24 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
     }, new Map<string, number>()),
   ).sort(([currencyA], [currencyB]) => currencyA.localeCompare(currencyB));
   const balanceRows = (expenseBalances ?? []) as ExpenseBalanceRow[];
+  const expenseSummaryRows = ((expenseSummary ?? []) as ExpenseSummaryRow[])
+    .map((row) => {
+      const estimatedTotal = Number(row.estimated_total);
+      const paidTotal = Number(row.paid_total);
+      const toPayTotal = Number(row.to_pay_total);
+      const consumedTotal = paidTotal + toPayTotal;
+      const difference = consumedTotal - estimatedTotal;
+      const percentUsed = estimatedTotal > 0 ? Math.round((consumedTotal / estimatedTotal) * 100) : null;
+      return {
+        currency: row.currency,
+        estimatedTotal,
+        paidTotal,
+        toPayTotal,
+        difference,
+        percentUsed,
+      };
+    })
+    .sort((a, b) => a.currency.localeCompare(b.currency));
   // Balances come from every historical payer/ower, including participants
   // later removed from the trip, so this is a strictly richer name lookup
   // than the current-participants-only map above.
@@ -573,7 +643,8 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
         expenses: groupExpenses,
         subtotalsByCurrency: Array.from(
           groupExpenses.reduce((totals, expense) => {
-            totals.set(expense.currency, (totals.get(expense.currency) ?? 0) + Number(expense.amount));
+            const amount = Number(expense.amount ?? expense.estimated_amount ?? 0);
+            totals.set(expense.currency, (totals.get(expense.currency) ?? 0) + amount);
             return totals;
           }, new Map<string, number>()),
         ).sort(([currencyA], [currencyB]) => currencyA.localeCompare(currencyB)),
@@ -588,8 +659,8 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
     : [];
   const expensesByPayer = expenseView === "payer"
     ? buildExpenseGroups(
-        (expense) => expense.payer_id,
-        (key) => namesIncludingRemoved.get(key) ?? tCommon("traveler"),
+        (expense) => expense.payer_id ?? "unassigned",
+        (key) => (key === "unassigned" ? t("expenses.noPayerYet") : namesIncludingRemoved.get(key) ?? tCommon("traveler")),
       )
     : [];
   const commentsFor = (itemType: "itinerary" | "task", itemId: string) =>
@@ -618,10 +689,38 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
             <Badge variant="secondary" className="capitalize">
               {expenseCategoryLabels[expense.category as keyof typeof expenseCategoryLabels] ?? expense.category}
             </Badge>
+            {expense.payment_status === "to_pay" ? (
+              <Badge className="bg-amber-100 text-amber-900">{t("expenses.paymentStatusToPay")}</Badge>
+            ) : null}
+            {reservationForExpense.get(expense.id) ? (
+              <Link
+                href={`/trips/${trip.id}?tab=itinerary#reservation-${reservationForExpense.get(expense.id)!.id}`}
+                className="inline-flex items-center rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-800 hover:bg-sky-100"
+              >
+                {t("expenses.originReservation")}
+              </Link>
+            ) : taskForExpense.get(expense.id) ? (
+              <Link
+                href={`/trips/${trip.id}?tab=preparation#task-${taskForExpense.get(expense.id)!.id}`}
+                className="inline-flex items-center rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-800 hover:bg-sky-100"
+              >
+                {t("expenses.originTask")}
+              </Link>
+            ) : null}
           </div>
-          <p className="mt-2 text-lg font-semibold text-emerald-800">{formatMoney(expense.amount, expense.currency)}</p>
+          <p className="mt-2 text-lg font-semibold text-emerald-800">
+            {expense.amount ? formatMoney(expense.amount, expense.currency) : null}
+            {expense.estimated_amount ? (
+              <span className="ml-2 text-sm font-normal text-slate-500">
+                {t("expenses.estimatedInline", { amount: formatMoney(expense.estimated_amount, expense.currency) })}
+              </span>
+            ) : null}
+          </p>
           <p className="mt-1 text-sm text-slate-600">
-            {t("expenses.paidBy", { name: namesIncludingRemoved.get(expense.payer_id) ?? tCommon("traveler") })} · {formatDate(expense.expense_date)}
+            {expense.payer_id
+              ? t("expenses.paidBy", { name: namesIncludingRemoved.get(expense.payer_id) ?? tCommon("traveler") })
+              : t("expenses.noPayerYet")}
+            {" · "}{formatDate(expense.expense_date)}
           </p>
           {sharesByExpense.get(expense.id)?.length ? (
             <p className="mt-2 text-sm text-slate-600">
@@ -1035,64 +1134,106 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                   {t("itinerary.loadError")}
                 </p>
               ) : filteredItineraryItems.length ? (
-                <div className="mt-6 space-y-8">
-                  {itineraryGroups.map((group) => (
-                    <section key={group.city ?? "__no_city__"}>
-                      {tripCities.length ? (
-                        <h3 className="text-sm font-semibold uppercase tracking-[0.12em] text-slate-500">
-                          {group.city ?? t("itinerary.noCity")}
-                        </h3>
-                      ) : null}
-                      <ol className="mt-3 space-y-4">
-                        {group.items.map((item) => (
-                          <li id={`itinerary-${item.id}`} key={item.id} className="rounded-2xl border border-slate-200 p-5">
-                            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                              <div>
-                                <p className="text-sm font-semibold text-sky-700">
-                                  {formatDate(item.item_date)} · {formatItineraryWhen(item)}
-                                </p>
-                                <h3 className="mt-2 text-lg font-semibold text-slate-950">{item.title}</h3>
-                                {item.location ? <p className="mt-1 text-sm text-slate-600">{item.location}</p> : null}
-                                {item.notes ? <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-slate-600">{item.notes}</p> : null}
-                                {(reservationsByItineraryItemId.get(item.id) ?? []).length ? (
-                                  <div className="mt-3 flex flex-wrap gap-2">
-                                    {(reservationsByItineraryItemId.get(item.id) ?? []).map((reservation) => (
-                                      <Link
-                                        key={reservation.id}
-                                        href={`/trips/${trip.id}?tab=itinerary#reservation-${reservation.id}`}
-                                        className="inline-flex items-center gap-1 rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-800 hover:bg-sky-100"
-                                      >
-                                        {t("itinerary.linkedReservation", { title: reservation.title })}
-                                      </Link>
-                                    ))}
-                                  </div>
-                                ) : null}
-                              </div>
-                              {!isArchived ? (
-                                <ItemActionsMenu
-                                  editLabel={t("itinerary.editItem")}
-                                  editForm={<ItineraryForm existingCities={tripCities} item={item} tripId={trip.id} />}
-                                  deleteAction={deleteItineraryItem}
-                                  deleteHiddenFields={{ tripId: trip.id, itemId: item.id }}
-                                  deleteTitle={t("itinerary.deleteItemTitle")}
-                                  deleteDescription={t("itinerary.deleteItemDescription", { title: item.title })}
-                                />
-                              ) : null}
-                            </div>
-                            <CommentThread
-                              comments={commentsFor("itinerary", item.id)}
-                              currentUserId={user.id}
-                              itemId={item.id}
-                              itemType="itinerary"
-                              participantNames={participantNames}
-                              tripId={trip.id}
+                <>
+                  {outOfRangeItineraryItems.length ? (
+                    <div className="mt-6 rounded-2xl border border-amber-300 bg-amber-50 p-5">
+                      <h3 className="font-semibold text-amber-900">{t("itinerary.outOfRangeTitle")}</h3>
+                      <p className="mt-1 text-sm text-amber-800">{t("itinerary.outOfRangeDescription")}</p>
+                      <ul className="mt-3 space-y-2">
+                        {outOfRangeItineraryItems.map((item) => (
+                          <li key={item.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-white p-3 text-sm">
+                            <span>{formatDate(item.item_date)} · {item.title}</span>
+                            <ItemActionsMenu
+                              editLabel={t("itinerary.editItem")}
+                              editForm={<ItineraryForm existingCities={tripCities} item={item} tripId={trip.id} />}
+                              deleteAction={deleteItineraryItem}
+                              deleteHiddenFields={{ tripId: trip.id, itemId: item.id }}
+                              deleteTitle={t("itinerary.deleteItemTitle")}
+                              deleteDescription={t("itinerary.deleteItemDescription", { title: item.title })}
                             />
                           </li>
                         ))}
-                      </ol>
-                    </section>
-                  ))}
-                </div>
+                      </ul>
+                    </div>
+                  ) : null}
+                  <div className="mt-6 space-y-8">
+                    {itineraryDayGroups.map((group) => (
+                      <section key={group.date}>
+                        <h3 className="text-sm font-semibold uppercase tracking-[0.12em] text-slate-500">
+                          {t("itinerary.dayHeading", { day: group.dayNumber, date: formatDate(group.date) })}
+                        </h3>
+                        {group.items.length ? (
+                          <ol className="mt-3 space-y-4">
+                            {group.items.map((item) => (
+                              <li id={`itinerary-${item.id}`} key={item.id} className="rounded-2xl border border-slate-200 p-5">
+                                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                                  <div>
+                                    <p className="text-sm font-semibold text-sky-700">
+                                      {formatItineraryWhen(item)}
+                                    </p>
+                                    <h3 className="mt-2 text-lg font-semibold text-slate-950">{item.title}</h3>
+                                    {item.location || item.city ? (
+                                      <p className="mt-1 text-sm text-slate-600">
+                                        {[item.location, item.city].filter(Boolean).join(" · ")}
+                                      </p>
+                                    ) : null}
+                                    {item.notes ? <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-slate-600">{item.notes}</p> : null}
+                                    {(reservationsByItineraryItemId.get(item.id) ?? []).length ? (
+                                      <div className="mt-3 flex flex-wrap gap-2">
+                                        {(reservationsByItineraryItemId.get(item.id) ?? []).map((reservation) => (
+                                          <Link
+                                            key={reservation.id}
+                                            href={`/trips/${trip.id}?tab=itinerary#reservation-${reservation.id}`}
+                                            className="inline-flex items-center gap-1 rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-800 hover:bg-sky-100"
+                                          >
+                                            {t("itinerary.linkedReservation", { title: reservation.title })}
+                                          </Link>
+                                        ))}
+                                      </div>
+                                    ) : null}
+                                    {(tasksByItineraryItemId.get(item.id) ?? []).length ? (
+                                      <div className="mt-3 flex flex-wrap gap-2">
+                                        {(tasksByItineraryItemId.get(item.id) ?? []).map((task) => (
+                                          <Link
+                                            key={task.id}
+                                            href={`/trips/${trip.id}?tab=preparation#task-${task.id}`}
+                                            className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-semibold ${task.completed_at ? "border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-100" : "border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100"}`}
+                                          >
+                                            {t("itinerary.linkedTask", { title: task.title })}
+                                          </Link>
+                                        ))}
+                                      </div>
+                                    ) : null}
+                                  </div>
+                                  {!isArchived ? (
+                                    <ItemActionsMenu
+                                      editLabel={t("itinerary.editItem")}
+                                      editForm={<ItineraryForm existingCities={tripCities} item={item} tripId={trip.id} />}
+                                      deleteAction={deleteItineraryItem}
+                                      deleteHiddenFields={{ tripId: trip.id, itemId: item.id }}
+                                      deleteTitle={t("itinerary.deleteItemTitle")}
+                                      deleteDescription={t("itinerary.deleteItemDescription", { title: item.title })}
+                                    />
+                                  ) : null}
+                                </div>
+                                <CommentThread
+                                  comments={commentsFor("itinerary", item.id)}
+                                  currentUserId={user.id}
+                                  itemId={item.id}
+                                  itemType="itinerary"
+                                  participantNames={participantNames}
+                                  tripId={trip.id}
+                                />
+                              </li>
+                            ))}
+                          </ol>
+                        ) : (
+                          <p className="mt-3 text-sm text-slate-500">{t("itinerary.emptyDay")}</p>
+                        )}
+                      </section>
+                    ))}
+                  </div>
+                </>
               ) : (
                 <p className="mt-5 rounded-2xl border border-dashed border-slate-300 p-6 text-sm text-slate-600">
                   {itineraryItems?.length ? t("itinerary.noneMatchFilters") : t("itinerary.empty")}
@@ -1115,7 +1256,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                     {t("itinerary.addReservation")}
                   </summary>
                   <div className="mt-5">
-                    <ReservationForm itineraryItems={itineraryItemOptions} tripId={trip.id} />
+                    <ReservationForm itineraryItems={itineraryItemOptions} participants={tripParticipants} tripId={trip.id} />
                   </div>
                 </details>
               ) : null}
@@ -1166,6 +1307,15 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                               {t("itinerary.linkedToItemSuffix")}
                             </p>
                           ) : null}
+                          {reservation.paid_amount && reservation.currency ? (
+                            <p className="mt-2 text-sm text-slate-600">
+                              {t("itinerary.reservationPaid", {
+                                amount: formatMoney(reservation.paid_amount, reservation.currency),
+                                payer: participantNames.get(reservation.payer_id ?? "") ?? tCommon("traveler"),
+                              })}
+                              {reservation.expense_id ? ` · ${t("itinerary.reservationExpenseLinked")}` : ""}
+                            </p>
+                          ) : null}
                           {reservation.notes ? (
                             <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-slate-600">{reservation.notes}</p>
                           ) : null}
@@ -1173,7 +1323,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                         {!isArchived ? (
                           <ItemActionsMenu
                             editLabel={t("itinerary.editReservation")}
-                            editForm={<ReservationForm itineraryItems={itineraryItemOptions} reservation={reservation} tripId={trip.id} />}
+                            editForm={<ReservationForm itineraryItems={itineraryItemOptions} participants={tripParticipants} reservation={reservation} tripId={trip.id} />}
                             deleteAction={deleteReservation}
                             deleteHiddenFields={{ tripId: trip.id, reservationId: reservation.id }}
                             deleteTitle={t("itinerary.deleteReservationTitle")}
@@ -1211,6 +1361,67 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                     </div>
                   ))}
                 </dl>
+              ) : null}
+
+              {expenseSummaryRows.length ? (
+                <div className="mt-6 space-y-4">
+                  <h3 className="text-lg font-semibold text-slate-950">{t("expenses.summaryTitle")}</h3>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    {expenseSummaryRows.map((row) => {
+                      const diffCents = Math.round(row.difference * 100);
+                      const budgetState =
+                        row.percentUsed === null
+                          ? "noEstimate"
+                          : diffCents > 0
+                            ? "over"
+                            : diffCents < 0
+                              ? "under"
+                              : "on";
+                      return (
+                        <div key={row.currency} className="rounded-2xl border border-slate-200 p-4">
+                          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{row.currency}</p>
+                          <dl className="mt-3 grid grid-cols-3 gap-2 text-sm">
+                            <div>
+                              <dt className="text-xs text-slate-500">{t("expenses.summaryEstimated")}</dt>
+                              <dd className="font-semibold text-slate-900">{formatMoney(row.estimatedTotal, row.currency)}</dd>
+                            </div>
+                            <div>
+                              <dt className="text-xs text-slate-500">{t("expenses.summaryPaid")}</dt>
+                              <dd className="font-semibold text-slate-900">{formatMoney(row.paidTotal, row.currency)}</dd>
+                            </div>
+                            <div>
+                              <dt className="text-xs text-slate-500">{t("expenses.summaryToPay")}</dt>
+                              <dd className="font-semibold text-slate-900">{formatMoney(row.toPayTotal, row.currency)}</dd>
+                            </div>
+                          </dl>
+                          {budgetState === "noEstimate" ? (
+                            <p className="mt-3 text-sm text-slate-500">{t("expenses.summaryNoEstimate")}</p>
+                          ) : (
+                            <p
+                              className={`mt-3 text-sm font-medium ${
+                                budgetState === "over"
+                                  ? "text-red-700"
+                                  : budgetState === "under"
+                                    ? "text-emerald-700"
+                                    : "text-slate-700"
+                              }`}
+                            >
+                              {budgetState === "over"
+                                ? t("expenses.summaryOverBudget")
+                                : budgetState === "under"
+                                  ? t("expenses.summaryUnderBudget")
+                                  : t("expenses.summaryOnBudget")}
+                              {" · "}
+                              {t("expenses.summaryDifference", { amount: formatMoney(row.difference, row.currency) })}
+                              {" · "}
+                              {t("expenses.summaryPercentUsed", { percent: row.percentUsed ?? 0 })}
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
               ) : null}
 
               {balancesByCurrency.size ? (
@@ -1358,6 +1569,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                       prepItemTypeLabels={prepItemTypeLabels}
                       classificationLabels={classificationLabels}
                       continentLabels={continentLabels}
+                      appliedTemplateIds={appliedTemplateIds}
                     />
                     <NewTaskModal triggerLabel={t("preparation.createTask")} tripId={trip.id} />
                   </div>
@@ -1498,13 +1710,10 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
 
               {tasksError ? (
                 <p role="alert" className="mt-5 rounded-xl bg-red-50 p-4 text-sm text-red-800">{t("preparation.loadError")}</p>
-              ) : tasksByCategory.length ? (
-                <div className="mt-7 space-y-8">
-                  {tasksByCategory.map((group) => (
-                    <section key={group.category}>
-                      <h3 className="text-sm font-semibold uppercase tracking-[0.12em] text-slate-500">{taskCategoryLabels[group.category]}</h3>
-                      <ul className="mt-3 space-y-4">
-                        {group.tasks.map((task) => {
+              ) : sortedTasks.length ? (
+                <div className="mt-7">
+                  <ul className="space-y-4">
+                        {sortedTasks.map((task) => {
                           const overdue = !task.completed_at && task.due_date && task.due_date < today;
                           const upcoming = !task.completed_at && task.due_date && task.due_date >= today;
                           const isGovernedPrepItem = task.classification !== null;
@@ -1517,6 +1726,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                                 <div>
                                   <div className="flex flex-wrap items-center gap-2">
                                     <h4 className={`font-semibold ${task.completed_at ? "text-slate-500 line-through" : "text-slate-950"}`}>{task.title}</h4>
+                                    <Badge variant="outline">{taskCategoryLabels[task.category]}</Badge>
                                     {isGovernedPrepItem && task.item_type === "document_request" ? (
                                       <Badge variant="outline">{prepItemTypeLabels.document_request}</Badge>
                                     ) : null}
@@ -1620,9 +1830,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                             </li>
                           );
                         })}
-                      </ul>
-                    </section>
-                  ))}
+                  </ul>
                 </div>
               ) : (
                 <p className="mt-5 rounded-2xl border border-dashed border-slate-300 p-6 text-sm text-slate-600">{t("preparation.empty")}</p>

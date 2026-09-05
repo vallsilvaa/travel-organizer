@@ -39,8 +39,12 @@ type ReservationFormProps = {
     destination_location: string | null;
     notes: string | null;
     itinerary_item_id: string | null;
+    paid_amount: string | null;
+    currency: string | null;
+    payer_id: string | null;
   };
   itineraryItems?: { id: string; title: string; item_date: string }[];
+  participants?: { user_id: string; display_name: string }[];
   tripId: string;
 };
 
@@ -52,7 +56,7 @@ function formatItemDate(value: string, locale: Locale) {
   );
 }
 
-export function ReservationForm({ reservation, itineraryItems = [], tripId }: ReservationFormProps) {
+export function ReservationForm({ reservation, itineraryItems = [], participants = [], tripId }: ReservationFormProps) {
   const t = useTranslations("reservationForm");
   const tCommon = useTranslations("common");
   const tReservationTypes = useTranslations("categories.reservationType");
@@ -216,6 +220,64 @@ export function ReservationForm({ reservation, itineraryItems = [], tripId }: Re
           </SelectContent>
         </Select>
         {state.errors?.itineraryItemId ? <p className="text-sm text-destructive">{state.errors.itineraryItemId}</p> : null}
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="reservation-paidAmount">
+          {t("paidAmountLabel")} <span className="font-normal text-muted-foreground">{tCommon("optional")}</span>
+        </Label>
+        <Input
+          min="0"
+          step="0.01"
+          type="number"
+          inputMode="decimal"
+          id="reservation-paidAmount"
+          name="paidAmount"
+          defaultValue={reservation?.paid_amount ?? ""}
+        />
+        {state.errors?.paidAmount ? <p className="text-sm text-destructive">{state.errors.paidAmount}</p> : null}
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="reservation-currency">
+          {t("currencyLabel")} <span className="font-normal text-muted-foreground">{tCommon("optional")}</span>
+        </Label>
+        <Input
+          minLength={3}
+          maxLength={3}
+          id="reservation-currency"
+          name="currency"
+          defaultValue={reservation?.currency ?? ""}
+          placeholder="BRL"
+          className="uppercase"
+        />
+        {state.errors?.currency ? <p className="text-sm text-destructive">{state.errors.currency}</p> : null}
+      </div>
+
+      <div className="space-y-2 sm:col-span-2">
+        <Label htmlFor="reservation-payerId">
+          {t("payerLabel")} <span className="font-normal text-muted-foreground">{tCommon("optional")}</span>
+        </Label>
+        <Select
+          name="payerId"
+          defaultValue={reservation?.payer_id ?? "none"}
+          items={{
+            none: t("payerNone"),
+            ...Object.fromEntries(participants.map((p) => [p.user_id, p.display_name])),
+          }}
+        >
+          <SelectTrigger id="reservation-payerId" className="w-full">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="none">{t("payerNone")}</SelectItem>
+            {participants.map((participant) => (
+              <SelectItem key={participant.user_id} value={participant.user_id}>{participant.display_name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {state.errors?.payerId ? <p className="text-sm text-destructive">{state.errors.payerId}</p> : null}
+        <p className="text-sm text-muted-foreground">{t("paidFieldsHint")}</p>
       </div>
 
       <div className="space-y-2 sm:col-span-2">

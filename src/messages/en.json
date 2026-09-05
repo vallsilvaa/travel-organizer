@@ -266,7 +266,11 @@
       "periodFilterLabel": "Time of day",
       "periodFilterAll": "All periods",
       "applyFilters": "Apply filters",
-      "noCity": "No city set",
+      "dayHeading": "Day {day} · {date}",
+      "emptyDay": "No activities planned for this day.",
+      "outOfRangeTitle": "Items outside the trip's dates",
+      "outOfRangeDescription": "The trip's dates changed and these items now fall outside the new range. Fix each one's date.",
+      "linkedTask": "Linked task: {title}",
       "reservationsTitle": "Reservations",
       "reservationsDescription": "Flights, lodging, and transport confirmed for this trip.",
       "addReservation": "Add reservation",
@@ -277,7 +281,9 @@
       "editReservation": "Edit reservation",
       "deleteReservationTitle": "Delete this reservation?",
       "deleteReservationDescription": "This will permanently remove \"{title}\" from the trip's reservations.",
-      "reservationsEmpty": "No reservations yet. Add flights, lodging, or transport above."
+      "reservationsEmpty": "No reservations yet. Add flights, lodging, or transport above.",
+      "reservationPaid": "Paid: {amount} by {payer}",
+      "reservationExpenseLinked": "linked to an expense in the Expenses tab"
     },
     "expenses": {
       "title": "Expenses",
@@ -296,11 +302,26 @@
       "viewByCategory": "By category",
       "viewByPayer": "By payer",
       "paidBy": "Paid by {name}",
+      "noPayerYet": "Not paid yet",
       "split": "Split: {details}",
       "editExpense": "Edit expense",
       "deleteExpenseTitle": "Delete expense?",
       "deleteExpenseDescription": "This will permanently remove \"{description}\" and its amount from the currency summary.",
-      "empty": "No expenses yet. Add the first shared cost above."
+      "empty": "No expenses yet. Add the first shared cost above.",
+      "paymentStatusToPay": "To pay",
+      "originReservation": "From: reservation",
+      "originTask": "From: task",
+      "estimatedInline": "(estimated: {amount})",
+      "summaryTitle": "Estimated vs. real",
+      "summaryEstimated": "Estimated",
+      "summaryPaid": "Paid",
+      "summaryToPay": "To pay",
+      "summaryDifference": "Difference: {amount}",
+      "summaryPercentUsed": "{percent}% of estimate",
+      "summaryOverBudget": "Over budget",
+      "summaryUnderBudget": "Under budget",
+      "summaryOnBudget": "On budget",
+      "summaryNoEstimate": "Not enough of an estimate to compare"
     },
     "preparation": {
       "eyebrow": "Before the itinerary",
@@ -350,6 +371,7 @@
         "searchLabel": "Search",
         "searchPlaceholder": "Search by name, category, or country",
         "noResults": "No templates match this search.",
+        "alreadyAdded": "Already added",
         "noTemplates": "You don't have any catalog templates yet. Use \"Create New Task\" to add the first one.",
         "back": "Back to search",
         "cancel": "Cancel",
@@ -525,6 +547,10 @@
   "expenseForm": {
     "descriptionLabel": "Description",
     "descriptionPlaceholder": "Dinner reservation",
+    "paymentStatusLabel": "Status",
+    "paymentStatusPaid": "Paid",
+    "paymentStatusToPay": "To pay",
+    "estimatedAmountLabel": "Estimated amount",
     "amountLabel": "Amount",
     "currencyLabel": "Currency",
     "categoryLabel": "Category",
@@ -548,7 +574,11 @@
       "dateInvalid": "Enter a valid expense date.",
       "payerInvalid": "Choose a valid payer.",
       "splitAmountInvalid": "Split values must be valid numbers with up to two decimal places.",
-      "splitMismatch": "The split total must equal the expense's full amount."
+      "splitMismatch": "The split total must equal the expense's full amount.",
+      "estimatedAmountInvalid": "Enter a valid estimated amount greater than zero.",
+      "amountRequiredWhenPaid": "Enter the real amount when the status is Paid.",
+      "payerRequiredWhenPaid": "Choose who paid when the status is Paid.",
+      "amountOrEstimateRequired": "Enter at least one amount: estimated or real."
     },
     "actionErrors": {
       "identifyTrip": "Could not identify the trip.",
@@ -590,7 +620,8 @@
       "identifyTrip": "Could not identify the trip.",
       "identifyItem": "Could not identify the itinerary item.",
       "addFailed": "Could not add this itinerary item. Check your access to the trip and try again.",
-      "updateFailed": "Could not update this itinerary item. Please try again."
+      "updateFailed": "Could not update this itinerary item. Please try again.",
+      "dateOutsideTripRange": "The date must be within the trip's date range."
     }
   },
   "reservationForm": {
@@ -611,6 +642,11 @@
     "destinationLocationPlaceholder": "Airport, address, or arrival point",
     "linkItemLabel": "Link to an itinerary item",
     "linkItemNone": "None",
+    "paidAmountLabel": "Paid amount",
+    "currencyLabel": "Currency",
+    "payerLabel": "Paid by",
+    "payerNone": "Not paid yet",
+    "paidFieldsHint": "Fill in the paid amount, currency, and payer to generate an expense linked to this reservation.",
     "notesLabel": "Notes",
     "savePending": "Saving...",
     "save": "Save changes",
@@ -630,7 +666,12 @@
       "endTimeInvalid": "Enter a valid end time.",
       "locationTooLong": "Location must be up to 200 characters.",
       "destinationLocationTooLong": "Destination must be up to 200 characters.",
-      "notesTooLong": "Notes must be up to 2,000 characters."
+      "notesTooLong": "Notes must be up to 2,000 characters.",
+      "paidAmountInvalid": "Enter a valid paid amount greater than zero.",
+      "currencyInvalid": "Enter a valid 3-letter currency code.",
+      "payerInvalid": "Select who paid.",
+      "currencyRequiredWithPaidAmount": "Enter the currency for the paid amount.",
+      "payerRequiredWithPaidAmount": "Select who paid."
     },
     "actionErrors": {
       "identifyTrip": "Could not identify the trip.",
@@ -920,7 +961,8 @@
       "identifyError": "Could not identify the trip or template.",
       "templateNotFound": "Template not found.",
       "tripNotFound": "Trip not found.",
-      "applyFailed": "Could not apply this template. Check your access to the trip."
+      "applyFailed": "Could not apply this template. Check your access to the trip.",
+      "alreadyAdded": "This template has already been added to this trip."
     },
     "modeSwitcher": {
       "currentModeOrganizer": "Mode: Organizer",

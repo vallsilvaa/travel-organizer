@@ -296,4 +296,54 @@ describe("applyPrepTemplate", () => {
     );
     expect(result.success).toBe(true);
   });
+
+  it("surfaces a friendly message when the template is already active on the trip (#171)", async () => {
+    const template = {
+      id: templateId,
+      title: "Check passport validity",
+      item_type: "preparation",
+      category: "documents",
+      continent: "europe",
+      country: "Portugal",
+      city: "Lisbon",
+      classification: "required",
+      due_offset_days: 7,
+      currency: "EUR",
+      estimated_amount: "50.00",
+      document_instructions: null,
+    };
+    const templateSingle = vi.fn().mockResolvedValue({ data: template, error: null });
+    const templateEq = vi.fn().mockReturnValue({ single: templateSingle });
+    const templateSelect = vi.fn().mockReturnValue({ eq: templateEq });
+
+    const trip = { id: tripId, start_date: "2027-09-10" };
+    const tripSingle = vi.fn().mockResolvedValue({ data: trip, error: null });
+    const tripEq = vi.fn().mockReturnValue({ single: tripSingle });
+    const tripSelect = vi.fn().mockReturnValue({ eq: tripEq });
+
+    const insert = vi.fn().mockReturnValue({
+      select: () => ({
+        single: async () => ({ data: null, error: { code: "23505" } }),
+      }),
+    });
+
+    const from = vi.fn((table: string) => {
+      if (table === "prep_item_templates") return { select: templateSelect };
+      if (table === "trips") return { select: tripSelect };
+      if (table === "trip_tasks") return { insert };
+      throw new Error(`unexpected table ${table}`);
+    });
+    mocks.createClient.mockResolvedValue({ auth: { getUser: mocks.getUser }, from });
+
+    const formData = new FormData();
+    formData.set("tripId", tripId);
+    formData.set("templateId", templateId);
+    formData.set("assignedTo", "none");
+    formData.set("itineraryItemId", "none");
+
+    const result = await applyPrepTemplate({}, formData);
+
+    expect(result.success).toBeUndefined();
+    expect(result.message).toBeTruthy();
+  });
 });

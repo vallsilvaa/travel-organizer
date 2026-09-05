@@ -266,7 +266,11 @@
       "periodFilterLabel": "Período do dia",
       "periodFilterAll": "Todos os períodos",
       "applyFilters": "Aplicar filtros",
-      "noCity": "Sem cidade definida",
+      "dayHeading": "Dia {day} · {date}",
+      "emptyDay": "Nenhuma atividade planejada para este dia.",
+      "outOfRangeTitle": "Itens fora do período da viagem",
+      "outOfRangeDescription": "As datas da viagem mudaram e estes itens ficaram fora do novo período. Corrija a data de cada um.",
+      "linkedTask": "Tarefa vinculada: {title}",
       "reservationsTitle": "Reservas",
       "reservationsDescription": "Voos, hospedagens e transportes confirmados para esta viagem.",
       "addReservation": "Adicionar reserva",
@@ -277,7 +281,9 @@
       "editReservation": "Editar reserva",
       "deleteReservationTitle": "Excluir esta reserva?",
       "deleteReservationDescription": "Isso vai remover permanentemente \"{title}\" das reservas da viagem.",
-      "reservationsEmpty": "Nenhuma reserva registrada ainda. Adicione voos, hospedagens ou transportes acima."
+      "reservationsEmpty": "Nenhuma reserva registrada ainda. Adicione voos, hospedagens ou transportes acima.",
+      "reservationPaid": "Pago: {amount} por {payer}",
+      "reservationExpenseLinked": "vinculado a um gasto na aba Despesas"
     },
     "expenses": {
       "title": "Despesas",
@@ -296,11 +302,26 @@
       "viewByCategory": "Por categoria",
       "viewByPayer": "Por pagador",
       "paidBy": "Pago por {name}",
+      "noPayerYet": "Ainda não pago",
       "split": "Dividido: {details}",
       "editExpense": "Editar despesa",
       "deleteExpenseTitle": "Excluir despesa?",
       "deleteExpenseDescription": "Isso vai remover permanentemente \"{description}\" e seu valor do resumo por moeda.",
-      "empty": "Nenhuma despesa ainda. Adicione o primeiro custo compartilhado acima."
+      "empty": "Nenhuma despesa ainda. Adicione o primeiro custo compartilhado acima.",
+      "paymentStatusToPay": "A pagar",
+      "originReservation": "Origem: reserva",
+      "originTask": "Origem: tarefa",
+      "estimatedInline": "(estimado: {amount})",
+      "summaryTitle": "Estimado vs. real",
+      "summaryEstimated": "Estimado",
+      "summaryPaid": "Pago",
+      "summaryToPay": "A pagar",
+      "summaryDifference": "Diferença: {amount}",
+      "summaryPercentUsed": "{percent}% do estimado",
+      "summaryOverBudget": "Acima do estimado",
+      "summaryUnderBudget": "Abaixo do estimado",
+      "summaryOnBudget": "Dentro do estimado",
+      "summaryNoEstimate": "Sem estimativa suficiente para comparar"
     },
     "preparation": {
       "eyebrow": "Antes do roteiro",
@@ -350,6 +371,7 @@
         "searchLabel": "Buscar",
         "searchPlaceholder": "Buscar por nome, categoria ou país",
         "noResults": "Nenhum modelo encontrado para esta busca.",
+        "alreadyAdded": "Já adicionada",
         "noTemplates": "Você ainda não tem modelos no catálogo. Use \"Criar Tarefa\" para criar o primeiro.",
         "back": "Voltar à busca",
         "cancel": "Cancelar",
@@ -525,6 +547,10 @@
   "expenseForm": {
     "descriptionLabel": "Descrição",
     "descriptionPlaceholder": "Reserva de jantar",
+    "paymentStatusLabel": "Status",
+    "paymentStatusPaid": "Pago",
+    "paymentStatusToPay": "A pagar",
+    "estimatedAmountLabel": "Valor estimado",
     "amountLabel": "Valor",
     "currencyLabel": "Moeda",
     "categoryLabel": "Categoria",
@@ -548,7 +574,11 @@
       "dateInvalid": "Informe uma data de despesa válida.",
       "payerInvalid": "Escolha um pagador válido.",
       "splitAmountInvalid": "Os valores da divisão devem ser números válidos com até duas casas decimais.",
-      "splitMismatch": "A soma da divisão deve ser igual ao valor total da despesa."
+      "splitMismatch": "A soma da divisão deve ser igual ao valor total da despesa.",
+      "estimatedAmountInvalid": "Informe um valor estimado válido e maior que zero.",
+      "amountRequiredWhenPaid": "Informe o valor real quando o status for Pago.",
+      "payerRequiredWhenPaid": "Escolha quem pagou quando o status for Pago.",
+      "amountOrEstimateRequired": "Informe pelo menos um valor: estimado ou real."
     },
     "actionErrors": {
       "identifyTrip": "Não foi possível identificar a viagem.",
@@ -590,7 +620,8 @@
       "identifyTrip": "Não foi possível identificar a viagem.",
       "identifyItem": "Não foi possível identificar o item do roteiro.",
       "addFailed": "Não foi possível adicionar este item ao roteiro. Verifique seu acesso à viagem e tente novamente.",
-      "updateFailed": "Não foi possível atualizar este item do roteiro. Tente novamente."
+      "updateFailed": "Não foi possível atualizar este item do roteiro. Tente novamente.",
+      "dateOutsideTripRange": "A data deve estar dentro do período da viagem."
     }
   },
   "reservationForm": {
@@ -611,6 +642,11 @@
     "destinationLocationPlaceholder": "Aeroporto, endereço ou ponto de chegada",
     "linkItemLabel": "Vincular a um item do roteiro",
     "linkItemNone": "Nenhum",
+    "paidAmountLabel": "Valor pago",
+    "currencyLabel": "Moeda",
+    "payerLabel": "Pago por",
+    "payerNone": "Ainda não pago",
+    "paidFieldsHint": "Preencha valor pago, moeda e quem pagou para gerar uma despesa vinculada a esta reserva.",
     "notesLabel": "Notas",
     "savePending": "Salvando...",
     "save": "Salvar alterações",
@@ -630,7 +666,12 @@
       "endTimeInvalid": "Informe um horário de término válido.",
       "locationTooLong": "O local deve ter até 200 caracteres.",
       "destinationLocationTooLong": "O destino deve ter até 200 caracteres.",
-      "notesTooLong": "As notas devem ter até 2.000 caracteres."
+      "notesTooLong": "As notas devem ter até 2.000 caracteres.",
+      "paidAmountInvalid": "Informe um valor pago válido e maior que zero.",
+      "currencyInvalid": "Informe um código de moeda válido com 3 letras.",
+      "payerInvalid": "Selecione quem pagou.",
+      "currencyRequiredWithPaidAmount": "Informe a moeda do valor pago.",
+      "payerRequiredWithPaidAmount": "Informe quem pagou."
     },
     "actionErrors": {
       "identifyTrip": "Não foi possível identificar a viagem.",
@@ -920,7 +961,8 @@
       "identifyError": "Não foi possível identificar a viagem ou o modelo.",
       "templateNotFound": "Modelo não encontrado.",
       "tripNotFound": "Viagem não encontrada.",
-      "applyFailed": "Não foi possível aplicar este modelo. Verifique seu acesso à viagem."
+      "applyFailed": "Não foi possível aplicar este modelo. Verifique seu acesso à viagem.",
+      "alreadyAdded": "Este modelo já foi adicionado a esta viagem."
     },
     "modeSwitcher": {
       "currentModeOrganizer": "Modo: Organizador",

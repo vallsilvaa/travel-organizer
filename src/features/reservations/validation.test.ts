@@ -35,6 +35,9 @@ describe("validateReservationInput", () => {
         destinationLocation: "LIS",
         notes: "Window seat",
         itineraryItemId: null,
+        paidAmount: null,
+        currency: null,
+        payerId: null,
       },
     });
   });
@@ -137,6 +140,60 @@ describe("validateReservationInput", () => {
     expect(result.success).toBe(false);
     if (!result.success) {
       expect(result.errors.endDate).toBe("endDateBeforeStart");
+    }
+  });
+
+  it("normalizes paid amount, currency, and payer together (#171)", () => {
+    const formData = validForm();
+    formData.set("paidAmount", "199.9");
+    formData.set("currency", "usd");
+    formData.set("payerId", "11111111-1111-4111-8111-111111111111");
+
+    const result = validateReservationInput(formData);
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.paidAmount).toBe("199.90");
+      expect(result.data.currency).toBe("USD");
+      expect(result.data.payerId).toBe("11111111-1111-4111-8111-111111111111");
+    }
+  });
+
+  it("requires a currency when a paid amount is given", () => {
+    const formData = validForm();
+    formData.set("paidAmount", "100");
+    formData.set("payerId", "11111111-1111-4111-8111-111111111111");
+
+    const result = validateReservationInput(formData);
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.errors.currency).toBe("currencyRequiredWithPaidAmount");
+    }
+  });
+
+  it("requires a payer when a paid amount is given", () => {
+    const formData = validForm();
+    formData.set("paidAmount", "100");
+    formData.set("currency", "USD");
+
+    const result = validateReservationInput(formData);
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.errors.payerId).toBe("payerRequiredWithPaidAmount");
+    }
+  });
+
+  it("treats the \"none\" payer sentinel as no payer", () => {
+    const formData = validForm();
+    formData.set("payerId", "none");
+
+    const result = validateReservationInput(formData);
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.payerId).toBeNull();
     }
   });
 });

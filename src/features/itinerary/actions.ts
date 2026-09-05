@@ -33,6 +33,31 @@ async function authenticatedClient() {
   return { supabase, user };
 }
 
+async function validateDateWithinTrip(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  tripId: string,
+  date: string,
+): Promise<"identifyTrip" | "dateOutsideTripRange" | null> {
+  const { data: trip } = await supabase
+    .from("trips")
+    .select("start_date, end_date")
+    .eq("id", tripId)
+    .single();
+
+  if (!trip) {
+    return "identifyTrip";
+  }
+
+  // Trips without an end_date only have a single valid day - their
+  // start_date (#171) - rather than an open-ended range.
+  const endDate = trip.end_date ?? trip.start_date;
+  if (date < trip.start_date || date > endDate) {
+    return "dateOutsideTripRange";
+  }
+
+  return null;
+}
+
 export async function createItineraryItem(
   _previousState: ItineraryActionState,
   formData: FormData,
@@ -49,6 +74,15 @@ export async function createItineraryItem(
   }
 
   const { supabase, user } = await authenticatedClient();
+
+  const dateError = await validateDateWithinTrip(supabase, tripId, validation.data.date);
+  if (dateError === "identifyTrip") {
+    return { message: t("actionErrors.identifyTrip") };
+  }
+  if (dateError === "dateOutsideTripRange") {
+    return { errors: { date: t("actionErrors.dateOutsideTripRange") } };
+  }
+
   const { data: created, error } = await supabase
     .from("itinerary_items")
     .insert({
@@ -102,6 +136,15 @@ export async function updateItineraryItem(
   }
 
   const { supabase, user } = await authenticatedClient();
+
+  const dateError = await validateDateWithinTrip(supabase, tripId, validation.data.date);
+  if (dateError === "identifyTrip") {
+    return { message: t("actionErrors.identifyTrip") };
+  }
+  if (dateError === "dateOutsideTripRange") {
+    return { errors: { date: t("actionErrors.dateOutsideTripRange") } };
+  }
+
   const { error } = await supabase
     .from("itinerary_items")
     .update({

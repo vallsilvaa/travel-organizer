@@ -65,6 +65,9 @@ export async function createReservation(
       destination_location: validation.data.destinationLocation,
       notes: validation.data.notes,
       itinerary_item_id: validation.data.itineraryItemId,
+      paid_amount: validation.data.paidAmount,
+      currency: validation.data.currency,
+      payer_id: validation.data.payerId,
       created_by: user.id,
     })
     .select("id")
@@ -73,6 +76,8 @@ export async function createReservation(
   if (error) {
     return { message: t("actionErrors.addFailed") };
   }
+
+  await supabase.rpc("sync_reservation_expense", { p_reservation_id: created.id });
 
   revalidatePath(`/trips/${tripId}`);
   after(() =>
@@ -122,6 +127,9 @@ export async function updateReservation(
       destination_location: validation.data.destinationLocation,
       notes: validation.data.notes,
       itinerary_item_id: validation.data.itineraryItemId,
+      paid_amount: validation.data.paidAmount,
+      currency: validation.data.currency,
+      payer_id: validation.data.payerId,
       updated_at: new Date().toISOString(),
     })
     .eq("id", reservationId)
@@ -130,6 +138,8 @@ export async function updateReservation(
   if (error) {
     return { message: t("actionErrors.updateFailed") };
   }
+
+  await supabase.rpc("sync_reservation_expense", { p_reservation_id: reservationId });
 
   revalidatePath(`/trips/${tripId}`);
   after(() =>

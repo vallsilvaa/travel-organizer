@@ -12,6 +12,7 @@ const mocks = vi.hoisted(() => ({
   }),
   revalidatePath: vi.fn(),
   update: vi.fn(),
+  tripSingle: vi.fn(),
 }));
 
 vi.mock("@/lib/supabase/server", () => ({
@@ -65,20 +66,28 @@ function validForm() {
 describe("itinerary actions", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    const builder = {
+    const itemsBuilder = {
       delete: mocks.delete,
       eq: mocks.eq,
       update: mocks.update,
+      insert: mocks.insert,
     };
-    mocks.delete.mockReturnValue(builder);
-    mocks.eq.mockReturnValue(builder);
-    mocks.update.mockReturnValue(builder);
+    mocks.delete.mockReturnValue(itemsBuilder);
+    mocks.eq.mockReturnValue(itemsBuilder);
+    mocks.update.mockReturnValue(itemsBuilder);
     mocks.insert.mockReturnValue({
       select: () => ({
         single: async () => ({ data: { id: itemId }, error: null }),
       }),
     });
-    mocks.from.mockReturnValue({ ...builder, insert: mocks.insert });
+    mocks.tripSingle.mockResolvedValue({
+      data: { start_date: "2026-10-01", end_date: "2026-10-20" },
+      error: null,
+    });
+    const tripsBuilder = {
+      select: () => ({ eq: () => ({ single: mocks.tripSingle }) }),
+    };
+    mocks.from.mockImplementation((table: string) => (table === "trips" ? tripsBuilder : itemsBuilder));
     mocks.getUser.mockResolvedValue({ data: { user: { id: "user-123" } } });
     mocks.createClient.mockResolvedValue({
       auth: { getUser: mocks.getUser },
@@ -105,6 +114,40 @@ describe("itinerary actions", () => {
     expect(mocks.revalidatePath).toHaveBeenCalledWith(`/trips/${tripId}`);
   });
 
+  it("rejects a new item dated outside the trip's date range (#171)", async () => {
+    const formData = validForm();
+    formData.set("date", "2026-11-01");
+
+    const result = await createItineraryItem({}, formData);
+
+    expect(mocks.insert).not.toHaveBeenCalled();
+    expect(result.errors?.date).toBeTruthy();
+  });
+
+  it("accepts an item dated on the start_date of a trip with no end_date (#171)", async () => {
+    mocks.tripSingle.mockResolvedValue({
+      data: { start_date: "2026-10-12", end_date: null },
+      error: null,
+    });
+
+    const formData = validForm();
+    formData.set("date", "2026-10-12");
+    const result = await createItineraryItem({}, formData);
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects an item dated after the start_date of a trip with no end_date (#171)", async () => {
+    mocks.tripSingle.mockResolvedValue({
+      data: { start_date: "2026-10-12", end_date: null },
+      error: null,
+    });
+
+    const formData = validForm();
+    formData.set("date", "2026-10-13");
+    const result = await createItineraryItem({}, formData);
+    expect(result.errors?.date).toBeTruthy();
+  });
+
   it("updates only the requested item within its trip", async () => {
     mocks.eq.mockReturnValueOnce({ eq: mocks.eq }).mockResolvedValueOnce({ error: null });
 
@@ -116,6 +159,16 @@ describe("itinerary actions", () => {
     expect(mocks.eq).toHaveBeenNthCalledWith(1, "id", itemId);
     expect(mocks.eq).toHaveBeenNthCalledWith(2, "trip_id", tripId);
     expect(result.success).toBe(true);
+  });
+
+  it("rejects updating an item to a date outside the trip's date range (#171)", async () => {
+    const formData = validForm();
+    formData.set("date", "2026-09-30");
+
+    const result = await updateItineraryItem({}, formData);
+
+    expect(mocks.update).not.toHaveBeenCalled();
+    expect(result.errors?.date).toBeTruthy();
   });
 
   it("deletes only the requested item within its trip", async () => {
