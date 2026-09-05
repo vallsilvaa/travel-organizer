@@ -124,7 +124,7 @@ test("traveler completes the critical collaborative planning journey", async ({
     const form = page.locator("details").filter({ hasText: "Adicionar despesa" });
 
     await form.getByLabel("Descrição").fill(expenseDescription);
-    await form.getByLabel("Valor").fill("125.50");
+    await form.getByLabel("Valor", { exact: true }).fill("125.50");
     await form.getByLabel("Moeda").fill("BRL");
     await form.getByLabel("Data").fill("2027-05-11");
     await form.getByRole("combobox", { name: "Pagador" }).click();
