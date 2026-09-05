@@ -263,7 +263,9 @@ as $$
     combined.total_owed,
     combined.total_paid - combined.total_owed as net_balance
   from combined
-  join public.profiles profile on profile.id = combined.user_id;
+  join public.profiles profile on profile.id = combined.user_id
+  where private.is_trip_participant(requested_trip_id, auth.uid())
+  order by combined.currency, profile.display_name;
 $$;
 
 -- Per-currency comparison of estimated vs. real spend, for the Despesas
