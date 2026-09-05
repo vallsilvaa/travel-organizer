@@ -9,17 +9,19 @@ insert into auth.users (id, email) values
   ('33333333-3333-3333-3333-333333333333', 'unrelated@example.com'),
   ('44444444-4444-4444-4444-444444444444', 'invitee@example.com');
 
-insert into public.trips (id, destination, start_date, created_by) values
+insert into public.trips (id, destination, start_date, end_date, created_by) values
   (
     'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
     'Londres',
     '2027-04-01',
+    '2027-04-10',
     '11111111-1111-1111-1111-111111111111'
   ),
   (
     'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
     'Paris',
     '2027-05-01',
+    null,
     '33333333-3333-3333-3333-333333333333'
   );
 

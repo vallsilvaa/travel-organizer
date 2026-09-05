@@ -33,11 +33,19 @@ alter table public.trip_expenses
 
 grant update (payment_status, estimated_amount) on table public.trip_expenses to authenticated;
 
--- Extends the two write RPCs with the new fields instead of replacing them,
--- so every existing call site (which never passes these) keeps behaving
--- exactly as a plain "paid" expense with no estimate - only the shares
--- invariant is relaxed to skip when amount isn't known yet (a to_pay
--- expense with only an estimate has nothing to split).
+-- Extends the two write RPCs with two new trailing parameters. Postgres
+-- does not let `create or replace function` change a function's parameter
+-- list in place - it would silently create a second overload instead,
+-- leaving old 8/9-arg call sites ambiguous between both signatures. The old
+-- signatures must be dropped first so there is exactly one version of each
+-- function, and every existing call site (which never passes the new
+-- fields) keeps behaving exactly as a plain "paid" expense with no
+-- estimate - only the shares invariant is relaxed to skip when amount
+-- isn't known yet (a to_pay expense with only an estimate has nothing to
+-- split).
+drop function if exists public.create_expense_with_shares(uuid, text, numeric, text, text, date, uuid, jsonb);
+drop function if exists public.update_expense_with_shares(uuid, uuid, text, numeric, text, text, date, uuid, jsonb);
+
 create or replace function public.create_expense_with_shares(
   p_trip_id uuid,
   p_description text,
