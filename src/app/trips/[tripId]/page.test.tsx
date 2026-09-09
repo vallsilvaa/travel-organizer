@@ -147,6 +147,50 @@ describe("TripPage", () => {
     expect(screen.queryByRole("button", { name: /checklist da inglaterra/i })).toBeNull();
   });
 
+  it("shows the catalog task actions to an organizer participant who is not the creator (#173)", async () => {
+    const organizerUserId = "33333333-3333-3333-3333-333333333333";
+    mocks.getUser.mockResolvedValue({ data: { user: { id: organizerUserId } } });
+    mocks.rpc.mockImplementation((fn: string) =>
+      Promise.resolve({
+        data: fn === "get_trip_participants"
+          ? [{ user_id: organizerUserId, display_name: "Carla", role: "organizer" }]
+          : [],
+      }),
+    );
+
+    render(
+      await TripPage({
+        params: Promise.resolve({ tripId }),
+        searchParams: Promise.resolve({ tab: "preparation" }),
+      }),
+    );
+
+    expect(screen.getByRole("button", { name: "Add Tarefa" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Criar Tarefa" })).toBeTruthy();
+  });
+
+  it("does not show the catalog task actions to a traveler participant who is not the creator (#173)", async () => {
+    const travelerUserId = "44444444-4444-4444-4444-444444444444";
+    mocks.getUser.mockResolvedValue({ data: { user: { id: travelerUserId } } });
+    mocks.rpc.mockImplementation((fn: string) =>
+      Promise.resolve({
+        data: fn === "get_trip_participants"
+          ? [{ user_id: travelerUserId, display_name: "Bruno", role: "traveler" }]
+          : [],
+      }),
+    );
+
+    render(
+      await TripPage({
+        params: Promise.resolve({ tripId }),
+        searchParams: Promise.resolve({ tab: "preparation" }),
+      }),
+    );
+
+    expect(screen.queryByRole("button", { name: "Add Tarefa" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Criar Tarefa" })).toBeNull();
+  });
+
   it("does not show the custom-task-add section anymore (#167)", async () => {
     render(
       await TripPage({

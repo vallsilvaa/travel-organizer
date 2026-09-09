@@ -145,7 +145,7 @@ export function ReservationForm({ reservation, itineraryItems = [], participants
         <Label htmlFor="reservation-startTime">
           {t("startTimeLabel")} <span className="font-normal text-muted-foreground">{tCommon("optional")}</span>
         </Label>
-        <Input id="reservation-startTime" name="startTime" type="time" defaultValue={reservation?.start_time?.slice(0, 5)} />
+        <Input id="reservation-startTime" name="startTime" type="time" step="60" defaultValue={reservation?.start_time?.slice(0, 5)} />
         {state.errors?.startTime ? <p className="text-sm text-destructive">{state.errors.startTime}</p> : null}
       </div>
 
@@ -161,7 +161,7 @@ export function ReservationForm({ reservation, itineraryItems = [], participants
         <Label htmlFor="reservation-endTime">
           {t("endTimeLabel")} <span className="font-normal text-muted-foreground">{tCommon("optional")}</span>
         </Label>
-        <Input id="reservation-endTime" name="endTime" type="time" defaultValue={reservation?.end_time?.slice(0, 5) ?? ""} />
+        <Input id="reservation-endTime" name="endTime" type="time" step="60" defaultValue={reservation?.end_time?.slice(0, 5) ?? ""} />
         {state.errors?.endTime ? <p className="text-sm text-destructive">{state.errors.endTime}</p> : null}
       </div>
 
