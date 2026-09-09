@@ -406,14 +406,17 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
             .eq("trip_id", trip.id)
             .order("created_at", { ascending: false })
         : Promise.resolve({ data: [] }),
-      isCreator
-        ? supabase
-            .from("prep_item_templates")
-            .select(
-              "id, title, item_type, category, continent, country, city, classification, due_offset_days, currency, estimated_amount, document_instructions",
-            )
-            .order("created_at", { ascending: false })
-        : Promise.resolve({ data: [] }),
+      // Not gated by isCreator: RLS already scopes this to the caller's own
+      // catalog (owner_id = auth.uid()), and organizer-role participants
+      // need their catalog too when adding prep tasks (see isTripOrganizer
+      // below) - a creator-only gate here would leave them with an
+      // "Add from catalog" button that always shows an empty list.
+      supabase
+        .from("prep_item_templates")
+        .select(
+          "id, title, item_type, category, continent, country, city, classification, due_offset_days, currency, estimated_amount, document_instructions",
+        )
+        .order("created_at", { ascending: false }),
     ]);
   const invitations = invitationResult.data;
   const catalogTemplates = (templatesResult.data ?? []) as CatalogTemplate[];
@@ -424,8 +427,12 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
       participant.display_name,
     ]),
   );
-  const canEditDestinationGuide =
+  // A participant invited with role="organizer" has the same standing as
+  // the trip creator for managing trip content (#173) - the creator is
+  // just the one guaranteed organizer, not the only one.
+  const isTripOrganizer =
     isCreator || tripParticipants.some((participant) => participant.user_id === user.id && participant.role === "organizer");
+  const canEditDestinationGuide = isTripOrganizer;
   const today = todayInTimeZone(trip.timezone);
   const tripEndDate = trip.end_date ?? trip.start_date;
   const countdownLabel =
@@ -1558,7 +1565,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                     {t("preparation.description")}
                   </p>
                 </div>
-                {!isArchived && isCreator ? (
+                {!isArchived && isTripOrganizer ? (
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                     <AddTaskFromCatalogModal
                       templates={catalogTemplates}

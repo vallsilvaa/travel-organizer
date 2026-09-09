@@ -69,7 +69,7 @@ export function ItineraryForm({ existingCities = [], item, tripId }: ItineraryFo
         <Label htmlFor="time">
           {t("timeLabel")} <span className="font-normal text-muted-foreground">{tCommon("optional")}</span>
         </Label>
-        <Input id="time" name="time" type="time" defaultValue={item?.start_time?.slice(0, 5)} />
+        <Input id="time" name="time" type="time" step="60" defaultValue={item?.start_time?.slice(0, 5)} />
         {state.errors?.time ? <p className="text-sm text-destructive">{state.errors.time}</p> : null}
       </div>
       <div className="space-y-2">
