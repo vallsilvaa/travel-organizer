@@ -7,7 +7,8 @@ import { redirect } from "next/navigation";
 
 import { translateFieldErrors } from "@/i18n/translate-field-errors";
 import { createClient } from "@/lib/supabase/server";
-import { isValidTripId, validateTripInput, type TripFieldErrors } from "./validation";
+import { isValidTripId, validateCoverImageUpload, validateTripInput, type TripFieldErrors } from "./validation";
+import { sanitizeFileNameForStorage } from "@/features/attachments/validation";
 import { inviteParticipant } from "@/features/invitations/actions";
 import { applyTemplateRowToTrip, type TemplateRow } from "@/features/prep-catalog/actions";
 import { isValidTemplateId } from "@/features/prep-catalog/validation";
@@ -241,4 +242,119 @@ export async function deleteTrip(formData: FormData): Promise<void> {
 
   revalidatePath("/dashboard");
   redirect("/dashboard");
+}
+
+export type CoverImageActionState = {
+  message?: string;
+  success?: boolean;
+};
+
+function coverImageRpcErrorMessage(
+  t: Awaited<ReturnType<typeof getTranslations<"coverImage">>>,
+  error: { message?: string },
+) {
+  switch (error.message) {
+    case "not_authorized":
+      return t("actionErrors.notAuthorized");
+    case "trip_archived":
+      return t("actionErrors.tripArchived");
+    default:
+      return t("actionErrors.genericFailed");
+  }
+}
+
+export async function updateTripCoverImage(
+  _previousState: CoverImageActionState,
+  formData: FormData,
+): Promise<CoverImageActionState> {
+  const t = await getTranslations("coverImage");
+  const tripId = String(formData.get("tripId") ?? "");
+  if (!isValidTripId(tripId)) {
+    return { message: t("actionErrors.identifyTrip") };
+  }
+
+  const file = formData.get("file");
+  const validation = validateCoverImageUpload(file instanceof File ? file : null);
+  if (!validation.success) {
+    return { message: t(`actionErrors.${validation.error}`) };
+  }
+
+  const uploadedFile = file as File;
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/auth/sign-in?error=authentication_required");
+  }
+
+  const { data: trip } = await supabase
+    .from("trips")
+    .select("cover_image_path")
+    .eq("id", tripId)
+    .maybeSingle();
+  const previousPath = (trip as { cover_image_path: string | null } | null)?.cover_image_path ?? null;
+
+  const storagePath = `${tripId}/cover-${crypto.randomUUID()}-${sanitizeFileNameForStorage(uploadedFile.name)}`;
+  const { error: uploadError } = await supabase.storage
+    .from("trip-attachments")
+    .upload(storagePath, uploadedFile, { contentType: uploadedFile.type });
+
+  if (uploadError) {
+    return { message: t("actionErrors.uploadFailed") };
+  }
+
+  const { error: rpcError } = await supabase.rpc("update_trip_cover_image", {
+    p_trip_id: tripId,
+    p_cover_image_path: storagePath,
+  });
+
+  if (rpcError) {
+    await supabase.storage.from("trip-attachments").remove([storagePath]);
+    return { message: coverImageRpcErrorMessage(t, rpcError) };
+  }
+
+  if (previousPath) {
+    await supabase.storage.from("trip-attachments").remove([previousPath]);
+  }
+
+  revalidatePath("/dashboard");
+  revalidatePath(`/trips/${tripId}`);
+  return { success: true, message: t("actionErrors.updated") };
+}
+
+export async function removeTripCoverImage(formData: FormData): Promise<void> {
+  const tripId = String(formData.get("tripId") ?? "");
+  if (!isValidTripId(tripId)) {
+    return;
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/auth/sign-in?error=authentication_required");
+  }
+
+  const { data: trip } = await supabase
+    .from("trips")
+    .select("cover_image_path")
+    .eq("id", tripId)
+    .maybeSingle();
+  const previousPath = (trip as { cover_image_path: string | null } | null)?.cover_image_path ?? null;
+
+  const { error } = await supabase.rpc("update_trip_cover_image", {
+    p_trip_id: tripId,
+    p_cover_image_path: null,
+  });
+
+  if (!error && previousPath) {
+    await supabase.storage.from("trip-attachments").remove([previousPath]);
+  }
+
+  revalidatePath("/dashboard");
+  revalidatePath(`/trips/${tripId}`);
 }

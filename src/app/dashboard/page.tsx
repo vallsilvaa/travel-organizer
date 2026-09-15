@@ -58,6 +58,7 @@ type Trip = {
   updated_at: string;
   archived_at: string | null;
   timezone: string;
+  cover_image_path: string | null;
 };
 
 type DashboardTripStats = {
@@ -99,6 +100,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   // detail page's header (src/app/trips/[tripId]/page.tsx), just applied
   // to each dashboard card instead of a single trip.
   const tTrip = await getTranslations("trip");
+  const tCoverImage = await getTranslations("coverImage");
   const format = await getFormatter();
   const formatDate = (value: string) => format.dateTime(new Date(`${value}T00:00:00Z`), "medium");
   const statusFilterLabels: Record<StatusFilter, string> = {
@@ -143,7 +145,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         .single(),
       supabase
         .from("trips")
-        .select("id, destination, start_date, end_date, updated_at, archived_at, timezone"),
+        .select("id, destination, start_date, end_date, updated_at, archived_at, timezone, cover_image_path"),
       supabase
         .from("notifications")
         .select("id, notification_type, title, body, link_path, read_at, created_at")
@@ -186,6 +188,20 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         : a.start_date.localeCompare(b.start_date),
     );
   const hasActiveFilters = Boolean(searchTerm) || statusFilter !== "all" || sortOption !== "date";
+  const coverImagePaths = filteredTrips
+    .map((trip) => trip.cover_image_path)
+    .filter((path): path is string => Boolean(path));
+  const coverImageUrlsByPath = new Map<string, string>();
+  if (coverImagePaths.length) {
+    const { data: signedCovers } = await supabase.storage
+      .from("trip-attachments")
+      .createSignedUrls(coverImagePaths, 3600);
+    for (const signed of signedCovers ?? []) {
+      if (signed.signedUrl && signed.path) {
+        coverImageUrlsByPath.set(signed.path, signed.signedUrl);
+      }
+    }
+  }
 
   return (
     <main className="min-h-screen bg-slate-50 px-6 py-12">
@@ -471,16 +487,28 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                       : status === "active"
                         ? tTrip("countdown.inProgress")
                         : null;
+                  const coverImageUrl = trip.cover_image_path
+                    ? (coverImageUrlsByPath.get(trip.cover_image_path) ?? null)
+                    : null;
                   return (
                     <li key={trip.id}>
                       <Link
                         href={`/trips/${trip.id}`}
-                        className={`block h-full rounded-2xl border p-5 transition hover:border-sky-300 hover:bg-sky-50 ${
+                        className={`block h-full overflow-hidden rounded-2xl border transition hover:border-sky-300 hover:bg-sky-50 ${
                           status === "archived"
                             ? "border-dashed border-slate-300 bg-slate-50"
                             : "border-slate-200"
                         }`}
                       >
+                      {coverImageUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element -- signed Supabase Storage URL, not an optimizable static/remote asset
+                        <img
+                          src={coverImageUrl}
+                          alt={tCoverImage("alt", { destination: trip.destination })}
+                          className="h-28 w-full object-cover"
+                        />
+                      ) : null}
+                      <div className="p-5">
                         <div className="flex items-start justify-between gap-2">
                           <h3 className={`text-lg font-semibold ${status === "archived" ? "text-slate-500" : "text-slate-950"}`}>
                             {trip.destination}
@@ -509,6 +537,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                             </span>
                           </div>
                         ) : null}
+                      </div>
                       </Link>
                     </li>
                   );

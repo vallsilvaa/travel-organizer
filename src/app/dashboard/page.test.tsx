@@ -276,6 +276,36 @@ describe("DashboardPage", () => {
       });
     });
 
+    it("shows a trip's cover photo via a signed URL when it has one", async () => {
+      const tripWithCover = { ...upcomingTrip, cover_image_path: `${upcomingTrip.id}/cover-1-beach.jpg` };
+      const createSignedUrls = vi.fn().mockResolvedValue({
+        data: [{ path: tripWithCover.cover_image_path, signedUrl: "https://storage.example/signed-cover.jpg" }],
+      });
+      mocks.from.mockImplementation((table: string) => {
+        if (table === "profiles") {
+          return queryBuilder({ data: { display_name: "Traveler", task_reminders_enabled: true } });
+        }
+        if (table === "trips") {
+          return queryBuilder({ data: [tripWithCover, archivedTrip], error: null });
+        }
+        if (table === "trip_invitations") {
+          return queryBuilder({ data: [], error: null });
+        }
+        return queryBuilder({ data: null, error: null });
+      });
+      mocks.createClient.mockResolvedValue({
+        auth: { getUser: mocks.getUser },
+        from: mocks.from,
+        rpc: mocks.rpc,
+        storage: { from: () => ({ createSignedUrls }) },
+      });
+
+      render(await DashboardPage({ searchParams: Promise.resolve({}) }));
+
+      const image = screen.getByRole("img", { name: /foto de capa da viagem para lisbon/i });
+      expect(image.getAttribute("src")).toBe("https://storage.example/signed-cover.jpg");
+    });
+
     it("still shows stats for an archived trip", async () => {
       mocks.rpc.mockResolvedValue({
         data: [

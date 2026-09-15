@@ -58,6 +58,7 @@ import { LanguageSwitcher } from "@/components/language-switcher";
 import { SubmitButton } from "@/components/submit-button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { archiveTrip, deleteTrip, restoreTrip } from "@/features/trips/actions";
+import { CoverImageForm } from "@/features/trips/cover-image-form";
 import { TripForm } from "@/features/trips/trip-form";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
@@ -241,7 +242,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
 
   const { data: trip, error } = await supabase
     .from("trips")
-    .select("id, destination, start_date, end_date, created_at, created_by, archived_at, timezone, destination_guide_content, destination_guide_source, destination_guide_reviewed_at")
+    .select("id, destination, start_date, end_date, created_at, created_by, archived_at, timezone, cover_image_path, destination_guide_content, destination_guide_source, destination_guide_reviewed_at")
     .eq("id", tripId)
     .single();
 
@@ -250,6 +251,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
   }
 
   const t = await getTranslations("trip");
+  const tCoverImage = await getTranslations("coverImage");
   const tCommon = await getTranslations("common");
   const tTemplateForm = await getTranslations("templateForm");
   const timelineOffsetLabels: Record<number, string> = Object.fromEntries(
@@ -434,6 +436,13 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
   const isTripOrganizer =
     isCreator || tripParticipants.some((participant) => participant.user_id === user.id && participant.role === "organizer");
   const canEditDestinationGuide = isTripOrganizer;
+  let coverImageUrl: string | null = null;
+  if (trip.cover_image_path) {
+    const { data: signedCover } = await supabase.storage
+      .from("trip-attachments")
+      .createSignedUrl(trip.cover_image_path, 3600);
+    coverImageUrl = signedCover?.signedUrl ?? null;
+  }
   const today = todayInTimeZone(trip.timezone);
   const tripEndDate = trip.end_date ?? trip.start_date;
   const countdownLabel =
@@ -836,6 +845,14 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
     <main className="min-h-screen bg-slate-50 px-6 py-12">
       <div className="mx-auto max-w-4xl space-y-8">
         <Card className="[--card-spacing:--spacing(8)] sm:[--card-spacing:--spacing(10)]">
+            {coverImageUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element -- signed Supabase Storage URL, not an optimizable static/remote asset
+              <img
+                src={coverImageUrl}
+                alt={tCoverImage("alt", { destination: trip.destination })}
+                className="h-48 w-full object-cover sm:h-64"
+              />
+            ) : null}
           <CardContent>
             <Link
               href="/dashboard"
@@ -859,6 +876,12 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
             </h1>
             {countdownLabel && !isArchived ? (
               <p className="mt-2 text-sm font-medium text-primary">{countdownLabel}</p>
+            ) : null}
+
+            {isTripOrganizer && !isArchived ? (
+              <div className="mt-4">
+                <CoverImageForm tripId={trip.id} hasCoverImage={Boolean(trip.cover_image_path)} />
+              </div>
             ) : null}
 
             <dl className="mt-8 grid gap-4 sm:grid-cols-3">
