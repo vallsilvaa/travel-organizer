@@ -39,12 +39,16 @@ type QueryResult = { data: unknown; error?: unknown };
 function queryBuilder(result: QueryResult) {
   const promise = Promise.resolve(result) as Promise<QueryResult> & {
     eq: () => typeof promise;
+    is: () => typeof promise;
+    limit: () => typeof promise;
     order: () => typeof promise;
     select: () => typeof promise;
     single: () => Promise<QueryResult>;
   };
   promise.select = () => promise;
   promise.eq = () => promise;
+  promise.is = () => promise;
+  promise.limit = () => promise;
   promise.order = () => promise;
   promise.single = () => Promise.resolve(result);
   return promise;
@@ -761,6 +765,65 @@ describe("TripPage", () => {
       const itemId = form?.querySelector('input[name="itemId"]') as HTMLInputElement;
       expect(itemType?.value).toBe("expense");
       expect(itemId?.value).toBe(expense.id);
+    });
+  });
+
+  describe("read-only share link", () => {
+    const originalAppUrl = process.env.NEXT_PUBLIC_APP_URL;
+
+    beforeEach(() => {
+      process.env.NEXT_PUBLIC_APP_URL = "https://travel.example.com";
+    });
+
+    afterEach(() => {
+      process.env.NEXT_PUBLIC_APP_URL = originalAppUrl;
+    });
+
+    it("offers to generate a link when the trip has none yet", async () => {
+      mocks.from.mockImplementation((table: string) => {
+        if (table === "trips") return queryBuilder({ data: trip, error: null });
+        if (table === "trip_tasks") return queryBuilder({ data: [], error: null });
+        if (table === "itinerary_items") return queryBuilder({ data: [], error: null });
+        if (table === "item_comments") return queryBuilder({ data: [], error: null });
+        if (table === "trip_expenses") return queryBuilder({ data: [], error: null });
+        if (table === "trip_expense_shares") return queryBuilder({ data: [], error: null });
+        if (table === "trip_invitations") return queryBuilder({ data: [], error: null });
+        if (table === "trip_share_links") return queryBuilder({ data: [], error: null });
+        return queryBuilder({ data: null, error: null });
+      });
+
+      render(await TripPage({
+        params: Promise.resolve({ tripId }),
+        searchParams: Promise.resolve({ tab: "organizer" }),
+      }));
+
+      expect(screen.getByRole("button", { name: "Gerar link" })).toBeTruthy();
+    });
+
+    it("shows the full share URL, copy, and revoke controls when a link is active", async () => {
+      mocks.from.mockImplementation((table: string) => {
+        if (table === "trips") return queryBuilder({ data: trip, error: null });
+        if (table === "trip_tasks") return queryBuilder({ data: [], error: null });
+        if (table === "itinerary_items") return queryBuilder({ data: [], error: null });
+        if (table === "item_comments") return queryBuilder({ data: [], error: null });
+        if (table === "trip_expenses") return queryBuilder({ data: [], error: null });
+        if (table === "trip_expense_shares") return queryBuilder({ data: [], error: null });
+        if (table === "trip_invitations") return queryBuilder({ data: [], error: null });
+        if (table === "trip_share_links") {
+          return queryBuilder({ data: [{ id: "share-link-1", token: "abc123token" }], error: null });
+        }
+        return queryBuilder({ data: null, error: null });
+      });
+
+      render(await TripPage({
+        params: Promise.resolve({ tripId }),
+        searchParams: Promise.resolve({ tab: "organizer" }),
+      }));
+
+      expect(screen.getByText("https://travel.example.com/share/abc123token")).toBeTruthy();
+      expect(screen.getByRole("button", { name: "Copiar" })).toBeTruthy();
+      expect(screen.getByRole("button", { name: "Revogar" })).toBeTruthy();
+      expect(screen.queryByRole("button", { name: "Gerar link" })).toBeNull();
     });
   });
 
