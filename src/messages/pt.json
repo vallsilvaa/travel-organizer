@@ -122,8 +122,10 @@
       "save": "Salvar nome"
     },
     "reminders": {
-      "title": "Lembretes por e-mail",
-      "description": "Receba um lembrete quando uma tarefa atribuída vencer nos próximos três dias.",
+      "title": "Central de notificações",
+      "description": "Escolha por quais canais você quer ser avisado sobre prazos de tarefas e atividade da viagem.",
+      "emailSectionTitle": "E-mail",
+      "pushSectionTitle": "Push",
       "checkboxLabel": "Enviar lembretes de prazos de tarefas",
       "savePending": "Salvando...",
       "save": "Salvar preferência",
@@ -978,7 +980,7 @@
   "pushNotifications": {
     "label": "Notificações push",
     "enabledHint": "Ativadas neste dispositivo.",
-    "disabledHint": "Receba um alerta no celular ou navegador quando algo mudar, mesmo com o app fechado.",
+    "disabledHint": "Receba um alerta no celular ou navegador sobre atividade da viagem e prazos de tarefas, mesmo com o app fechado.",
     "enable": "Ativar",
     "disable": "Desativar",
     "pending": "Aguarde...",

@@ -140,6 +140,14 @@ describe("DashboardPage", () => {
     }
   });
 
+  it("groups notification preferences into email and push sections", async () => {
+    render(await DashboardPage({ searchParams: Promise.resolve({}) }));
+
+    expect(screen.getByText("Central de notificações")).toBeTruthy();
+    expect(screen.getByText("E-mail")).toBeTruthy();
+    expect(screen.getByText("Push")).toBeTruthy();
+  });
+
   it("does not show an invitation the user sent to someone else's email as one addressed to them", async () => {
     const ownInvitation = { ...invitation, id: "own-invitation", email: "traveler@example.com" };
     const sentInvitation = {

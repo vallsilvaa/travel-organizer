@@ -118,7 +118,7 @@ export function PushToggle() {
   }
 
   return (
-    <div className="flex flex-col gap-3 border-t border-slate-200 pt-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div>
         <p className="text-sm font-medium">{t("label")}</p>
         <p className="text-sm text-muted-foreground">{t(status === "enabled" ? "enabledHint" : "disabledHint")}</p>

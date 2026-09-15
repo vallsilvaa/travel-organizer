@@ -4,6 +4,7 @@ import * as Sentry from "@sentry/nextjs";
 
 import { buildReminderEmail, getReminderWindow, isWithinReminderWindow } from "@/features/reminders/email";
 import { sendEmail } from "@/lib/email";
+import { sendPushToUser } from "@/lib/push";
 
 type ReminderTrip = { destination: string; timezone: string };
 
@@ -121,14 +122,21 @@ export async function GET(request: NextRequest) {
     // In-app notification, gated by the same task_reminders_enabled
     // preference and task_reminder_deliveries dedup as the email channel
     // above, so a task's deadline is only ever announced once per day.
+    const title = "Prazo se aproximando";
+    const linkPath = `/trips/${task.trip_id}?tab=preparation`;
     await supabase.from("notifications").insert({
       user_id: task.owner_id,
       trip_id: task.trip_id,
       notification_type: "deadline",
-      title: "Prazo se aproximando",
+      title,
       body: task.title,
-      link_path: `/trips/${task.trip_id}?tab=preparation`,
+      link_path: linkPath,
     });
+
+    // Push as its own channel, same claim/dedup as the in-app and email
+    // notifications above (#187) - a subscription is the opt-in, so this
+    // isn't gated by a separate preference beyond task_reminders_enabled.
+    await sendPushToUser(supabase, task.owner_id, { title, body: task.title, url: linkPath });
 
     const { data: ownerData, error: ownerError } =
       await supabase.auth.admin.getUserById(task.owner_id);
