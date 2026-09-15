@@ -349,6 +349,42 @@ describe("TripPage", () => {
     });
   });
 
+  describe("preparation progress by category", () => {
+    const documentTaskDone = { ...task, id: "11111111-1111-1111-1111-111111111111", title: "Passport", category: "documents" as const, completed_at: "2026-08-01T00:00:00Z" };
+    const documentTaskOpen = { ...task, id: "22222222-2222-2222-2222-222222222222", title: "Visa", category: "documents" as const, completed_at: null };
+    const packingTaskOpen = { ...task, id: "33333333-3333-3333-3333-333333333333", title: "Sunscreen", category: "packing" as const, completed_at: null };
+
+    beforeEach(() => {
+      mocks.from.mockImplementation((table: string) => {
+        if (table === "trips") return queryBuilder({ data: trip, error: null });
+        if (table === "trip_tasks") {
+          return queryBuilder({ data: [documentTaskDone, documentTaskOpen, packingTaskOpen], error: null });
+        }
+        if (table === "itinerary_items") return queryBuilder({ data: [], error: null });
+        if (table === "item_comments") return queryBuilder({ data: [], error: null });
+        if (table === "trip_expenses") return queryBuilder({ data: [], error: null });
+        if (table === "trip_expense_shares") return queryBuilder({ data: [], error: null });
+        if (table === "trip_invitations") return queryBuilder({ data: [], error: null });
+        return queryBuilder({ data: null, error: null });
+      });
+    });
+
+    it("shows a progress bar per category with only tasks in that category", async () => {
+      render(await TripPage({
+        params: Promise.resolve({ tripId }),
+        searchParams: Promise.resolve({ tab: "preparation" }),
+      }));
+
+      const documentsBar = screen.getByRole("progressbar", { name: "Documentos: 50% pronto" });
+      expect(documentsBar.getAttribute("aria-valuenow")).toBe("50");
+
+      const packingBar = screen.getByRole("progressbar", { name: "Bagagem: 0% pronto" });
+      expect(packingBar.getAttribute("aria-valuenow")).toBe("0");
+
+      expect(screen.queryByRole("progressbar", { name: /Transporte:/ })).toBeNull();
+    });
+  });
+
   describe("preparation quick filters", () => {
     const criticalTask = { ...task, id: "11111111-1111-1111-1111-111111111111", title: "Critical task", is_critical: true, due_date: null };
     const overdueTask = { ...task, id: "22222222-2222-2222-2222-222222222222", title: "Overdue task", is_critical: false, due_date: "2026-08-01" };

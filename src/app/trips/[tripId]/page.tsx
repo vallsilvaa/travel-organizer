@@ -473,6 +473,19 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
     : 0;
   const criticalOpenCount = allTasks.filter((task) => task.is_critical && !task.completed_at).length;
   const overdueTaskCount = allTasks.filter((task) => !task.completed_at && task.due_date && task.due_date < today).length;
+  const readinessByCategory = taskCategories
+    .map((category) => {
+      const categoryTasks = allTasks.filter((task) => task.category === category);
+      const completed = categoryTasks.filter((task) => task.completed_at).length;
+      return {
+        category,
+        label: taskCategoryLabels[category],
+        total: categoryTasks.length,
+        completed,
+        percent: categoryTasks.length ? Math.round((completed / categoryTasks.length) * 100) : 0,
+      };
+    })
+    .filter((row) => row.total > 0);
   // The DB query already sorts open tasks by due_date asc (nulls last),
   // then created_at, then id - most overdue first, then soonest-due, then
   // furthest out, with no-deadline tasks trailing (#171). Viewing
@@ -1718,6 +1731,31 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                   <Badge variant="outline" className={overdueTaskCount ? "border-red-200 bg-red-100 text-red-800" : "bg-card"}>{t("readiness.overdue", { count: overdueTaskCount })}</Badge>
                 </div>
               </div>
+
+              {readinessByCategory.length ? (
+                <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                  {readinessByCategory.map((row) => (
+                    <div key={row.category} className="rounded-2xl border border-slate-200 p-4">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-sm font-semibold text-slate-800">{row.label}</p>
+                        <p className="text-xs font-medium text-slate-500">
+                          {t("readiness.completedCount", { completed: row.completed, total: row.total })}
+                        </p>
+                      </div>
+                      <div
+                        className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100"
+                        role="progressbar"
+                        aria-label={t("readiness.categoryAriaLabel", { category: row.label, percent: row.percent })}
+                        aria-valuemin={0}
+                        aria-valuemax={100}
+                        aria-valuenow={row.percent}
+                      >
+                        <div className="h-full rounded-full bg-sky-600" style={{ width: `${row.percent}%` }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
 
               <div className="mt-6 flex flex-wrap gap-2">
                 <Link

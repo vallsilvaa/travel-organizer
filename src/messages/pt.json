@@ -226,6 +226,7 @@
       "title": "Prontidão para a viagem",
       "completedCount": "{completed} de {total} concluídas",
       "ariaLabel": "{percent}% pronto",
+      "categoryAriaLabel": "{category}: {percent}% pronto",
       "criticalOpen": "{count} críticas em aberto",
       "overdue": "{count} atrasadas"
     },
