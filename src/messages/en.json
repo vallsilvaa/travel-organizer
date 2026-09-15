@@ -316,6 +316,7 @@
       "remindGenericFailed": "Could not send the reminder. Please try again.",
       "remindNotificationTitle": "{name} reminded you about a pending balance",
       "remindNotificationBody": "You owe {amount} in {destination}",
+      "addReceipt": "Attach receipt",
       "addExpense": "Add expense",
       "loadError": "Could not load expenses. Try refreshing the page.",
       "viewAll": "All",
@@ -420,7 +421,8 @@
       "itemLabels": {
         "itinerary": "Itinerary",
         "task": "Task",
-        "reservation": "Reservation"
+        "reservation": "Reservation",
+        "expense": "Expense"
       },
       "removedItem": "removed item"
     },
@@ -772,6 +774,7 @@
     "itineraryPrefix": "Itinerary",
     "taskPrefix": "Task",
     "reservationPrefix": "Reservation",
+    "expensePrefix": "Expense",
     "submitPending": "Uploading...",
     "submit": "Upload attachment",
     "toastUploaded": "Attachment uploaded.",
