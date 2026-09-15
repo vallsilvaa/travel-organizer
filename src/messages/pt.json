@@ -286,7 +286,9 @@
       "deleteReservationDescription": "Isso vai remover permanentemente \"{title}\" das reservas da viagem.",
       "reservationsEmpty": "Nenhuma reserva registrada ainda. Adicione voos, hospedagens ou transportes acima.",
       "reservationPaid": "Pago: {amount} por {payer}",
-      "reservationExpenseLinked": "vinculado a um gasto na aba Despesas"
+      "reservationExpenseLinked": "vinculado a um gasto na aba Despesas",
+      "addReservationToCalendar": "Adicionar ao calendário",
+      "viewReservationOnMap": "Ver no mapa"
     },
     "expenses": {
       "title": "Despesas",

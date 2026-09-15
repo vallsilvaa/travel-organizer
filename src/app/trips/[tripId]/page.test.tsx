@@ -825,5 +825,42 @@ describe("TripPage", () => {
       const link = screen.getByRole("link", { name: "Museu do Louvre" });
       expect(link.getAttribute("href")).toBe(`/trips/${tripId}?tab=itinerary#itinerary-${itineraryItem.id}`);
     });
+
+    it("offers a calendar download and, when a location is set, a map link for the reservation", async () => {
+      const reservationWithLocation = { ...reservation, location: "Museu do Louvre" };
+      mocks.from.mockImplementation((table: string) => {
+        if (table === "trips") return queryBuilder({ data: trip, error: null });
+        if (table === "trip_tasks") return queryBuilder({ data: [], error: null });
+        if (table === "itinerary_items") return queryBuilder({ data: [itineraryItem], error: null });
+        if (table === "item_comments") return queryBuilder({ data: [], error: null });
+        if (table === "trip_reservations") return queryBuilder({ data: [reservationWithLocation], error: null });
+        if (table === "trip_expenses") return queryBuilder({ data: [], error: null });
+        if (table === "trip_expense_shares") return queryBuilder({ data: [], error: null });
+        if (table === "trip_invitations") return queryBuilder({ data: [], error: null });
+        return queryBuilder({ data: null, error: null });
+      });
+
+      render(await TripPage({
+        params: Promise.resolve({ tripId }),
+        searchParams: Promise.resolve({ tab: "itinerary" }),
+      }));
+
+      const calendarLink = screen.getByRole("link", { name: "Adicionar ao calendário" });
+      expect(calendarLink.getAttribute("href")).toBe(`/api/trips/${tripId}/reservations/${reservation.id}/ics`);
+
+      const mapLink = screen.getByRole("link", { name: "Ver no mapa" });
+      expect(mapLink.getAttribute("href")).toContain(encodeURIComponent("Museu do Louvre"));
+      expect(mapLink.getAttribute("target")).toBe("_blank");
+    });
+
+    it("hides the map link when the reservation has no location", async () => {
+      render(await TripPage({
+        params: Promise.resolve({ tripId }),
+        searchParams: Promise.resolve({ tab: "itinerary" }),
+      }));
+
+      expect(screen.getByRole("link", { name: "Adicionar ao calendário" })).toBeTruthy();
+      expect(screen.queryByRole("link", { name: "Ver no mapa" })).toBeNull();
+    });
   });
 });
