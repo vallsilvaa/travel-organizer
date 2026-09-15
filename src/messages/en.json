@@ -226,6 +226,7 @@
       "title": "Trip readiness",
       "completedCount": "{completed} of {total} completed",
       "ariaLabel": "{percent}% ready",
+      "categoryAriaLabel": "{category}: {percent}% ready",
       "criticalOpen": "{count} critical open",
       "overdue": "{count} overdue"
     },
