@@ -528,6 +528,10 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
     dayNumber: index + 1,
     items: itemsByDate.get(date) ?? [],
   }));
+  // Land on the first day that actually has something planned rather than
+  // an empty Day 1, so the day-tab navigation doesn't default to a blank tab.
+  const defaultItineraryDay = itineraryDayGroups.find((group) => group.items.length)?.date
+    ?? itineraryDayGroups[0]?.date;
   // Shortening/moving the trip's dates after items already exist must
   // surface those items for correction, never silently drop or move them
   // (#171) - so anything outside the *current* range is shown separately
@@ -1163,9 +1167,19 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                       </ul>
                     </div>
                   ) : null}
-                  <div className="mt-6 space-y-8">
+                  <Tabs defaultValue={defaultItineraryDay} className="mt-6">
+                    <div className="overflow-x-auto pb-1">
+                      <TabsList className="h-8 w-max">
+                        {itineraryDayGroups.map((group) => (
+                          <TabsTrigger key={group.date} value={group.date}>
+                            {t("itinerary.dayTabLabel", { day: group.dayNumber })}
+                          </TabsTrigger>
+                        ))}
+                      </TabsList>
+                    </div>
                     {itineraryDayGroups.map((group) => (
-                      <section key={group.date}>
+                      <TabsContent key={group.date} value={group.date} keepMounted className="mt-4">
+                      <section>
                         <h3 className="text-sm font-semibold uppercase tracking-[0.12em] text-slate-500">
                           {t("itinerary.dayHeading", { day: group.dayNumber, date: formatDate(group.date) })}
                         </h3>
@@ -1238,8 +1252,9 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                           <p className="mt-3 text-sm text-slate-500">{t("itinerary.emptyDay")}</p>
                         )}
                       </section>
+                      </TabsContent>
                     ))}
-                  </div>
+                  </Tabs>
                 </>
               ) : (
                 <p className="mt-5 rounded-2xl border border-dashed border-slate-300 p-6 text-sm text-slate-600">
