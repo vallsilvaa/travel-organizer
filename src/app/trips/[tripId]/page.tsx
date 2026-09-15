@@ -148,7 +148,7 @@ type ExpenseSummaryRow = {
 
 type TripAttachment = {
   id: string;
-  item_type: "itinerary" | "task" | "reservation" | null;
+  item_type: "itinerary" | "task" | "reservation" | "expense" | null;
   item_id: string | null;
   storage_path: string;
   file_name: string;
@@ -162,6 +162,7 @@ function attachmentItemLabel(
   itineraryTitles: Map<string, string>,
   taskTitles: Map<string, string>,
   reservationTitles: Map<string, string>,
+  expenseTitles: Map<string, string>,
   itemTypeLabels: Record<string, string>,
   removedItemLabel: string,
 ) {
@@ -172,6 +173,7 @@ function attachmentItemLabel(
     itinerary: itineraryTitles,
     task: taskTitles,
     reservation: reservationTitles,
+    expense: expenseTitles,
   };
   const title = titlesByType[attachment.item_type]?.get(attachment.item_id) ?? removedItemLabel;
   return `${itemTypeLabels[attachment.item_type]}: ${title}`;
@@ -319,6 +321,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
     itinerary: t("documents.itemLabels.itinerary"),
     task: t("documents.itemLabels.task"),
     reservation: t("documents.itemLabels.reservation"),
+    expense: t("documents.itemLabels.expense"),
   };
 
   const isCreator = trip.created_by === user.id;
@@ -589,6 +592,15 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
     reservationsByItineraryItemId.set(reservation.itinerary_item_id, list);
   }
   const tripExpenses = (expenses ?? []) as TripExpense[];
+  const expenseTitles = new Map(tripExpenses.map((expense) => [expense.id, expense.description]));
+  const attachmentsByExpenseId = new Map<string, TripAttachment[]>();
+  for (const attachment of tripAttachments) {
+    if (attachment.item_type === "expense" && attachment.item_id) {
+      const list = attachmentsByExpenseId.get(attachment.item_id) ?? [];
+      list.push(attachment);
+      attachmentsByExpenseId.set(attachment.item_id, list);
+    }
+  }
   const reservationForExpense = new Map(
     tripReservations.filter((r) => r.expense_id).map((r) => [r.expense_id as string, r]),
   );
@@ -816,6 +828,50 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
           />
         ) : null}
       </div>
+      {(attachmentsByExpenseId.get(expense.id) ?? []).length ? (
+        <ul className="mt-3 space-y-2 border-t border-slate-100 pt-3">
+          {(attachmentsByExpenseId.get(expense.id) ?? []).map((attachment) => (
+            <li key={attachment.id} className="flex flex-wrap items-center justify-between gap-2 text-sm">
+              <span className="text-slate-700">
+                {attachment.file_name} <span className="text-xs text-slate-500">({formatFileSize(attachment.size_bytes)})</span>
+              </span>
+              <span className="flex items-center gap-3">
+                {attachment.downloadUrl ? (
+                  <a href={attachment.downloadUrl} className="font-semibold text-sky-700 hover:text-sky-800">
+                    {t("documents.download")}
+                  </a>
+                ) : (
+                  <span className="text-xs text-red-800">{t("documents.linkUnavailable")}</span>
+                )}
+                {!isArchived ? (
+                  <ConfirmDeleteForm
+                    action={deleteAttachment}
+                    hiddenFields={{ tripId: trip.id, attachmentId: attachment.id, storagePath: attachment.storage_path }}
+                    title={t("documents.deleteAttachmentTitle")}
+                    description={t("documents.deleteAttachmentDescription", { fileName: attachment.file_name })}
+                    triggerLabel={t("documents.delete")}
+                    triggerClassName="h-auto p-0 text-destructive"
+                  />
+                ) : null}
+              </span>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+      {!isArchived ? (
+        <details className="mt-3 border-t border-slate-100 pt-3">
+          <summary className="cursor-pointer text-sm font-semibold text-sky-700 hover:text-sky-800">
+            {t("expenses.addReceipt")}
+          </summary>
+          <div className="mt-3">
+            <AttachmentForm
+              tripId={trip.id}
+              fixedAssociation={{ itemType: "expense", itemId: expense.id }}
+              compact
+            />
+          </div>
+        </details>
+      ) : null}
     </li>
   );
   const buildExpenseViewHref = (view: "all" | "category" | "payer") => {
@@ -2063,6 +2119,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                       itineraryItems={(itineraryItems ?? []).map((item) => ({ id: item.id, title: item.title }))}
                       tasks={allTasks.map((task) => ({ id: task.id, title: task.title }))}
                       reservations={tripReservations.map((reservation) => ({ id: reservation.id, title: reservation.title }))}
+                      expenses={tripExpenses.map((expense) => ({ id: expense.id, title: expense.description }))}
                     />
                   </div>
                 </details>
@@ -2080,7 +2137,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                         <h3 className="text-lg font-semibold text-slate-950">{attachment.file_name}</h3>
                         <p className="mt-1 text-sm text-slate-600">
                           {formatFileSize(attachment.size_bytes)}
-                          {attachment.item_type ? ` · ${attachmentItemLabel(attachment, itineraryTitles, taskTitles, reservationTitles, attachmentItemTypeLabels, t("documents.removedItem"))}` : ""}
+                          {attachment.item_type ? ` · ${attachmentItemLabel(attachment, itineraryTitles, taskTitles, reservationTitles, expenseTitles, attachmentItemTypeLabels, t("documents.removedItem"))}` : ""}
                         </p>
                       </div>
                       <div className="flex items-center gap-4">

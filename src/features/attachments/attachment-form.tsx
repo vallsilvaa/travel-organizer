@@ -21,14 +21,31 @@ type AssociableItem = { id: string; title: string };
 
 type AttachmentFormProps = {
   tripId: string;
-  itineraryItems: AssociableItem[];
-  tasks: AssociableItem[];
-  reservations: AssociableItem[];
+  itineraryItems?: AssociableItem[];
+  tasks?: AssociableItem[];
+  reservations?: AssociableItem[];
+  expenses?: AssociableItem[];
+  /** When set, the item association is fixed (e.g. a receipt uploaded
+   * directly from a specific expense row) and the association picker is
+   * skipped entirely. */
+  fixedAssociation?: { itemType: "itinerary" | "task" | "reservation" | "expense"; itemId: string };
+  /** Compact layout for inline use (e.g. attaching a receipt from within an
+   * expense row) instead of the full two-column form used on the
+   * Documents tab. */
+  compact?: boolean;
 };
 
 const initialState: AttachmentActionState = {};
 
-export function AttachmentForm({ tripId, itineraryItems, tasks, reservations }: AttachmentFormProps) {
+export function AttachmentForm({
+  tripId,
+  itineraryItems = [],
+  tasks = [],
+  reservations = [],
+  expenses = [],
+  fixedAssociation,
+  compact = false,
+}: AttachmentFormProps) {
   const t = useTranslations("attachmentForm");
   const tCommon = useTranslations("common");
   const [state, formAction, pending] = useActionState(uploadAttachment, initialState);
@@ -43,14 +60,15 @@ export function AttachmentForm({ tripId, itineraryItems, tasks, reservations }: 
     }
   }, [state, t]);
 
-  const hasAssociableItems = itineraryItems.length || tasks.length || reservations.length;
+  const hasAssociableItems = !fixedAssociation
+    && (itineraryItems.length || tasks.length || reservations.length || expenses.length);
 
   return (
-    <form ref={formRef} action={formAction} className="grid gap-4 sm:grid-cols-2">
+    <form ref={formRef} action={formAction} className={compact ? "flex flex-wrap items-end gap-3" : "grid gap-4 sm:grid-cols-2"}>
       <input type="hidden" name="tripId" value={tripId} />
 
-      <div className="space-y-2 sm:col-span-2">
-        <Label htmlFor="attachment-file">{t("fileLabel")}</Label>
+      <div className={compact ? "space-y-2" : "space-y-2 sm:col-span-2"}>
+        {compact ? null : <Label htmlFor="attachment-file">{t("fileLabel")}</Label>}
         <Input
           required
           id="attachment-file"
@@ -58,10 +76,15 @@ export function AttachmentForm({ tripId, itineraryItems, tasks, reservations }: 
           type="file"
           accept=".pdf,.jpg,.jpeg,.png,.webp,.heic,application/pdf,image/jpeg,image/png,image/webp,image/heic"
         />
-        <p className="text-xs text-muted-foreground">{t("fileHint")}</p>
+        {compact ? null : <p className="text-xs text-muted-foreground">{t("fileHint")}</p>}
       </div>
 
-      {hasAssociableItems ? (
+      {fixedAssociation ? (
+        <>
+          <input type="hidden" name="itemType" value={fixedAssociation.itemType} />
+          <input type="hidden" name="itemId" value={fixedAssociation.itemId} />
+        </>
+      ) : hasAssociableItems ? (
         <div className="space-y-2 sm:col-span-2">
           <Label htmlFor="attachment-association">
             {t("associateLabel")} <span className="font-normal text-muted-foreground">{tCommon("optional")}</span>
@@ -73,6 +96,7 @@ export function AttachmentForm({ tripId, itineraryItems, tasks, reservations }: 
               ...Object.fromEntries(itineraryItems.map((item) => [`itinerary:${item.id}`, `${t("itineraryPrefix")} · ${item.title}`])),
               ...Object.fromEntries(tasks.map((task) => [`task:${task.id}`, `${t("taskPrefix")} · ${task.title}`])),
               ...Object.fromEntries(reservations.map((reservation) => [`reservation:${reservation.id}`, `${t("reservationPrefix")} · ${reservation.title}`])),
+              ...Object.fromEntries(expenses.map((expense) => [`expense:${expense.id}`, `${t("expensePrefix")} · ${expense.title}`])),
             }}
             onValueChange={(value) => {
               const form = formRef.current;
@@ -96,6 +120,9 @@ export function AttachmentForm({ tripId, itineraryItems, tasks, reservations }: 
               {reservations.map((reservation) => (
                 <SelectItem key={reservation.id} value={`reservation:${reservation.id}`}>{t("reservationPrefix")} · {reservation.title}</SelectItem>
               ))}
+              {expenses.map((expense) => (
+                <SelectItem key={expense.id} value={`expense:${expense.id}`}>{t("expensePrefix")} · {expense.title}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
           <input type="hidden" name="itemType" defaultValue="" />
@@ -108,7 +135,7 @@ export function AttachmentForm({ tripId, itineraryItems, tasks, reservations }: 
         </>
       )}
 
-      <Button type="submit" disabled={pending} size="lg" className="sm:col-span-2 sm:justify-self-start">
+      <Button type="submit" disabled={pending} size={compact ? "sm" : "lg"} variant={compact ? "outline" : "default"} className={compact ? undefined : "sm:col-span-2 sm:justify-self-start"}>
         {pending ? t("submitPending") : t("submit")}
       </Button>
     </form>

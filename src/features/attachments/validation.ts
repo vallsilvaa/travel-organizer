@@ -14,7 +14,7 @@ export const allowedAttachmentMimeTypes = [
 
 export const maxAttachmentSizeBytes = 10 * 1024 * 1024;
 
-export const attachmentItemTypes = ["itinerary", "task", "reservation"] as const;
+export const attachmentItemTypes = ["itinerary", "task", "reservation", "expense"] as const;
 export type AttachmentItemType = (typeof attachmentItemTypes)[number];
 
 export function isValidAttachmentId(value: string) {

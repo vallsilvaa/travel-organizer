@@ -692,6 +692,78 @@ describe("TripPage", () => {
     });
   });
 
+  describe("expense receipt attachments", () => {
+    const expense = {
+      id: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+      description: "Hotel",
+      amount: "500.00",
+      currency: "EUR",
+      category: "lodging",
+      expense_date: "2026-09-02",
+      payer_id: null,
+    };
+    const receipt = {
+      id: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+      item_type: "expense",
+      item_id: expense.id,
+      storage_path: `${tripId}/receipt-1-hotel.pdf`,
+      file_name: "hotel-receipt.pdf",
+      content_type: "application/pdf",
+      size_bytes: 102400,
+    };
+    const createSignedUrls = vi.fn().mockResolvedValue({
+      data: [{ path: receipt.storage_path, signedUrl: "https://storage.example/signed-receipt.pdf" }],
+    });
+
+    beforeEach(() => {
+      mocks.from.mockImplementation((table: string) => {
+        if (table === "trips") return queryBuilder({ data: trip, error: null });
+        if (table === "trip_tasks") return queryBuilder({ data: [], error: null });
+        if (table === "itinerary_items") return queryBuilder({ data: [], error: null });
+        if (table === "item_comments") return queryBuilder({ data: [], error: null });
+        if (table === "trip_expenses") return queryBuilder({ data: [expense], error: null });
+        if (table === "trip_expense_shares") return queryBuilder({ data: [], error: null });
+        if (table === "trip_invitations") return queryBuilder({ data: [], error: null });
+        if (table === "trip_attachments") return queryBuilder({ data: [receipt], error: null });
+        return queryBuilder({ data: null, error: null });
+      });
+      mocks.createClient.mockResolvedValue({
+        auth: { getUser: mocks.getUser },
+        from: mocks.from,
+        rpc: mocks.rpc,
+        storage: { from: () => ({ createSignedUrls }) },
+      });
+    });
+
+    it("shows an attached receipt on its expense with a signed download link", async () => {
+      render(await TripPage({
+        params: Promise.resolve({ tripId }),
+        searchParams: Promise.resolve({ tab: "expenses" }),
+      }));
+
+      expect(screen.getByText(/hotel-receipt\.pdf/)).toBeTruthy();
+      const downloadLink = screen.getByRole("link", { name: "Baixar" });
+      expect(downloadLink.getAttribute("href")).toBe("https://storage.example/signed-receipt.pdf");
+    });
+
+    it("offers an inline upload form fixed to that expense, without an association picker", async () => {
+      render(await TripPage({
+        params: Promise.resolve({ tripId }),
+        searchParams: Promise.resolve({ tab: "expenses" }),
+      }));
+
+      const summary = screen.getByText("Anexar comprovante");
+      summary.click();
+
+      expect(screen.queryByLabelText(/Associar a/)).toBeNull();
+      const form = summary.closest("details")?.querySelector("form");
+      const itemType = form?.querySelector('input[name="itemType"]') as HTMLInputElement;
+      const itemId = form?.querySelector('input[name="itemId"]') as HTMLInputElement;
+      expect(itemType?.value).toBe("expense");
+      expect(itemId?.value).toBe(expense.id);
+    });
+  });
+
   describe("overview tab", () => {
     const participants = [
       { user_id: "11111111-1111-1111-1111-111111111111", display_name: "Ana", role: "organizer" },
