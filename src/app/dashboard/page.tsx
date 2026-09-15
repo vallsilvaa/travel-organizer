@@ -26,7 +26,7 @@ import {
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { SubmitButton } from "@/components/submit-button";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { todayInTimeZone } from "@/lib/timezone";
+import { daysUntil, todayInTimeZone } from "@/lib/timezone";
 import {
   Card,
   CardAction,
@@ -95,6 +95,10 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const t = await getTranslations("dashboard");
   const invitationRoleLabels = getInvitationRoleLabels(await getTranslations("categories.invitationRole"));
   const tCommon = await getTranslations("common");
+  // Reuses the same "days remaining" wording already shown on the trip
+  // detail page's header (src/app/trips/[tripId]/page.tsx), just applied
+  // to each dashboard card instead of a single trip.
+  const tTrip = await getTranslations("trip");
   const format = await getFormatter();
   const formatDate = (value: string) => format.dateTime(new Date(`${value}T00:00:00Z`), "medium");
   const statusFilterLabels: Record<StatusFilter, string> = {
@@ -452,6 +456,13 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                 {filteredTrips.map((trip) => {
                   const status = tripStatus(trip);
                   const stats = tripStatsByTripId.get(trip.id);
+                  const today = todayInTimeZone(trip.timezone);
+                  const countdownLabel =
+                    status === "upcoming"
+                      ? tTrip("countdown.days", { days: daysUntil(trip.start_date, today) })
+                      : status === "active"
+                        ? tTrip("countdown.inProgress")
+                        : null;
                   return (
                     <li key={trip.id}>
                       <Link
@@ -474,6 +485,9 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                           {formatDate(trip.start_date)}
                           {trip.end_date ? ` – ${formatDate(trip.end_date)}` : ""}
                         </p>
+                        {countdownLabel ? (
+                          <p className="mt-1 text-xs font-medium text-primary">{countdownLabel}</p>
+                        ) : null}
                         {stats ? (
                           <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-600">
                             <span>{t("yourTrips.readiness", { percent: stats.readiness_percentage })}</span>
