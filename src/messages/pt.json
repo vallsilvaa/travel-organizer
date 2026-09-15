@@ -436,6 +436,17 @@
       "removeParticipantDescription": "{name} perderá acesso imediato a esta viagem.",
       "removeAccess": "Remover acesso",
       "invitationExpires": "Expira em {date}",
+      "shareLink": {
+        "title": "Link de compartilhamento (somente leitura)",
+        "description": "Gere um link para quem quiser acompanhar o roteiro da viagem sem virar participante — sem despesas, tarefas ou dados sensíveis.",
+        "generate": "Gerar link",
+        "generating": "Gerando...",
+        "copy": "Copiar",
+        "copied": "Link copiado.",
+        "copyFailed": "Não foi possível copiar o link.",
+        "revoke": "Revogar",
+        "revoking": "Revogando..."
+      },
       "invitationStatus": {
         "pending": "Pendente",
         "accepted": "Aceito",
@@ -1012,6 +1023,13 @@
       "currentModeOrganizer": "Modo: Organizador",
       "switchToTraveler": "Traveler View"
     }
+  },
+  "shareLinkPage": {
+    "eyebrow": "Roteiro compartilhado",
+    "readOnlyNotice": "Esta é uma visão somente leitura. Despesas, tarefas e documentos da viagem não são exibidos aqui.",
+    "itineraryTitle": "Roteiro",
+    "itineraryEmpty": "Ainda não há itens no roteiro desta viagem.",
+    "footer": "Compartilhado via Travel Organizer"
   },
   "pushNotifications": {
     "label": "Notificações push",

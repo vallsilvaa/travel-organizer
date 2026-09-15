@@ -436,6 +436,17 @@
       "removeParticipantDescription": "{name} will immediately lose access to this trip.",
       "removeAccess": "Remove access",
       "invitationExpires": "Expires on {date}",
+      "shareLink": {
+        "title": "Share link (read-only)",
+        "description": "Generate a link for anyone who wants to follow the trip's itinerary without becoming a participant — no expenses, tasks, or sensitive data.",
+        "generate": "Generate link",
+        "generating": "Generating...",
+        "copy": "Copy",
+        "copied": "Link copied.",
+        "copyFailed": "Could not copy the link.",
+        "revoke": "Revoke",
+        "revoking": "Revoking..."
+      },
       "invitationStatus": {
         "pending": "Pending",
         "accepted": "Accepted",
@@ -1012,6 +1023,13 @@
       "currentModeOrganizer": "Mode: Organizer",
       "switchToTraveler": "Traveler View"
     }
+  },
+  "shareLinkPage": {
+    "eyebrow": "Shared itinerary",
+    "readOnlyNotice": "This is a read-only view. The trip's expenses, tasks, and documents aren't shown here.",
+    "itineraryTitle": "Itinerary",
+    "itineraryEmpty": "This trip's itinerary doesn't have any items yet.",
+    "footer": "Shared via Travel Organizer"
   },
   "pushNotifications": {
     "label": "Push notifications",

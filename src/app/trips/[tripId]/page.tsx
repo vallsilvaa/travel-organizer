@@ -60,6 +60,7 @@ import { SubmitButton } from "@/components/submit-button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { archiveTrip, deleteTrip, restoreTrip } from "@/features/trips/actions";
 import { CoverImageForm } from "@/features/trips/cover-image-form";
+import { ShareLinkPanel } from "@/features/trip-sharing/share-link-panel";
 import { TripForm } from "@/features/trips/trip-form";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
@@ -362,6 +363,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
     { data: expenseSummary },
     invitationResult,
     templatesResult,
+    { data: shareLinks },
   ] =
     await Promise.all([
       supabase
@@ -424,6 +426,15 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
           "id, title, item_type, category, continent, country, city, classification, due_offset_days, currency, estimated_amount, document_instructions",
         )
         .order("created_at", { ascending: false }),
+      isCreator
+        ? supabase
+            .from("trip_share_links")
+            .select("id, token")
+            .eq("trip_id", trip.id)
+            .is("revoked_at", null)
+            .order("created_at", { ascending: false })
+            .limit(1)
+        : Promise.resolve({ data: [] }),
     ]);
   const invitations = invitationResult.data;
   const catalogTemplates = (templatesResult.data ?? []) as CatalogTemplate[];
@@ -440,6 +451,11 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
   const isTripOrganizer =
     isCreator || tripParticipants.some((participant) => participant.user_id === user.id && participant.role === "organizer");
   const canEditDestinationGuide = isTripOrganizer;
+  const activeShareLinkRow = ((shareLinks ?? []) as { id: string; token: string }[])[0] ?? null;
+  const shareBaseUrl = (process.env.NEXT_PUBLIC_APP_URL ?? "").replace(/\/$/, "");
+  const activeShareLink = activeShareLinkRow
+    ? { id: activeShareLinkRow.id, url: `${shareBaseUrl}/share/${activeShareLinkRow.token}` }
+    : null;
   let coverImageUrl: string | null = null;
   if (trip.cover_image_path) {
     const { data: signedCover } = await supabase.storage
@@ -2220,6 +2236,10 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                         );
                       })}
                     </ul>
+                  </div>
+
+                  <div className="border-b border-slate-200 py-8">
+                    <ShareLinkPanel tripId={trip.id} activeLink={activeShareLink} />
                   </div>
 
                   <div className="mt-8">
