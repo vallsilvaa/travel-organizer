@@ -9,6 +9,7 @@ import { CommentThread, type ItemComment } from "@/features/comments/comment-thr
 import { DestinationGuideForm } from "@/features/destination-guide/destination-guide-form";
 import { deleteExpense } from "@/features/expenses/actions";
 import { computeSettlements } from "@/features/expenses/balances";
+import { ExpenseCategoryChart, type ExpenseCategoryChartDatum } from "@/features/expenses/category-chart";
 import { ExpenseForm } from "@/features/expenses/expense-form";
 import { getExpenseCategoryLabels } from "@/features/expenses/validation";
 import {
@@ -619,6 +620,36 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
     const rows = balancesByCurrency.get(row.currency) ?? [];
     rows.push(row);
     balancesByCurrency.set(row.currency, rows);
+  }
+  const yourShareByCurrency = new Map<string, number>();
+  for (const row of balanceRows) {
+    if (row.user_id === user.id) {
+      yourShareByCurrency.set(row.currency, Number(row.total_owed));
+    }
+  }
+  const expenseOverviewByCurrency = totalsByCurrency.map(([currency, total]) => {
+    const yourShare = yourShareByCurrency.get(currency) ?? 0;
+    const percentOfTotal = total > 0 ? Math.round((yourShare / total) * 100) : 0;
+    return { currency, total, yourShare, percentOfTotal };
+  });
+  const categoryChartDataByCurrency = new Map<string, ExpenseCategoryChartDatum[]>();
+  for (const expense of tripExpenses) {
+    const amount = Number(expense.amount ?? expense.estimated_amount ?? 0);
+    if (!amount) {
+      continue;
+    }
+    const label = expenseCategoryLabels[expense.category as keyof typeof expenseCategoryLabels] ?? expense.category;
+    const list = categoryChartDataByCurrency.get(expense.currency) ?? [];
+    const existing = list.find((datum) => datum.category === label);
+    if (existing) {
+      existing.amount += amount;
+    } else {
+      list.push({ category: label, amount });
+    }
+    categoryChartDataByCurrency.set(expense.currency, list);
+  }
+  for (const list of categoryChartDataByCurrency.values()) {
+    list.sort((a, b) => b.amount - a.amount);
   }
   const settlements = computeSettlements(
     balanceRows.map((row) => ({
@@ -1374,15 +1405,44 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {totalsByCurrency.length ? (
-                <dl className="grid gap-3 sm:grid-cols-3">
-                  {totalsByCurrency.map(([currency, total]) => (
-                    <div key={currency} className="rounded-2xl bg-emerald-50 p-4">
-                      <dt className="text-xs font-semibold uppercase tracking-wide text-emerald-700">{t("expenses.totalLabel", { currency })}</dt>
-                      <dd className="mt-1 text-xl font-semibold text-emerald-950">{formatMoney(total, currency)}</dd>
+              {expenseOverviewByCurrency.length ? (
+                <div className="space-y-4">
+                  {expenseOverviewByCurrency.map((overview) => (
+                    <dl key={overview.currency} className="grid gap-3 sm:grid-cols-3">
+                      <div className="rounded-2xl bg-emerald-50 p-4">
+                        <dt className="text-xs font-semibold uppercase tracking-wide text-emerald-700">{t("expenses.totalLabel", { currency: overview.currency })}</dt>
+                        <dd className="mt-1 text-xl font-semibold text-emerald-950">{formatMoney(overview.total, overview.currency)}</dd>
+                      </div>
+                      <div className="rounded-2xl bg-emerald-50 p-4">
+                        <dt className="text-xs font-semibold uppercase tracking-wide text-emerald-700">{t("expenses.yourShareLabel")}</dt>
+                        <dd className="mt-1 text-xl font-semibold text-emerald-950">{formatMoney(overview.yourShare, overview.currency)}</dd>
+                      </div>
+                      <div className="rounded-2xl bg-emerald-50 p-4">
+                        <dt className="text-xs font-semibold uppercase tracking-wide text-emerald-700">{t("expenses.percentOfGroupLabel")}</dt>
+                        <dd className="mt-1 text-xl font-semibold text-emerald-950">{t("expenses.percentValue", { percent: overview.percentOfTotal })}</dd>
+                      </div>
+                    </dl>
+                  ))}
+                </div>
+              ) : null}
+
+              {categoryChartDataByCurrency.size ? (
+                <div className="mt-6 space-y-6">
+                  <h3 className="text-lg font-semibold text-slate-950">{t("expenses.chartTitle")}</h3>
+                  {Array.from(categoryChartDataByCurrency.entries()).map(([currency, data]) => (
+                    <div key={currency} className="rounded-2xl border border-slate-200 p-4">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{currency}</p>
+                      <div className="mt-3">
+                        <ExpenseCategoryChart
+                          data={data}
+                          currency={currency}
+                          chartLabel={t("expenses.chartAriaLabel", { currency })}
+                          formatAmount={formatMoney}
+                        />
+                      </div>
                     </div>
                   ))}
-                </dl>
+                </div>
               ) : null}
 
               {expenseSummaryRows.length ? (

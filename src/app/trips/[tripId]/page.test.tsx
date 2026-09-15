@@ -481,6 +481,47 @@ describe("TripPage", () => {
       expect(screen.getByText("Total EUR")).toBeTruthy();
       expect(screen.getByText("Saldos")).toBeTruthy();
     });
+
+    it("shows the current user's share and percent of the group total, plus a spending-by-category chart", async () => {
+      mocks.getUser.mockResolvedValue({ data: { user: { id: participants[0].user_id } } });
+      mocks.rpc.mockImplementation((fn: string) => {
+        if (fn === "get_trip_participants") return Promise.resolve({ data: participants });
+        if (fn === "get_trip_expense_balances") {
+          return Promise.resolve({
+            data: [
+              {
+                user_id: participants[0].user_id,
+                display_name: "Ana",
+                currency: "EUR",
+                total_paid: "500.00",
+                total_owed: "290.00",
+                net_balance: "210.00",
+              },
+              {
+                user_id: participants[1].user_id,
+                display_name: "Bruno",
+                currency: "EUR",
+                total_paid: "80.00",
+                total_owed: "290.00",
+                net_balance: "-210.00",
+              },
+            ],
+          });
+        }
+        return Promise.resolve({ data: [] });
+      });
+
+      render(await TripPage({
+        params: Promise.resolve({ tripId }),
+        searchParams: Promise.resolve({ tab: "expenses" }),
+      }));
+
+      // Hotel (500) + Jantar (80) = 580 total; Ana's total_owed is 290 (50%).
+      expect(screen.getByText("Sua parte")).toBeTruthy();
+      expect(screen.getByText("50%")).toBeTruthy();
+      expect(screen.getByText("Gastos por categoria")).toBeTruthy();
+      expect(screen.getByRole("img", { name: "Gráfico de barras de gastos por categoria em EUR" })).toBeTruthy();
+    });
   });
 
   describe("overview tab", () => {
