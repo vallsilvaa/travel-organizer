@@ -733,11 +733,12 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
         ? comment.itinerary_item_id === itemId
         : comment.task_id === itemId,
     );
-  const buildPrepQuickFilterHref = (next: { critical?: boolean; overdue?: boolean }) => {
+  const buildPrepQuickFilterHref = (next: { critical?: boolean; overdue?: boolean; category?: string }) => {
     const params = new URLSearchParams();
     if (statusFilter !== "all") params.set("status", statusFilter);
     if (ownerFilter !== "all") params.set("owner", ownerFilter);
-    if (categoryFilter !== "all") params.set("category", categoryFilter);
+    const nextCategory = next.category ?? categoryFilter;
+    if (nextCategory !== "all") params.set("category", nextCategory);
     if (dueOffsetFilter !== "all") params.set("dueOffset", String(dueOffsetFilter));
     if (next.critical ?? criticalOnlyFilter) params.set("critical", "1");
     if (next.overdue ?? overdueOnlyFilter) params.set("overdue", "1");
@@ -1754,6 +1755,39 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                       </div>
                     </div>
                   ))}
+                </div>
+              ) : null}
+
+              {readinessByCategory.length ? (
+                <div className="mt-6">
+                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">{t("preparation.categoryQuickFilterTitle")}</p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <Link
+                      href={buildPrepQuickFilterHref({ category: "all" })}
+                      aria-current={categoryFilter === "all" ? "true" : undefined}
+                      className={`rounded-full border px-3 py-1.5 text-sm font-medium transition ${
+                        categoryFilter === "all"
+                          ? "border-sky-300 bg-sky-100 text-sky-900"
+                          : "border-slate-200 bg-white text-slate-700 hover:bg-slate-100"
+                      }`}
+                    >
+                      {t("preparation.categoryAll")} ({allTasks.length})
+                    </Link>
+                    {readinessByCategory.map((row) => (
+                      <Link
+                        key={row.category}
+                        href={buildPrepQuickFilterHref({ category: row.category === categoryFilter ? "all" : row.category })}
+                        aria-current={categoryFilter === row.category ? "true" : undefined}
+                        className={`rounded-full border px-3 py-1.5 text-sm font-medium transition ${
+                          categoryFilter === row.category
+                            ? "border-sky-300 bg-sky-100 text-sky-900"
+                            : "border-slate-200 bg-white text-slate-700 hover:bg-slate-100"
+                        }`}
+                      >
+                        {row.label} ({row.total})
+                      </Link>
+                    ))}
+                  </div>
                 </div>
               ) : null}
 
