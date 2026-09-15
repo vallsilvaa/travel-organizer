@@ -234,6 +234,40 @@ describe("DashboardPage", () => {
       expect(screen.getByText("3 participantes")).toBeTruthy();
     });
 
+    describe("days-remaining countdown", () => {
+      afterEach(() => {
+        vi.useRealTimers();
+      });
+
+      it("counts down the days until an upcoming trip", async () => {
+        vi.useFakeTimers();
+        vi.setSystemTime(new Date("2099-01-05T12:00:00Z"));
+
+        render(await DashboardPage({ searchParams: Promise.resolve({}) }));
+
+        expect(screen.getByText("Faltam 5 dias para a viagem")).toBeTruthy();
+      });
+
+      it("shows an in-progress label while the trip is under way", async () => {
+        vi.useFakeTimers();
+        vi.setSystemTime(new Date("2099-01-15T12:00:00Z"));
+
+        render(await DashboardPage({ searchParams: Promise.resolve({}) }));
+
+        expect(screen.getByText("A viagem está em andamento")).toBeTruthy();
+      });
+
+      it("shows no countdown for an archived trip", async () => {
+        vi.useFakeTimers();
+        vi.setSystemTime(new Date("2099-01-15T12:00:00Z"));
+
+        render(await DashboardPage({ searchParams: Promise.resolve({ status: "archived" }) }));
+
+        expect(screen.getByText("Buenos Aires")).toBeTruthy();
+        expect(screen.queryByText(/faltam|falta 1 dia|em andamento/i)).toBeNull();
+      });
+    });
+
     it("still shows stats for an archived trip", async () => {
       mocks.rpc.mockResolvedValue({
         data: [
