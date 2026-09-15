@@ -291,6 +291,64 @@ describe("TripPage", () => {
     });
   });
 
+  describe("cover image", () => {
+    const tripWithCover = { ...trip, cover_image_path: `${tripId}/cover-1-beach.jpg` };
+    const createSignedUrl = vi.fn().mockResolvedValue({
+      data: { signedUrl: "https://storage.example/signed-cover.jpg" },
+    });
+
+    beforeEach(() => {
+      mocks.from.mockImplementation((table: string) => {
+        if (table === "trips") return queryBuilder({ data: tripWithCover, error: null });
+        if (table === "trip_tasks") return queryBuilder({ data: [], error: null });
+        if (table === "itinerary_items") return queryBuilder({ data: [], error: null });
+        if (table === "item_comments") return queryBuilder({ data: [], error: null });
+        if (table === "trip_expenses") return queryBuilder({ data: [], error: null });
+        if (table === "trip_expense_shares") return queryBuilder({ data: [], error: null });
+        if (table === "trip_invitations") return queryBuilder({ data: [], error: null });
+        return queryBuilder({ data: null, error: null });
+      });
+      mocks.createClient.mockResolvedValue({
+        auth: { getUser: mocks.getUser },
+        from: mocks.from,
+        rpc: mocks.rpc,
+        storage: { from: () => ({ createSignedUrl }) },
+      });
+    });
+
+    it("shows the cover photo via a signed URL and lets the creator change it", async () => {
+      render(await TripPage({
+        params: Promise.resolve({ tripId }),
+        searchParams: Promise.resolve({}),
+      }));
+
+      const image = screen.getByRole("img", { name: /foto de capa da viagem para lisbon/i });
+      expect(image.getAttribute("src")).toBe("https://storage.example/signed-cover.jpg");
+      expect(screen.getByRole("button", { name: "Trocar capa" })).toBeTruthy();
+      expect(screen.getByRole("button", { name: "Remover capa" })).toBeTruthy();
+    });
+
+    it("does not offer cover image controls to a plain traveler participant", async () => {
+      const travelerUserId = "44444444-4444-4444-4444-444444444444";
+      mocks.getUser.mockResolvedValue({ data: { user: { id: travelerUserId } } });
+      mocks.rpc.mockImplementation((fn: string) =>
+        Promise.resolve({
+          data: fn === "get_trip_participants"
+            ? [{ user_id: travelerUserId, display_name: "Bruno", role: "traveler" }]
+            : [],
+        }),
+      );
+
+      render(await TripPage({
+        params: Promise.resolve({ tripId }),
+        searchParams: Promise.resolve({}),
+      }));
+
+      expect(screen.getByRole("img", { name: /foto de capa da viagem para lisbon/i })).toBeTruthy();
+      expect(screen.queryByRole("button", { name: "Trocar capa" })).toBeNull();
+    });
+  });
+
   describe("preparation quick filters", () => {
     const criticalTask = { ...task, id: "11111111-1111-1111-1111-111111111111", title: "Critical task", is_critical: true, due_date: null };
     const overdueTask = { ...task, id: "22222222-2222-2222-2222-222222222222", title: "Overdue task", is_critical: false, due_date: "2026-08-01" };

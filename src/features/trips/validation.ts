@@ -1,5 +1,33 @@
 import { isSupportedTimeZone } from "@/lib/timezone";
 
+// A subset of the trip-attachments bucket's allowed_mime_types (see the
+// trip_attachments migration) restricted to images, since a cover photo
+// isn't a PDF document.
+export const allowedCoverImageMimeTypes = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/heic",
+] as const;
+
+export const maxCoverImageSizeBytes = 10 * 1024 * 1024;
+
+export type CoverImageValidationError = "missing_file" | "file_too_large" | "unsupported_file_type";
+
+export function validateCoverImageUpload(file: File | null): { success: true } | { success: false; error: CoverImageValidationError } {
+  if (!file || file.size === 0) {
+    return { success: false, error: "missing_file" };
+  }
+  if (file.size > maxCoverImageSizeBytes) {
+    return { success: false, error: "file_too_large" };
+  }
+  if (!(allowedCoverImageMimeTypes as readonly string[]).includes(file.type)) {
+    return { success: false, error: "unsupported_file_type" };
+  }
+
+  return { success: true };
+}
+
 export type TripInput = {
   destination: string;
   startDate: string;

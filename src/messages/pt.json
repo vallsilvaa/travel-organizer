@@ -777,6 +777,26 @@
     "deleteDefault": "Excluir",
     "deletingPending": "Excluindo..."
   },
+  "coverImage": {
+    "fileLabel": "Imagem de capa",
+    "fileHint": "JPEG, PNG, WEBP ou HEIC, até 10 MB.",
+    "submitPending": "Enviando...",
+    "submit": "Salvar capa",
+    "change": "Trocar capa",
+    "remove": "Remover capa",
+    "alt": "Foto de capa da viagem para {destination}",
+    "actionErrors": {
+      "identifyTrip": "Não foi possível identificar a viagem.",
+      "missing_file": "Selecione uma imagem para enviar.",
+      "file_too_large": "A imagem deve ter no máximo 10 MB.",
+      "unsupported_file_type": "Tipo de arquivo não suportado. Envie uma imagem JPEG, PNG, WEBP ou HEIC.",
+      "uploadFailed": "Não foi possível enviar a imagem. Tente novamente.",
+      "notAuthorized": "Apenas o criador ou um organizador da viagem pode alterar a capa.",
+      "tripArchived": "Não é possível alterar a capa de uma viagem arquivada.",
+      "genericFailed": "Não foi possível salvar a capa. Tente novamente.",
+      "updated": "Capa da viagem atualizada."
+    }
+  },
   "itemActionsMenu": {
     "actionsLabel": "Ações do item",
     "editDefault": "Editar",

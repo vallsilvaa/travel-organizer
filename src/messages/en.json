@@ -777,6 +777,26 @@
     "deleteDefault": "Delete",
     "deletingPending": "Deleting..."
   },
+  "coverImage": {
+    "fileLabel": "Cover image",
+    "fileHint": "JPEG, PNG, WEBP, or HEIC, up to 10 MB.",
+    "submitPending": "Uploading...",
+    "submit": "Save cover",
+    "change": "Change cover",
+    "remove": "Remove cover",
+    "alt": "Cover photo for the trip to {destination}",
+    "actionErrors": {
+      "identifyTrip": "Could not identify the trip.",
+      "missing_file": "Select an image to upload.",
+      "file_too_large": "The image must be at most 10 MB.",
+      "unsupported_file_type": "Unsupported file type. Upload a JPEG, PNG, WEBP, or HEIC image.",
+      "uploadFailed": "Could not upload the image. Please try again.",
+      "notAuthorized": "Only the trip's creator or an organizer can change the cover.",
+      "tripArchived": "The cover image can't be changed on an archived trip.",
+      "genericFailed": "Could not save the cover image. Please try again.",
+      "updated": "Trip cover updated."
+    }
+  },
   "itemActionsMenu": {
     "actionsLabel": "Item actions",
     "editDefault": "Edit",
