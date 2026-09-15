@@ -264,38 +264,46 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
               {t("reminders.description")}
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <form
-              action={updateReminderPreference}
-              className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
-            >
-              <label className="flex items-center gap-3 text-sm font-medium">
-                <input
-                  type="checkbox"
-                  name="taskRemindersEnabled"
-                  defaultChecked={profile?.task_reminders_enabled ?? true}
-                  className="h-5 w-5 rounded border-input accent-primary"
-                />
-                {t("reminders.checkboxLabel")}
-              </label>
-              <SubmitButton pendingLabel={t("reminders.savePending")} variant="outline">{t("reminders.save")}</SubmitButton>
-            </form>
-            <form
-              action={updateCollaborationEmailPreference}
-              className="mt-4 flex flex-col gap-4 border-t border-slate-200 pt-4 sm:flex-row sm:items-center sm:justify-between"
-            >
-              <label className="flex items-center gap-3 text-sm font-medium">
-                <input
-                  type="checkbox"
-                  name="collaborationEmailsEnabled"
-                  defaultChecked={profile?.collaboration_emails_enabled ?? true}
-                  className="h-5 w-5 rounded border-input accent-primary"
-                />
-                {t("reminders.collaborationCheckboxLabel")}
-              </label>
-              <SubmitButton pendingLabel={t("reminders.savePending")} variant="outline">{t("reminders.save")}</SubmitButton>
-            </form>
-            <PushToggle />
+          <CardContent className="space-y-6">
+            <section>
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t("reminders.emailSectionTitle")}</h3>
+              <form
+                action={updateReminderPreference}
+                className="mt-3 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <label className="flex items-center gap-3 text-sm font-medium">
+                  <input
+                    type="checkbox"
+                    name="taskRemindersEnabled"
+                    defaultChecked={profile?.task_reminders_enabled ?? true}
+                    className="h-5 w-5 rounded border-input accent-primary"
+                  />
+                  {t("reminders.checkboxLabel")}
+                </label>
+                <SubmitButton pendingLabel={t("reminders.savePending")} variant="outline">{t("reminders.save")}</SubmitButton>
+              </form>
+              <form
+                action={updateCollaborationEmailPreference}
+                className="mt-4 flex flex-col gap-4 border-t border-slate-200 pt-4 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <label className="flex items-center gap-3 text-sm font-medium">
+                  <input
+                    type="checkbox"
+                    name="collaborationEmailsEnabled"
+                    defaultChecked={profile?.collaboration_emails_enabled ?? true}
+                    className="h-5 w-5 rounded border-input accent-primary"
+                  />
+                  {t("reminders.collaborationCheckboxLabel")}
+                </label>
+                <SubmitButton pendingLabel={t("reminders.savePending")} variant="outline">{t("reminders.save")}</SubmitButton>
+              </form>
+            </section>
+            <section className="border-t border-slate-200 pt-6">
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t("reminders.pushSectionTitle")}</h3>
+              <div className="mt-3">
+                <PushToggle />
+              </div>
+            </section>
           </CardContent>
         </Card>
 

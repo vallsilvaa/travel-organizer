@@ -122,8 +122,10 @@
       "save": "Save name"
     },
     "reminders": {
-      "title": "Email reminders",
-      "description": "Get a reminder when an assigned task's deadline is coming up within three days.",
+      "title": "Notification center",
+      "description": "Choose which channels you want to be notified through about task deadlines and trip activity.",
+      "emailSectionTitle": "Email",
+      "pushSectionTitle": "Push",
       "checkboxLabel": "Send task deadline reminders",
       "savePending": "Saving...",
       "save": "Save preference",
@@ -978,7 +980,7 @@
   "pushNotifications": {
     "label": "Push notifications",
     "enabledHint": "Enabled on this device.",
-    "disabledHint": "Get an alert on your phone or browser when something changes, even with the app closed.",
+    "disabledHint": "Get an alert on your phone or browser for trip activity and task deadlines, even with the app closed.",
     "enable": "Enable",
     "disable": "Disable",
     "pending": "Please wait...",
