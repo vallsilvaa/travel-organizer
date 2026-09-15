@@ -11,9 +11,13 @@ const mocks = vi.hoisted(() => ({
     throw new Error(`NEXT_REDIRECT:${url}`);
   }),
   revalidatePath: vi.fn(),
+  sendEmail: vi.fn(),
+  sendPushToUser: vi.fn(),
 }));
 
 vi.mock("@/lib/supabase/server", () => ({ createClient: mocks.createClient }));
+vi.mock("@/lib/email", () => ({ sendEmail: mocks.sendEmail }));
+vi.mock("@/lib/push", () => ({ sendPushToUser: mocks.sendPushToUser }));
 vi.mock("next/cache", () => ({ revalidatePath: mocks.revalidatePath }));
 vi.mock("next/navigation", () => ({ redirect: mocks.redirect }));
 vi.mock("next/server", () => ({
@@ -28,7 +32,27 @@ vi.mock("next-intl/server", async () => {
   };
 });
 
-import { createExpense, deleteExpense, updateExpense } from "./actions";
+import { createExpense, deleteExpense, remindExpenseBalance, updateExpense } from "./actions";
+
+type QueryResult = { data: unknown; error?: unknown };
+
+function queryBuilder(result: QueryResult) {
+  const promise = Promise.resolve(result) as Promise<QueryResult> & {
+    eq: () => typeof promise;
+    gte: () => typeof promise;
+    limit: () => typeof promise;
+    maybeSingle: () => Promise<QueryResult>;
+    select: () => typeof promise;
+    insert: () => Promise<QueryResult>;
+  };
+  promise.select = () => promise;
+  promise.eq = () => promise;
+  promise.gte = () => promise;
+  promise.limit = () => promise;
+  promise.maybeSingle = () => Promise.resolve(result);
+  promise.insert = () => Promise.resolve(result);
+  return promise;
+}
 
 const tripId = "27823996-ec50-4cc2-8506-a29d07b86f94";
 const expenseId = "8f3f147b-8684-4ff1-b5c7-6814e4f57f73";
@@ -209,6 +233,141 @@ describe("expense actions", () => {
     expect(result.errors?.amount).toBe(
       "Informe um valor maior que zero com até duas casas decimais.",
     );
+    expect(mocks.createClient).not.toHaveBeenCalled();
+  });
+});
+
+describe("remindExpenseBalance", () => {
+  const creditorId = "9ae6d984-8a52-4f7a-9cae-5d21f02c1bb9";
+  const debtorId = "11111111-1111-4111-8111-111111111111";
+  const balanceRows = [
+    { user_id: creditorId, display_name: "Ana", currency: "BRL", total_paid: "150.00", total_owed: "100.00", net_balance: "50.00" },
+    { user_id: debtorId, display_name: "Bruno", currency: "BRL", total_paid: "0.00", total_owed: "50.00", net_balance: "-50.00" },
+  ];
+
+  function singleRowBuilder(data: unknown) {
+    const chain = { eq: () => chain, maybeSingle: () => Promise.resolve({ data, error: null }) };
+    return { select: () => chain };
+  }
+
+  function remindForm(overrides: Partial<Record<"tripId" | "debtorUserId" | "currency", string>> = {}) {
+    const formData = new FormData();
+    formData.set("tripId", overrides.tripId ?? tripId);
+    formData.set("debtorUserId", overrides.debtorUserId ?? debtorId);
+    formData.set("currency", overrides.currency ?? "BRL");
+    return formData;
+  }
+
+  function setupFrom({ recentReminder = null as unknown, insertError = null as unknown } = {}) {
+    const reminderSelectChain = {
+      eq: () => reminderSelectChain,
+      gte: () => reminderSelectChain,
+      limit: () => reminderSelectChain,
+      maybeSingle: () => Promise.resolve({ data: recentReminder, error: null }),
+    };
+    mocks.from.mockImplementation((table: string) => {
+      if (table === "expense_balance_reminders") {
+        return { select: () => reminderSelectChain, insert: () => Promise.resolve({ error: insertError }) };
+      }
+      if (table === "trips") return singleRowBuilder({ destination: "Paris" });
+      if (table === "profiles") return singleRowBuilder({ display_name: "Ana" });
+      return queryBuilder({ data: null, error: null });
+    });
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.getUser.mockResolvedValue({ data: { user: { id: creditorId } } });
+    mocks.rpc.mockImplementation((fn: string) => {
+      if (fn === "get_trip_expense_balances") return Promise.resolve({ data: balanceRows });
+      if (fn === "get_trip_participant_emails") {
+        return Promise.resolve({
+          data: [{ user_id: debtorId, email: "bruno@example.com", collaboration_emails_enabled: true }],
+        });
+      }
+      return Promise.resolve({ data: null });
+    });
+    mocks.createClient.mockResolvedValue({
+      auth: { getUser: mocks.getUser },
+      from: mocks.from,
+      rpc: mocks.rpc,
+    });
+    process.env.NEXT_PUBLIC_APP_URL = "https://travel.example.com";
+    mocks.sendEmail.mockResolvedValue({ success: true, messageId: "msg-1" });
+  });
+
+  it("records the reminder and notifies the debtor by in-app, push, and email", async () => {
+    setupFrom();
+
+    const result = await remindExpenseBalance({}, remindForm());
+
+    expect(result.success).toBe(true);
+    expect(mocks.rpc).toHaveBeenCalledWith(
+      "create_collaboration_notifications",
+      expect.objectContaining({ p_recipient_ids: [debtorId], p_notification_type: "expense_reminder" }),
+    );
+    expect(mocks.sendPushToUser).toHaveBeenCalledWith(expect.anything(), debtorId, expect.objectContaining({ title: expect.any(String) }));
+    expect(mocks.sendEmail).toHaveBeenCalledWith(expect.objectContaining({ to: "bruno@example.com" }));
+    expect(mocks.revalidatePath).toHaveBeenCalledWith(`/trips/${tripId}`);
+  });
+
+  it("does not email a debtor who opted out of collaboration emails", async () => {
+    setupFrom();
+    mocks.rpc.mockImplementation((fn: string) => {
+      if (fn === "get_trip_expense_balances") return Promise.resolve({ data: balanceRows });
+      if (fn === "get_trip_participant_emails") {
+        return Promise.resolve({
+          data: [{ user_id: debtorId, email: "bruno@example.com", collaboration_emails_enabled: false }],
+        });
+      }
+      return Promise.resolve({ data: null });
+    });
+
+    const result = await remindExpenseBalance({}, remindForm());
+
+    expect(result.success).toBe(true);
+    expect(mocks.sendEmail).not.toHaveBeenCalled();
+  });
+
+  it("refuses to send when there is no matching settlement (already settled)", async () => {
+    setupFrom();
+    mocks.rpc.mockImplementation((fn: string) => {
+      if (fn === "get_trip_expense_balances") {
+        return Promise.resolve({
+          data: balanceRows.map((row) => ({ ...row, net_balance: "0.00" })),
+        });
+      }
+      return Promise.resolve({ data: null });
+    });
+
+    const result = await remindExpenseBalance({}, remindForm());
+
+    expect(result.success).toBeFalsy();
+    expect(mocks.sendPushToUser).not.toHaveBeenCalled();
+  });
+
+  it("rate-limits to one reminder per debtor/currency every 24h", async () => {
+    setupFrom({ recentReminder: { id: "existing-reminder" } });
+
+    const result = await remindExpenseBalance({}, remindForm());
+
+    expect(result.success).toBeFalsy();
+    expect(mocks.sendPushToUser).not.toHaveBeenCalled();
+  });
+
+  it("rejects reminding yourself", async () => {
+    setupFrom();
+
+    const result = await remindExpenseBalance({}, remindForm({ debtorUserId: creditorId }));
+
+    expect(result.success).toBeFalsy();
+    expect(mocks.sendPushToUser).not.toHaveBeenCalled();
+  });
+
+  it("rejects a malformed request before contacting Supabase", async () => {
+    const result = await remindExpenseBalance({}, remindForm({ debtorUserId: "not-a-uuid" }));
+
+    expect(result.success).toBeFalsy();
     expect(mocks.createClient).not.toHaveBeenCalled();
   });
 });

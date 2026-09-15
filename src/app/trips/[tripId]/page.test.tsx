@@ -649,6 +649,47 @@ describe("TripPage", () => {
       expect(screen.getByText("Gastos por categoria")).toBeTruthy();
       expect(screen.getByRole("img", { name: "Gráfico de barras de gastos por categoria em EUR" })).toBeTruthy();
     });
+
+    it("offers a Remind button only to the participant who is owed money", async () => {
+      const balances = [
+        {
+          user_id: participants[0].user_id,
+          display_name: "Ana",
+          currency: "EUR",
+          total_paid: "500.00",
+          total_owed: "290.00",
+          net_balance: "210.00",
+        },
+        {
+          user_id: participants[1].user_id,
+          display_name: "Bruno",
+          currency: "EUR",
+          total_paid: "80.00",
+          total_owed: "290.00",
+          net_balance: "-210.00",
+        },
+      ];
+      mocks.rpc.mockImplementation((fn: string) => {
+        if (fn === "get_trip_participants") return Promise.resolve({ data: participants });
+        if (fn === "get_trip_expense_balances") return Promise.resolve({ data: balances });
+        return Promise.resolve({ data: [] });
+      });
+
+      mocks.getUser.mockResolvedValue({ data: { user: { id: participants[0].user_id } } });
+      const { unmount } = render(await TripPage({
+        params: Promise.resolve({ tripId }),
+        searchParams: Promise.resolve({ tab: "expenses" }),
+      }));
+      expect(screen.getByRole("button", { name: "Lembrar" })).toBeTruthy();
+      unmount();
+
+      mocks.getUser.mockResolvedValue({ data: { user: { id: participants[1].user_id } } });
+      render(await TripPage({
+        params: Promise.resolve({ tripId }),
+        searchParams: Promise.resolve({ tab: "expenses" }),
+      }));
+      expect(screen.queryByRole("button", { name: "Lembrar" })).toBeNull();
+    });
   });
 
   describe("overview tab", () => {

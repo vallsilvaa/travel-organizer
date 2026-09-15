@@ -11,6 +11,7 @@ import { deleteExpense } from "@/features/expenses/actions";
 import { computeSettlements } from "@/features/expenses/balances";
 import { ExpenseCategoryChart, type ExpenseCategoryChartDatum } from "@/features/expenses/category-chart";
 import { ExpenseForm } from "@/features/expenses/expense-form";
+import { RemindBalanceButton } from "@/features/expenses/remind-balance-button";
 import { getExpenseCategoryLabels } from "@/features/expenses/validation";
 import {
   cancelInvitation,
@@ -1598,14 +1599,19 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                       {(settlementsByCurrency.get(currency) ?? []).length ? (
                         <div className="mt-4 border-t border-slate-100 pt-3">
                           <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t("expenses.settlementSuggestion")}</p>
-                          <ul className="mt-2 space-y-1 text-sm text-slate-700">
+                          <ul className="mt-2 space-y-2 text-sm text-slate-700">
                             {(settlementsByCurrency.get(currency) ?? []).map((settlement) => (
-                              <li key={`${settlement.fromUserId}-${settlement.toUserId}`}>
-                                {t("expenses.settlementLine", {
-                                  from: settlement.fromDisplayName,
-                                  amount: formatMoney(settlement.amount, currency),
-                                  to: settlement.toDisplayName,
-                                })}
+                              <li key={`${settlement.fromUserId}-${settlement.toUserId}`} className="flex flex-wrap items-center justify-between gap-2">
+                                <span>
+                                  {t("expenses.settlementLine", {
+                                    from: settlement.fromDisplayName,
+                                    amount: formatMoney(settlement.amount, currency),
+                                    to: settlement.toDisplayName,
+                                  })}
+                                </span>
+                                {settlement.toUserId === user.id ? (
+                                  <RemindBalanceButton tripId={trip.id} debtorUserId={settlement.fromUserId} currency={currency} />
+                                ) : null}
                               </li>
                             ))}
                           </ul>
