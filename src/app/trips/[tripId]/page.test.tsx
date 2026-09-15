@@ -383,6 +383,39 @@ describe("TripPage", () => {
 
       expect(screen.queryByRole("progressbar", { name: /Transporte:/ })).toBeNull();
     });
+
+    it("shows a clickable category chip per category, with a count and no chip for empty categories", async () => {
+      render(await TripPage({
+        params: Promise.resolve({ tripId }),
+        searchParams: Promise.resolve({ tab: "preparation" }),
+      }));
+
+      const allChip = screen.getByRole("link", { name: "Todas as categorias (3)" });
+      expect(allChip.getAttribute("aria-current")).toBe("true");
+
+      const documentsChip = screen.getByRole("link", { name: "Documentos (2)" });
+      expect(documentsChip.getAttribute("href")).toContain("category=documents");
+      expect(documentsChip.getAttribute("aria-current")).toBeNull();
+
+      const packingChip = screen.getByRole("link", { name: "Bagagem (1)" });
+      expect(packingChip.getAttribute("href")).toContain("category=packing");
+
+      expect(screen.queryByRole("link", { name: /^Transporte /i })).toBeNull();
+    });
+
+    it("marks the active category chip and toggles it back to \"all\" when clicked again", async () => {
+      render(await TripPage({
+        params: Promise.resolve({ tripId }),
+        searchParams: Promise.resolve({ tab: "preparation", category: "packing" }),
+      }));
+
+      const packingChip = screen.getByRole("link", { name: "Bagagem (1)" });
+      expect(packingChip.getAttribute("aria-current")).toBe("true");
+      expect(packingChip.getAttribute("href")).not.toContain("category=");
+
+      const allChip = screen.getByRole("link", { name: "Todas as categorias (3)" });
+      expect(allChip.getAttribute("aria-current")).toBeNull();
+    });
   });
 
   describe("preparation quick filters", () => {

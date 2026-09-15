@@ -351,6 +351,7 @@
       "ownerUnassigned": "Sem responsável",
       "categoryLabel": "Categoria",
       "categoryAll": "Todas as categorias",
+      "categoryQuickFilterTitle": "Ver por categoria",
       "dueOffsetLabel": "Prazo",
       "dueOffsetAll": "Todos os prazos",
       "applyFilters": "Aplicar filtros",

@@ -351,6 +351,7 @@
       "ownerUnassigned": "Unassigned",
       "categoryLabel": "Category",
       "categoryAll": "All categories",
+      "categoryQuickFilterTitle": "View by category",
       "dueOffsetLabel": "Lead time",
       "dueOffsetAll": "All lead times",
       "applyFilters": "Apply filters",
