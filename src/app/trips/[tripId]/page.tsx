@@ -1395,6 +1395,27 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                           {reservation.notes ? (
                             <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-slate-600">{reservation.notes}</p>
                           ) : null}
+                          <div className="mt-3 flex flex-wrap gap-3 text-sm font-semibold text-sky-700">
+                            <a
+                              href={`/api/trips/${trip.id}/reservations/${reservation.id}/ics`}
+                              download
+                              className="hover:text-sky-800"
+                            >
+                              {t("itinerary.addReservationToCalendar")}
+                            </a>
+                            {reservation.location || reservation.destination_location ? (
+                              <a
+                                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                                  reservation.location ?? reservation.destination_location ?? "",
+                                )}`}
+                                target="_blank"
+                                rel="noreferrer noopener"
+                                className="hover:text-sky-800"
+                              >
+                                {t("itinerary.viewReservationOnMap")}
+                              </a>
+                            ) : null}
+                          </div>
                         </div>
                         {!isArchived ? (
                           <ItemActionsMenu

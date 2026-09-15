@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { buildItineraryIcs } from "./ics";
+import { buildItineraryIcs, buildReservationIcs } from "./ics";
 
 describe("buildItineraryIcs", () => {
   it("wraps events in a valid VCALENDAR with CRLF line endings", () => {
@@ -169,5 +169,101 @@ describe("buildItineraryIcs", () => {
     const summaryLine = ics.split("\r\n").find((line) => line.startsWith("SUMMARY:"));
     expect(summaryLine?.length).toBeLessThanOrEqual(75);
     expect(ics).toContain(`SUMMARY:${longTitle.slice(0, 66)}\r\n ${longTitle.slice(66)}`);
+  });
+});
+
+describe("buildReservationIcs", () => {
+  const base = {
+    tripDestination: "Paris",
+    tripTimezone: "Europe/Paris",
+    tripUrl: "https://travel.example.com/trips/trip-1",
+  };
+
+  it("uses a one-hour default duration when there is no end date or time", () => {
+    const ics = buildReservationIcs({
+      ...base,
+      reservation: {
+        id: "res-1",
+        title: "Dinner reservation",
+        startDate: "2026-09-12",
+        startTime: "20:00",
+        endDate: null,
+        endTime: null,
+        location: "Le Comptoir",
+        destinationLocation: null,
+        notes: null,
+      },
+    });
+
+    expect(ics).toContain("DTSTART;TZID=Europe/Paris:20260912T200000");
+    expect(ics).toContain("DTEND;TZID=Europe/Paris:20260912T210000");
+    expect(ics).toContain("LOCATION:Le Comptoir");
+  });
+
+  it("uses the explicit end date and time when both are given", () => {
+    const ics = buildReservationIcs({
+      ...base,
+      reservation: {
+        id: "res-2",
+        title: "Flight CDG to JFK",
+        startDate: "2026-09-12",
+        startTime: "22:00",
+        endDate: "2026-09-13",
+        endTime: "01:15",
+        location: "CDG",
+        destinationLocation: "JFK",
+        notes: null,
+        confirmationCode: "XJ9F2",
+      },
+    });
+
+    expect(ics).toContain("DTSTART;TZID=Europe/Paris:20260912T220000");
+    expect(ics).toContain("DTEND;TZID=Europe/Paris:20260913T011500");
+    expect(ics).toContain("LOCATION:CDG → JFK");
+    expect(ics).toContain("Confirma");
+    expect(ics).toContain("XJ9F2");
+  });
+
+  it("represents a dateless, timeless lodging stay as an all-day range", () => {
+    const ics = buildReservationIcs({
+      ...base,
+      reservation: {
+        id: "res-3",
+        title: "Hotel Lutetia",
+        startDate: "2026-09-12",
+        startTime: null,
+        endDate: "2026-09-15",
+        endTime: null,
+        location: "Paris 6e",
+        destinationLocation: null,
+        notes: null,
+      },
+    });
+
+    expect(ics).toContain("DTSTART;VALUE=DATE:20260912");
+    // DTEND on an all-day range is exclusive, so the night of the 15th
+    // (checkout morning) is represented as the 16th.
+    expect(ics).toContain("DTEND;VALUE=DATE:20260916");
+  });
+
+  it("produces exactly one VEVENT", () => {
+    const ics = buildReservationIcs({
+      ...base,
+      reservation: {
+        id: "res-4",
+        title: "Taxi to airport",
+        startDate: "2026-09-12",
+        startTime: "06:00",
+        endDate: null,
+        endTime: null,
+        location: null,
+        destinationLocation: null,
+        notes: null,
+      },
+    });
+
+    expect(ics.match(/BEGIN:VEVENT/g)).toHaveLength(1);
+    expect(ics.startsWith("BEGIN:VCALENDAR\r\nVERSION:2.0\r\n")).toBe(true);
+    expect(ics.endsWith("END:VCALENDAR\r\n")).toBe(true);
   });
 });

@@ -286,7 +286,9 @@
       "deleteReservationDescription": "This will permanently remove \"{title}\" from the trip's reservations.",
       "reservationsEmpty": "No reservations yet. Add flights, lodging, or transport above.",
       "reservationPaid": "Paid: {amount} by {payer}",
-      "reservationExpenseLinked": "linked to an expense in the Expenses tab"
+      "reservationExpenseLinked": "linked to an expense in the Expenses tab",
+      "addReservationToCalendar": "Add to calendar",
+      "viewReservationOnMap": "View on map"
     },
     "expenses": {
       "title": "Expenses",
