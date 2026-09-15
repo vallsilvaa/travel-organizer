@@ -1436,8 +1436,8 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                         <ExpenseCategoryChart
                           data={data}
                           currency={currency}
+                          localeTag={localeTag(locale)}
                           chartLabel={t("expenses.chartAriaLabel", { currency })}
-                          formatAmount={formatMoney}
                         />
                       </div>
                     </div>

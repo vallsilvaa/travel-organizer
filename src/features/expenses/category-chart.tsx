@@ -10,14 +10,25 @@ export type ExpenseCategoryChartDatum = {
 export function ExpenseCategoryChart({
   data,
   currency,
+  localeTag,
   chartLabel,
-  formatAmount,
 }: {
   data: ExpenseCategoryChartDatum[];
   currency: string;
+  localeTag: string;
   chartLabel: string;
-  formatAmount: (amount: number, currency: string) => string;
 }) {
+  // formatAmount can't be a function prop crossing the server/client
+  // boundary (page.tsx is a Server Component), so this formats locally
+  // from the plain currency/localeTag strings instead.
+  const formatAmount = (amount: number) => {
+    try {
+      return new Intl.NumberFormat(localeTag, { style: "currency", currency }).format(amount);
+    } catch {
+      return `${currency} ${amount.toFixed(2)}`;
+    }
+  };
+
   return (
     <div className="h-64 w-full" role="img" aria-label={chartLabel}>
       <ResponsiveContainer width="100%" height="100%">
@@ -41,7 +52,7 @@ export function ExpenseCategoryChart({
           />
           <Tooltip
             cursor={{ fill: "var(--muted)" }}
-            formatter={(value) => [formatAmount(Number(value ?? 0), currency), null]}
+            formatter={(value) => [formatAmount(Number(value ?? 0)), null]}
             contentStyle={{
               borderRadius: 8,
               borderColor: "var(--border)",
