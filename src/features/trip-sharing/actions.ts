@@ -38,6 +38,15 @@ export async function createShareLink(formData: FormData): Promise<void> {
 
   const { supabase, user } = await authenticatedClient();
 
+  // At most one active link per trip - otherwise the UI (which only shows
+  // the latest one) would leave an older, still-valid link silently
+  // reachable with no way to manage or revoke it.
+  await supabase
+    .from("trip_share_links")
+    .update({ revoked_at: new Date().toISOString() })
+    .eq("trip_id", tripId)
+    .is("revoked_at", null);
+
   await supabase.from("trip_share_links").insert({
     trip_id: tripId,
     token: generateShareToken(),
