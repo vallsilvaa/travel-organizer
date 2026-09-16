@@ -80,16 +80,18 @@ test("primary trip sections are navigable on a phone-sized viewport without hori
     for (const tabName of ["Visão geral", "Roteiro", "Despesas", "Preparação", "Colaboradores"]) {
       const tab = page.getByRole("tab", { name: tabName });
       // The tab strip scrolls horizontally on narrow viewports (more tabs than
-      // fit at once). `scrollIntoViewIfNeeded` only guarantees the element is
-      // *somewhere* in the viewport, not fully clear of the strip's own clipped
-      // edge, so centering it explicitly avoids clicking a partially-clipped tab.
+      // fit at once). Playwright's own pre-click auto-scroll re-runs on every
+      // actionability retry and doesn't reliably settle within this nested
+      // scroll container, repeatedly leaving the target clipped by its parent's
+      // edge - so scroll it into view ourselves and dispatch the click directly
+      // instead of letting `.click()` recompute (and re-break) the scroll position.
       await tab.evaluate((el) => el.scrollIntoView({ block: "nearest", inline: "center" }));
       await expect(tab).toBeVisible();
       // "Visão geral" is the default/already-active tab on load - clicking
       // an already-selected tab isn't a real user action and isn't needed
       // to exercise it, so only click tabs that actually need switching to.
       if ((await tab.getAttribute("aria-selected")) !== "true") {
-        await tab.click();
+        await tab.dispatchEvent("click");
       }
       await expect(tab).toHaveAttribute("aria-selected", "true");
       await assertNoHorizontalOverflow(page);
