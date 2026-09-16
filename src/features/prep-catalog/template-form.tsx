@@ -64,6 +64,12 @@ export function TemplateForm({ template, onSuccess, cancelSlot, tripId }: Templa
     initialState,
   );
   const [itemType, setItemType] = useState<PrepItemType>(template?.item_type ?? "preparation");
+  const initialOffsetIsCustom = Boolean(
+    template?.due_offset_days != null && !(timelineOffsets as readonly number[]).includes(template.due_offset_days),
+  );
+  const [dueOffsetSelection, setDueOffsetSelection] = useState<string>(
+    initialOffsetIsCustom ? "custom" : template?.due_offset_days ? String(template.due_offset_days) : "",
+  );
   const timelineOffsetLabels: Record<number, string> = Object.fromEntries(
     timelineOffsets.map((offset) => [
       offset,
@@ -174,9 +180,12 @@ export function TemplateForm({ template, onSuccess, cancelSlot, tripId }: Templa
         <div className="space-y-2">
           <Label htmlFor="template-dueOffsetDays">{t("dueOffsetDaysLabel")}</Label>
           <Select
-            name="dueOffsetDays"
-            defaultValue={template?.due_offset_days ? String(template.due_offset_days) : undefined}
-            items={Object.fromEntries(timelineOffsets.map((offset) => [String(offset), timelineOffsetLabels[offset]]))}
+            value={dueOffsetSelection}
+            onValueChange={(value) => setDueOffsetSelection(value ?? "")}
+            items={{
+              ...Object.fromEntries(timelineOffsets.map((offset) => [String(offset), timelineOffsetLabels[offset]])),
+              custom: t("dueOffsetDaysCustom"),
+            }}
           >
             <SelectTrigger id="template-dueOffsetDays" className="w-full">
               <SelectValue placeholder={t("dueOffsetDaysPlaceholder")} />
@@ -185,8 +194,26 @@ export function TemplateForm({ template, onSuccess, cancelSlot, tripId }: Templa
               {timelineOffsets.map((offset) => (
                 <SelectItem key={offset} value={String(offset)}>{timelineOffsetLabels[offset]}</SelectItem>
               ))}
+              <SelectItem value="custom">{t("dueOffsetDaysCustom")}</SelectItem>
             </SelectContent>
           </Select>
+          {dueOffsetSelection === "custom" ? (
+            <Input
+              required
+              min={0}
+              max={730}
+              step={1}
+              type="number"
+              inputMode="numeric"
+              id="template-dueOffsetDaysCustom"
+              name="dueOffsetDays"
+              defaultValue={initialOffsetIsCustom ? (template?.due_offset_days ?? undefined) : undefined}
+              placeholder={t("dueOffsetDaysCustomPlaceholder")}
+              className="mt-2"
+            />
+          ) : (
+            <input type="hidden" name="dueOffsetDays" value={dueOffsetSelection} />
+          )}
           {state.errors?.dueOffsetDays ? <p className="text-sm text-destructive">{state.errors.dueOffsetDays}</p> : null}
         </div>
       ) : null}

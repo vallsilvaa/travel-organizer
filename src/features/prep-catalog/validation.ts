@@ -4,13 +4,11 @@ import {
   isClassification,
   isContinent,
   isPrepItemType,
-  isTimelineOffset,
   taskCategories,
   type Classification,
   type Continent,
   type PrepItemType,
   type TaskCategory,
-  type TimelineOffset,
 } from "./shared";
 
 const uuidPattern =
@@ -43,7 +41,7 @@ export type TemplateInput = {
   country: string;
   city: string | null;
   classification: Classification;
-  dueOffsetDays: TimelineOffset | null;
+  dueOffsetDays: number | null;
   currency: string | null;
   estimatedAmount: string | null;
   documentInstructions: string | null;
@@ -98,18 +96,21 @@ export function validateTemplateInput(formData: FormData):
   }
 
   // Only required (and only meaningful) for "Preparação para viagem" -
-  // the other two item types don't collect a lead time at all.
-  let dueOffsetDays: TimelineOffset | null = null;
+  // the other two item types don't collect a lead time at all. The
+  // presets (timelineOffsets) are just a UI shortcut - any whole number of
+  // days in the same 0-730 range trip_tasks.due_offset_days already
+  // accepts is valid here too (#206).
+  let dueOffsetDays: number | null = null;
   if (itemType === "preparation") {
     const parsed = Number(rawDueOffsetDays);
-    if (!rawDueOffsetDays || !Number.isInteger(parsed) || !isTimelineOffset(parsed)) {
+    if (!rawDueOffsetDays || !Number.isInteger(parsed) || parsed < 0 || parsed > 730) {
       errors.dueOffsetDays = "dueOffsetDaysInvalid";
     } else {
       dueOffsetDays = parsed;
     }
   } else if (rawDueOffsetDays) {
     const parsed = Number(rawDueOffsetDays);
-    if (!Number.isInteger(parsed) || !isTimelineOffset(parsed)) {
+    if (!Number.isInteger(parsed) || parsed < 0 || parsed > 730) {
       errors.dueOffsetDays = "dueOffsetDaysInvalid";
     } else {
       dueOffsetDays = parsed;

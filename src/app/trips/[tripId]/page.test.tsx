@@ -1058,13 +1058,13 @@ describe("TripPage", () => {
       }));
 
       const link = screen.getByRole("link", { name: /Reserva vinculada: Taxi ao museu/ });
-      expect(link.getAttribute("href")).toBe(`/trips/${tripId}?tab=itinerary#reservation-${reservation.id}`);
+      expect(link.getAttribute("href")).toBe(`/trips/${tripId}?tab=reservations#reservation-${reservation.id}`);
     });
 
     it("shows the linked itinerary item on the reservation with a link to it", async () => {
       render(await TripPage({
         params: Promise.resolve({ tripId }),
-        searchParams: Promise.resolve({ tab: "itinerary" }),
+        searchParams: Promise.resolve({ tab: "reservations" }),
       }));
 
       const link = screen.getByRole("link", { name: "Museu do Louvre" });
@@ -1087,7 +1087,7 @@ describe("TripPage", () => {
 
       render(await TripPage({
         params: Promise.resolve({ tripId }),
-        searchParams: Promise.resolve({ tab: "itinerary" }),
+        searchParams: Promise.resolve({ tab: "reservations" }),
       }));
 
       const calendarLink = screen.getByRole("link", { name: "Adicionar ao calendário" });
@@ -1101,7 +1101,7 @@ describe("TripPage", () => {
     it("hides the map link when the reservation has no location", async () => {
       render(await TripPage({
         params: Promise.resolve({ tripId }),
-        searchParams: Promise.resolve({ tab: "itinerary" }),
+        searchParams: Promise.resolve({ tab: "reservations" }),
       }));
 
       expect(screen.getByRole("link", { name: "Adicionar ao calendário" })).toBeTruthy();

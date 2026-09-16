@@ -50,7 +50,7 @@ export async function GET(
 
   const reservationTypeLabels = getReservationTypeLabels(await getTranslations("categories.reservationType"));
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? new URL(request.url).origin;
-  const tripUrl = `${appUrl.replace(/\/$/, "")}/trips/${trip.id}?tab=itinerary#reservation-${reservation.id}`;
+  const tripUrl = `${appUrl.replace(/\/$/, "")}/trips/${trip.id}?tab=reservations#reservation-${reservation.id}`;
 
   const ics = buildReservationIcs({
     tripDestination: trip.destination,

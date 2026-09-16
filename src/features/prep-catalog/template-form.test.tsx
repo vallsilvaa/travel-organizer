@@ -90,6 +90,53 @@ describe("TemplateForm", () => {
     expect(screen.queryByLabelText(/dias antes da partida/i)).toBeNull();
   });
 
+  it("shows a free-text day input pre-filled when the saved lead time isn't one of the presets (#206)", () => {
+    const { container } = render(
+      <TemplateForm
+        template={{
+          id: "8f3f147b-8684-4ff1-b5c7-6814e4f57f73",
+          title: "Custom lead time task",
+          item_type: "preparation",
+          category: "documents",
+          country: "Portugal",
+          classification: "required",
+          due_offset_days: 45,
+          currency: null,
+          estimated_amount: null,
+          document_instructions: null,
+        }}
+      />,
+    );
+
+    const customInput = container.querySelector('input[name="dueOffsetDays"][type="number"]') as HTMLInputElement;
+    expect(customInput).toBeTruthy();
+    expect(customInput.value).toBe("45");
+  });
+
+  it("carries a preset lead time via a hidden field instead of the free-text input", () => {
+    const { container } = render(
+      <TemplateForm
+        template={{
+          id: "8f3f147b-8684-4ff1-b5c7-6814e4f57f73",
+          title: "Preset lead time task",
+          item_type: "preparation",
+          category: "documents",
+          country: "Portugal",
+          classification: "required",
+          due_offset_days: 30,
+          currency: null,
+          estimated_amount: null,
+          document_instructions: null,
+        }}
+      />,
+    );
+
+    const hiddenInput = container.querySelector('input[name="dueOffsetDays"][type="hidden"]') as HTMLInputElement;
+    expect(hiddenInput).toBeTruthy();
+    expect(hiddenInput.value).toBe("30");
+    expect(container.querySelector('input[name="dueOffsetDays"][type="number"]')).toBeNull();
+  });
+
   it("carries a tripId as a hidden field for a new template, but not when editing", () => {
     const { container, unmount } = render(
       <TemplateForm tripId="27823996-ec50-4cc2-8506-a29d07b86f94" />,

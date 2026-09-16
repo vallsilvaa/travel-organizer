@@ -63,6 +63,7 @@ export function ExpenseForm({
     expense ? updateExpense : createExpense,
     initialState,
   );
+  const [formKey, setFormKey] = useState(0);
 
   const [amount, setAmount] = useState(expense?.amount ?? "");
   const [paymentStatus, setPaymentStatus] = useState<"paid" | "to_pay">(expense?.payment_status ?? "paid");
@@ -78,6 +79,20 @@ export function ExpenseForm({
   const [customAmounts, setCustomAmounts] = useState<Record<string, string>>(
     Object.fromEntries(existingShares.map((share) => [share.user_id, share.share_amount])),
   );
+
+  const [lastHandledState, setLastHandledState] = useState(state);
+  if (state !== lastHandledState) {
+    setLastHandledState(state);
+    if (state.success && !expense) {
+      setFormKey((key) => key + 1);
+      setAmount("");
+      setPaymentStatus("paid");
+      setSplitEnabled(false);
+      setSplitMode("equal");
+      setSelected(new Set(participants.map((participant) => participant.user_id)));
+      setCustomAmounts({});
+    }
+  }
 
   useEffect(() => {
     if (state.success) {
@@ -119,7 +134,7 @@ export function ExpenseForm({
   }
 
   return (
-    <form action={formAction} className="grid gap-4 sm:grid-cols-2">
+    <form key={formKey} action={formAction} className="grid gap-4 sm:grid-cols-2">
       <input type="hidden" name="tripId" value={tripId} />
       {expense ? <input type="hidden" name="expenseId" value={expense.id} /> : null}
       <input

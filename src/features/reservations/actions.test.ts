@@ -114,25 +114,29 @@ describe("reservation actions", () => {
       itinerary_item_id: null,
       paid_amount: null,
       currency: null,
-      payer_id: null,
+      payment_status: null,
       created_by: "user-123",
     });
     expect(result.success).toBe(true);
     expect(mocks.revalidatePath).toHaveBeenCalledWith(`/trips/${tripId}`);
   });
 
-  it("passes paid_amount/currency/payer through and syncs the linked expense on create (#171)", async () => {
+  it("passes paid_amount/currency/paymentStatus through and syncs the linked expense with the responsible people on create (#171, #205)", async () => {
     const formData = validForm();
     formData.set("paidAmount", "250");
     formData.set("currency", "usd");
-    formData.set("payerId", payerId);
+    formData.set("paymentStatus", "paid");
+    formData.append("responsibleIds", payerId);
 
     const result = await createReservation({}, formData);
 
     expect(mocks.insert).toHaveBeenCalledWith(
-      expect.objectContaining({ paid_amount: "250.00", currency: "USD", payer_id: payerId }),
+      expect.objectContaining({ paid_amount: "250.00", currency: "USD", payment_status: "paid" }),
     );
-    expect(mocks.rpc).toHaveBeenCalledWith("sync_reservation_expense", { p_reservation_id: reservationId });
+    expect(mocks.rpc).toHaveBeenCalledWith("sync_reservation_expense", {
+      p_reservation_id: reservationId,
+      p_responsible_ids: [payerId],
+    });
     expect(result.success).toBe(true);
   });
 
@@ -146,7 +150,10 @@ describe("reservation actions", () => {
     );
     expect(mocks.eq).toHaveBeenNthCalledWith(1, "id", reservationId);
     expect(mocks.eq).toHaveBeenNthCalledWith(2, "trip_id", tripId);
-    expect(mocks.rpc).toHaveBeenCalledWith("sync_reservation_expense", { p_reservation_id: reservationId });
+    expect(mocks.rpc).toHaveBeenCalledWith("sync_reservation_expense", {
+      p_reservation_id: reservationId,
+      p_responsible_ids: [],
+    });
     expect(result.success).toBe(true);
   });
 

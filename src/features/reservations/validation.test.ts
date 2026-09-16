@@ -37,7 +37,8 @@ describe("validateReservationInput", () => {
         itineraryItemId: null,
         paidAmount: null,
         currency: null,
-        payerId: null,
+        paymentStatus: null,
+        responsibleIds: [],
       },
     });
   });
@@ -143,11 +144,13 @@ describe("validateReservationInput", () => {
     }
   });
 
-  it("normalizes paid amount, currency, and payer together (#171)", () => {
+  it("normalizes paid amount, currency, payment status, and responsible people together (#171, #205)", () => {
     const formData = validForm();
     formData.set("paidAmount", "199.9");
     formData.set("currency", "usd");
-    formData.set("payerId", "11111111-1111-4111-8111-111111111111");
+    formData.set("paymentStatus", "paid");
+    formData.append("responsibleIds", "11111111-1111-4111-8111-111111111111");
+    formData.append("responsibleIds", "22222222-2222-4222-8222-222222222222");
 
     const result = validateReservationInput(formData);
 
@@ -155,45 +158,83 @@ describe("validateReservationInput", () => {
     if (result.success) {
       expect(result.data.paidAmount).toBe("199.90");
       expect(result.data.currency).toBe("USD");
-      expect(result.data.payerId).toBe("11111111-1111-4111-8111-111111111111");
+      expect(result.data.paymentStatus).toBe("paid");
+      expect(result.data.responsibleIds).toEqual([
+        "11111111-1111-4111-8111-111111111111",
+        "22222222-2222-4222-8222-222222222222",
+      ]);
+    }
+  });
+
+  it("accepts a to_pay reservation with no one having paid yet (#205)", () => {
+    const formData = validForm();
+    formData.set("paidAmount", "100");
+    formData.set("currency", "BRL");
+    formData.set("paymentStatus", "to_pay");
+    formData.append("responsibleIds", "11111111-1111-4111-8111-111111111111");
+
+    const result = validateReservationInput(formData);
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.paymentStatus).toBe("to_pay");
     }
   });
 
   it("requires a currency when a paid amount is given", () => {
     const formData = validForm();
     formData.set("paidAmount", "100");
-    formData.set("payerId", "11111111-1111-4111-8111-111111111111");
+    formData.set("paymentStatus", "paid");
+    formData.append("responsibleIds", "11111111-1111-4111-8111-111111111111");
 
     const result = validateReservationInput(formData);
 
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.errors.currency).toBe("currencyRequiredWithPaidAmount");
+      expect(result.errors.currency).toBe("currencyRequiredWithPaymentInfo");
     }
   });
 
-  it("requires a payer when a paid amount is given", () => {
+  it("requires a payment status when a paid amount is given", () => {
     const formData = validForm();
     formData.set("paidAmount", "100");
     formData.set("currency", "USD");
+    formData.append("responsibleIds", "11111111-1111-4111-8111-111111111111");
 
     const result = validateReservationInput(formData);
 
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.errors.payerId).toBe("payerRequiredWithPaidAmount");
+      expect(result.errors.paymentStatus).toBe("paymentStatusRequiredWithPaymentInfo");
     }
   });
 
-  it("treats the \"none\" payer sentinel as no payer", () => {
+  it("requires at least one responsible person when a paid amount is given", () => {
     const formData = validForm();
-    formData.set("payerId", "none");
+    formData.set("paidAmount", "100");
+    formData.set("currency", "USD");
+    formData.set("paymentStatus", "paid");
 
     const result = validateReservationInput(formData);
 
-    expect(result.success).toBe(true);
-    if (result.success) {
-      expect(result.data.payerId).toBeNull();
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.errors.responsibleIds).toBe("responsibleRequiredWithPaymentInfo");
+    }
+  });
+
+  it("rejects a malformed responsible person id", () => {
+    const formData = validForm();
+    formData.set("paidAmount", "100");
+    formData.set("currency", "USD");
+    formData.set("paymentStatus", "paid");
+    formData.append("responsibleIds", "not-a-uuid");
+
+    const result = validateReservationInput(formData);
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.errors.responsibleIds).toBe("responsibleInvalid");
     }
   });
 });

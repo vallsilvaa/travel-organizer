@@ -82,6 +82,14 @@ select throws_ok(
   'an unsupported reservation_type is rejected by the check constraint'
 );
 
+select lives_ok(
+  $$
+    insert into public.trip_reservations (trip_id, reservation_type, title, start_date, created_by)
+    values ('aaaaaaaa-2222-4aaa-8aaa-aaaaaaaaaaaa', 'tickets', 'Museum tickets', '2027-10-01', 'a2222222-2222-4222-8222-222222222222')
+  $$,
+  'a fellow participant can create a tickets reservation (#203)'
+);
+
 -- An outsider (not a participant) cannot see or create reservations.
 set local request.jwt.claim.sub = 'a3333333-3333-4333-8333-333333333333';
 set local request.jwt.claims = '{"sub":"a3333333-3333-4333-8333-333333333333","email":"outsider@example.com","role":"authenticated"}';

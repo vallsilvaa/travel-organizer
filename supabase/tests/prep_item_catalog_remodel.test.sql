@@ -50,14 +50,15 @@ select lives_ok(
   'continent can be omitted on any template'
 );
 
--- due_offset_days must come from the fixed lead-time set going forward.
-select throws_ok(
+-- due_offset_days accepts a custom lead time too, not just the fixed
+-- 180/120/90/60/30/7/1 presets (#206) - any whole number of days in range.
+select lives_ok(
   $$
     insert into public.prep_item_templates (
       owner_id, title, item_type, category, country, classification, due_offset_days
     ) values (
       '94111111-1111-4111-8111-111111111111',
-      'Bad lead time',
+      'Custom lead time',
       'preparation',
       'other',
       'Italy',
@@ -65,9 +66,26 @@ select throws_ok(
       45
     )
   $$,
+  'a custom lead time outside the fixed presets is accepted'
+);
+
+select throws_ok(
+  $$
+    insert into public.prep_item_templates (
+      owner_id, title, item_type, category, country, classification, due_offset_days
+    ) values (
+      '94111111-1111-4111-8111-111111111111',
+      'Out of range lead time',
+      'preparation',
+      'other',
+      'Italy',
+      'optional',
+      731
+    )
+  $$,
   '23514',
   null,
-  'a lead time outside the fixed set (180/120/90/60/30/7/1) is rejected'
+  'a lead time outside the 0-730 range is still rejected'
 );
 
 -- ...but is still required for "preparação para viagem".

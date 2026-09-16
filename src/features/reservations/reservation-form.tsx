@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
@@ -41,7 +41,10 @@ type ReservationFormProps = {
     itinerary_item_id: string | null;
     paid_amount: string | null;
     currency: string | null;
-    payer_id: string | null;
+    payment_status: "paid" | "to_pay" | null;
+    /** Derived from the linked expense's shares (trip_expense_shares via
+     * expense_id) - not a column on trip_reservations itself. */
+    responsible_ids: string[];
   };
   itineraryItems?: { id: string; title: string; item_date: string }[];
   participants?: { user_id: string; display_name: string }[];
@@ -64,6 +67,42 @@ export function ReservationForm({ reservation, itineraryItems = [], participants
   const locale = useLocale() as Locale;
   const action = reservation ? updateReservation : createReservation;
   const [state, formAction, pending] = useActionState(action, initialState);
+  const [formKey, setFormKey] = useState(0);
+  const [paymentStatus, setPaymentStatus] = useState<"paid" | "to_pay">(reservation?.payment_status ?? "paid");
+  const [paidAmount, setPaidAmount] = useState(reservation?.paid_amount ?? "");
+  const [responsibleIds, setResponsibleIds] = useState<Set<string>>(
+    () => new Set(reservation?.responsible_ids ?? []),
+  );
+  const perPersonShare = useMemo(() => {
+    const total = Number(paidAmount);
+    if (!Number.isFinite(total) || total <= 0 || responsibleIds.size === 0) {
+      return null;
+    }
+    return total / responsibleIds.size;
+  }, [paidAmount, responsibleIds]);
+
+  function toggleResponsible(userId: string) {
+    setResponsibleIds((current) => {
+      const next = new Set(current);
+      if (next.has(userId)) {
+        next.delete(userId);
+      } else {
+        next.add(userId);
+      }
+      return next;
+    });
+  }
+
+  const [lastHandledState, setLastHandledState] = useState(state);
+  if (state !== lastHandledState) {
+    setLastHandledState(state);
+    if (state.success && !reservation) {
+      setFormKey((key) => key + 1);
+      setPaymentStatus("paid");
+      setPaidAmount("");
+      setResponsibleIds(new Set());
+    }
+  }
 
   useEffect(() => {
     if (state.success) {
@@ -74,7 +113,7 @@ export function ReservationForm({ reservation, itineraryItems = [], participants
   }, [state, reservation, t]);
 
   return (
-    <form action={formAction} className="grid gap-4 sm:grid-cols-2">
+    <form key={formKey} action={formAction} className="grid gap-4 sm:grid-cols-2">
       <input type="hidden" name="tripId" value={tripId} />
       {reservation ? <input type="hidden" name="reservationId" value={reservation.id} /> : null}
 
@@ -233,7 +272,8 @@ export function ReservationForm({ reservation, itineraryItems = [], participants
           inputMode="decimal"
           id="reservation-paidAmount"
           name="paidAmount"
-          defaultValue={reservation?.paid_amount ?? ""}
+          value={paidAmount}
+          onChange={(event) => setPaidAmount(event.target.value)}
         />
         {state.errors?.paidAmount ? <p className="text-sm text-destructive">{state.errors.paidAmount}</p> : null}
       </div>
@@ -255,29 +295,59 @@ export function ReservationForm({ reservation, itineraryItems = [], participants
       </div>
 
       <div className="space-y-2 sm:col-span-2">
-        <Label htmlFor="reservation-payerId">
-          {t("payerLabel")} <span className="font-normal text-muted-foreground">{tCommon("optional")}</span>
-        </Label>
-        <Select
-          name="payerId"
-          defaultValue={reservation?.payer_id ?? "none"}
-          items={{
-            none: t("payerNone"),
-            ...Object.fromEntries(participants.map((p) => [p.user_id, p.display_name])),
-          }}
-        >
-          <SelectTrigger id="reservation-payerId" className="w-full">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="none">{t("payerNone")}</SelectItem>
-            {participants.map((participant) => (
-              <SelectItem key={participant.user_id} value={participant.user_id}>{participant.display_name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        {state.errors?.payerId ? <p className="text-sm text-destructive">{state.errors.payerId}</p> : null}
-        <p className="text-sm text-muted-foreground">{t("paidFieldsHint")}</p>
+        <Label>{t("paymentStatusLabel")}</Label>
+        <div className="flex gap-4 text-sm">
+          <label className="flex items-center gap-1.5">
+            <input
+              type="radio"
+              name="paymentStatus"
+              value="paid"
+              checked={paymentStatus === "paid"}
+              onChange={() => setPaymentStatus("paid")}
+            />
+            {t("paymentStatusPaid")}
+          </label>
+          <label className="flex items-center gap-1.5">
+            <input
+              type="radio"
+              name="paymentStatus"
+              value="to_pay"
+              checked={paymentStatus === "to_pay"}
+              onChange={() => setPaymentStatus("to_pay")}
+            />
+            {t("paymentStatusToPay")}
+          </label>
+        </div>
+        {state.errors?.paymentStatus ? <p className="text-sm text-destructive">{state.errors.paymentStatus}</p> : null}
+      </div>
+
+      <div className="space-y-2 sm:col-span-2">
+        <Label>{t("responsibleLabel")}</Label>
+        <p className="text-sm text-muted-foreground">
+          {paymentStatus === "paid" ? t("responsibleHintPaid") : t("responsibleHintToPay")}
+        </p>
+        <ul className="space-y-2">
+          {participants.map((participant) => (
+            <li key={participant.user_id}>
+              <label className="flex items-center gap-2 text-sm text-slate-700">
+                <input
+                  type="checkbox"
+                  name="responsibleIds"
+                  value={participant.user_id}
+                  checked={responsibleIds.has(participant.user_id)}
+                  onChange={() => toggleResponsible(participant.user_id)}
+                />
+                {participant.display_name}
+              </label>
+            </li>
+          ))}
+        </ul>
+        {perPersonShare !== null && responsibleIds.size > 1 ? (
+          <p className="text-sm text-muted-foreground">
+            {t("responsibleSplitPreview", { amount: perPersonShare.toFixed(2), count: responsibleIds.size })}
+          </p>
+        ) : null}
+        {state.errors?.responsibleIds ? <p className="text-sm text-destructive">{state.errors.responsibleIds}</p> : null}
       </div>
 
       <div className="space-y-2 sm:col-span-2">
