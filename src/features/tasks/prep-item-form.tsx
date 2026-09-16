@@ -17,18 +17,20 @@ import {
 } from "@/components/ui/select";
 import {
   classifications,
-  continents,
   getClassificationLabels,
-  getContinentLabels,
+  getPrepItemActionLabels,
   getPrepItemTypeLabels,
   getTaskCategoryLabels,
+  prepItemActions,
   prepItemTypes,
   taskCategories,
   type Classification,
   type Continent,
+  type PrepItemAction,
   type PrepItemType,
   type TaskCategory,
 } from "@/features/prep-catalog/shared";
+import { CityAutocomplete } from "@/features/prep-catalog/city-autocomplete";
 
 import { updatePrepTripItem, type PrepItemActionState } from "./actions";
 
@@ -41,6 +43,7 @@ type PrepItemFormProps = {
   task: {
     id: string;
     title: string;
+    action: PrepItemAction | null;
     item_type: PrepItemType;
     category: TaskCategory;
     continent: Continent;
@@ -63,12 +66,12 @@ const initialState: PrepItemActionState = {};
 export function PrepItemForm({ itineraryItems, participants, task, tripId }: PrepItemFormProps) {
   const t = useTranslations("prepItemForm");
   const tPrepItemType = useTranslations("categories.prepItemType");
+  const tPrepItemAction = useTranslations("categories.prepItemAction");
   const tClassification = useTranslations("categories.classification");
-  const tContinent = useTranslations("categories.continent");
   const tCategory = useTranslations("categories.task");
   const prepItemTypeLabels = getPrepItemTypeLabels(tPrepItemType);
+  const prepItemActionLabels = getPrepItemActionLabels(tPrepItemAction);
   const classificationLabels = getClassificationLabels(tClassification);
-  const continentLabels = getContinentLabels(tContinent);
   const taskCategoryLabels = getTaskCategoryLabels(tCategory);
 
   const [state, formAction, pending] = useActionState(updatePrepTripItem, initialState);
@@ -87,8 +90,26 @@ export function PrepItemForm({ itineraryItems, participants, task, tripId }: Pre
       <input type="hidden" name="tripId" value={tripId} />
       <input type="hidden" name="taskId" value={task.id} />
 
-      <div className="space-y-2 sm:col-span-2">
-        <Label htmlFor={`prep-title-${task.id}`}>{t("titleLabel")}</Label>
+      <div className="space-y-2">
+        <Label htmlFor={`prep-action-${task.id}`}>
+          {t("actionLabel")} <span className="font-normal text-muted-foreground">{t("optional")}</span>
+        </Label>
+        <Select name="action" defaultValue={task.action ?? "none"} items={{ none: t("actionNone"), ...prepItemActionLabels }}>
+          <SelectTrigger id={`prep-action-${task.id}`} className="w-full">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="none">{t("actionNone")}</SelectItem>
+            {prepItemActions.map((action) => (
+              <SelectItem key={action} value={action}>{prepItemActionLabels[action]}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {state.errors?.action ? <p className="text-sm text-destructive">{state.errors.action}</p> : null}
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor={`prep-title-${task.id}`}>{t("whatLabel")}</Label>
         <Input
           required
           maxLength={200}
@@ -148,31 +169,19 @@ export function PrepItemForm({ itineraryItems, participants, task, tripId }: Pre
         </Select>
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor={`prep-continent-${task.id}`}>{t("continentLabel")}</Label>
-        <Select name="continent" defaultValue={task.continent} items={continentLabels}>
-          <SelectTrigger id={`prep-continent-${task.id}`} className="w-full">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {continents.map((continent) => (
-              <SelectItem key={continent} value={continent}>{continentLabels[continent]}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor={`prep-country-${task.id}`}>{t("countryLabel")}</Label>
-        <Input required maxLength={100} id={`prep-country-${task.id}`} name="country" defaultValue={task.country} />
+      <div className="space-y-2 sm:col-span-2">
+        <Label htmlFor={`prep-city-${task.id}`}>{t("cityLabel")}</Label>
+        <CityAutocomplete
+          id={`prep-city-${task.id}`}
+          defaultCity={task.city}
+          defaultCountry={task.country}
+          defaultContinent={task.continent}
+          countryInputName="country"
+          cityInputName="city"
+          continentInputName="continent"
+          required
+        />
         {state.errors?.country ? <p className="text-sm text-destructive">{state.errors.country}</p> : null}
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor={`prep-city-${task.id}`}>
-          {t("cityLabel")} <span className="font-normal text-muted-foreground">{t("optional")}</span>
-        </Label>
-        <Input maxLength={200} id={`prep-city-${task.id}`} name="city" defaultValue={task.city ?? ""} />
       </div>
 
       <div className="space-y-2">

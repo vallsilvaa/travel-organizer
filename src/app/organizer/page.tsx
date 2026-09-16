@@ -11,6 +11,7 @@ import {
   getPrepItemTypeLabels,
   type Classification,
   type Continent,
+  type PrepItemAction,
   type PrepItemType,
 } from "@/features/prep-catalog/shared";
 import { getTaskCategoryLabels, type TaskCategory } from "@/features/tasks/templates";
@@ -46,6 +47,7 @@ type DashboardTripStats = {
 type Template = {
   id: string;
   title: string;
+  action: PrepItemAction | null;
   item_type: PrepItemType;
   category: TaskCategory;
   continent: Continent | null;
@@ -110,7 +112,7 @@ export default async function OrganizerPage() {
       supabase
         .from("prep_item_templates")
         .select(
-          "id, title, item_type, category, continent, country, city, classification, due_offset_days, currency, estimated_amount, document_instructions",
+          "id, title, action, item_type, category, continent, country, city, classification, due_offset_days, currency, estimated_amount, document_instructions",
         )
         .order("created_at", { ascending: false }),
     ]);

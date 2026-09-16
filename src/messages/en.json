@@ -545,6 +545,14 @@
       "preparation": "Preparation task",
       "document_request": "Document request",
       "itinerary_item": "Itinerary item"
+    },
+    "prepItemAction": {
+      "buy": "Buy",
+      "book": "Book",
+      "confirm": "Confirm",
+      "validate": "Validate",
+      "renew": "Renew",
+      "schedule": "Schedule"
     }
   },
   "taskForm": {
@@ -857,7 +865,14 @@
     "reconnecting": "Reconnecting...",
     "disconnected": "Disconnected"
   },
+  "cityAutocomplete": {
+    "placeholder": "Type a city...",
+    "noMatchFallback": "No matching city - the typed text will be saved as the country."
+  },
   "templateForm": {
+    "actionLabel": "Action",
+    "actionNone": "No action",
+    "whatLabel": "What",
     "titleLabel": "Title",
     "titlePlaceholder": "Verify passport validity",
     "itemTypeLabel": "Item type",
@@ -883,6 +898,7 @@
     "toastAdded": "Template added.",
     "errors": {
       "titleRequired": "Enter a title with up to 200 characters.",
+      "actionInvalid": "Choose a valid action.",
       "itemTypeInvalid": "Choose a valid item type.",
       "categoryInvalid": "Choose a valid category.",
       "continentInvalid": "Choose a valid continent.",
@@ -913,6 +929,9 @@
     "cancel": "Cancel"
   },
   "prepItemForm": {
+    "actionLabel": "Action",
+    "actionNone": "No action",
+    "whatLabel": "What",
     "titleLabel": "Title",
     "itemTypeLabel": "Item type",
     "categoryLabel": "Category",
@@ -936,6 +955,7 @@
     "toastUpdated": "Item updated.",
     "errors": {
       "titleRequired": "Enter a title with up to 200 characters.",
+      "actionInvalid": "Choose a valid action.",
       "itemTypeInvalid": "Choose a valid item type.",
       "categoryInvalid": "Choose a valid category.",
       "continentInvalid": "Choose a valid continent.",

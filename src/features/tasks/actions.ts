@@ -236,6 +236,7 @@ export async function updatePrepTripItem(
     .from("trip_tasks")
     .update({
       title: validation.data.title,
+      action: validation.data.action,
       owner_id: validation.data.assignedTo,
       item_type: validation.data.itemType,
       category: validation.data.category,

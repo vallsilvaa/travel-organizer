@@ -44,10 +44,12 @@ import { NewTaskModal } from "@/features/prep-catalog/new-task-modal";
 import {
   getClassificationLabels,
   getContinentLabels,
+  getPrepItemActionLabels,
   getPrepItemTypeLabels,
   timelineOffsets,
   type Classification,
   type Continent,
+  type PrepItemAction,
   type PrepItemType,
 } from "@/features/prep-catalog/shared";
 import { localeTag } from "@/i18n/locale";
@@ -203,6 +205,7 @@ type TripReservation = {
 type TripTask = {
   id: string;
   title: string;
+  action: PrepItemAction | null;
   owner_id: string | null;
   due_date: string | null;
   due_offset_days: number | null;
@@ -271,6 +274,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
   const itineraryPeriodLabels = getItineraryPeriodLabels(await getTranslations("categories.itineraryPeriod"));
   const invitationRoleLabels = getInvitationRoleLabels(await getTranslations("categories.invitationRole"));
   const prepItemTypeLabels = getPrepItemTypeLabels(await getTranslations("categories.prepItemType"));
+  const prepItemActionLabels = getPrepItemActionLabels(await getTranslations("categories.prepItemAction"));
   const classificationLabels = getClassificationLabels(await getTranslations("categories.classification"));
   const continentLabels = getContinentLabels(await getTranslations("categories.continent"));
   const locale = await getLocale();
@@ -386,7 +390,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
         .order("created_at", { ascending: false }),
       supabase
         .from("trip_tasks")
-        .select("id, title, owner_id, due_date, due_offset_days, completed_at, created_at, category, is_critical, template_key, template_id, reference_label, reference_url, item_type, continent, country, city, classification, currency, estimated_amount, paid_amount, itinerary_item_id, document_instructions, expense_id")
+        .select("id, title, action, owner_id, due_date, due_offset_days, completed_at, created_at, category, is_critical, template_key, template_id, reference_label, reference_url, item_type, continent, country, city, classification, currency, estimated_amount, paid_amount, itinerary_item_id, document_instructions, expense_id")
         .eq("trip_id", trip.id)
         .order("due_date", { ascending: true, nullsFirst: false })
         .order("created_at", { ascending: true })
@@ -424,7 +428,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
       supabase
         .from("prep_item_templates")
         .select(
-          "id, title, item_type, category, continent, country, city, classification, due_offset_days, currency, estimated_amount, document_instructions",
+          "id, title, action, item_type, category, continent, country, city, classification, due_offset_days, currency, estimated_amount, document_instructions",
         )
         .order("created_at", { ascending: false }),
       isCreator
@@ -2030,7 +2034,9 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                               <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                                 <div>
                                   <div className="flex flex-wrap items-center gap-2">
-                                    <h4 className={`font-semibold ${task.completed_at ? "text-slate-500 line-through" : "text-slate-950"}`}>{task.title}</h4>
+                                    <h4 className={`font-semibold ${task.completed_at ? "text-slate-500 line-through" : "text-slate-950"}`}>
+                                      {task.action ? `${prepItemActionLabels[task.action]}: ` : ""}{task.title}
+                                    </h4>
                                     <Badge variant="outline">{taskCategoryLabels[task.category]}</Badge>
                                     {isGovernedPrepItem && task.item_type === "document_request" ? (
                                       <Badge variant="outline">{prepItemTypeLabels.document_request}</Badge>
@@ -2102,6 +2108,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                                             task={{
                                               id: task.id,
                                               title: task.title,
+                                              action: task.action,
                                               item_type: task.item_type,
                                               category: task.category,
                                               continent: task.continent as Continent,

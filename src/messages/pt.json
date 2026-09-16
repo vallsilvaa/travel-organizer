@@ -545,6 +545,14 @@
       "preparation": "Tarefa de preparação",
       "document_request": "Solicitação de documento",
       "itinerary_item": "Item de roteiro"
+    },
+    "prepItemAction": {
+      "buy": "Comprar",
+      "book": "Reservar",
+      "confirm": "Confirmar",
+      "validate": "Validar",
+      "renew": "Renovar",
+      "schedule": "Agendar"
     }
   },
   "taskForm": {
@@ -857,7 +865,14 @@
     "reconnecting": "Reconectando...",
     "disconnected": "Desconectado"
   },
+  "cityAutocomplete": {
+    "placeholder": "Digite uma cidade...",
+    "noMatchFallback": "Nenhuma cidade encontrada - o texto digitado será salvo como país."
+  },
   "templateForm": {
+    "actionLabel": "Ação",
+    "actionNone": "Sem ação",
+    "whatLabel": "O quê",
     "titleLabel": "Título",
     "titlePlaceholder": "Verificar a validade do passaporte",
     "itemTypeLabel": "Tipo de item",
@@ -883,6 +898,7 @@
     "toastAdded": "Modelo adicionado.",
     "errors": {
       "titleRequired": "Informe um título com até 200 caracteres.",
+      "actionInvalid": "Escolha uma ação válida.",
       "itemTypeInvalid": "Escolha um tipo de item válido.",
       "categoryInvalid": "Escolha uma categoria válida.",
       "continentInvalid": "Escolha um continente válido.",
@@ -913,6 +929,9 @@
     "cancel": "Cancelar"
   },
   "prepItemForm": {
+    "actionLabel": "Ação",
+    "actionNone": "Sem ação",
+    "whatLabel": "O quê",
     "titleLabel": "Título",
     "itemTypeLabel": "Tipo de item",
     "categoryLabel": "Categoria",
@@ -936,6 +955,7 @@
     "toastUpdated": "Item atualizado.",
     "errors": {
       "titleRequired": "Informe um título com até 200 caracteres.",
+      "actionInvalid": "Escolha uma ação válida.",
       "itemTypeInvalid": "Escolha um tipo de item válido.",
       "categoryInvalid": "Escolha uma categoria válida.",
       "continentInvalid": "Escolha um continente válido.",

@@ -145,5 +145,85 @@ select lives_ok(
   'a governed trip_tasks row no longer requires a continent, only a country'
 );
 
+-- #208: the optional "action" prefix (Comprar, Reservar...) on both the
+-- template and the applied trip_tasks row.
+select lives_ok(
+  $$
+    insert into public.prep_item_templates (
+      owner_id, title, action, item_type, category, country, classification, due_offset_days
+    ) values (
+      '94111111-1111-4111-8111-111111111111',
+      'Musical tickets',
+      'buy',
+      'preparation',
+      'experiences',
+      'United Kingdom',
+      'optional',
+      30
+    )
+  $$,
+  'a valid action value is accepted on a template'
+);
+
+select throws_ok(
+  $$
+    insert into public.prep_item_templates (
+      owner_id, title, action, item_type, category, country, classification, due_offset_days
+    ) values (
+      '94111111-1111-4111-8111-111111111111',
+      'Musical tickets',
+      'not_a_real_action',
+      'preparation',
+      'experiences',
+      'United Kingdom',
+      'optional',
+      30
+    )
+  $$,
+  '23514',
+  null,
+  'an invalid action value is rejected on a template'
+);
+
+select lives_ok(
+  $$
+    insert into public.trip_tasks (
+      trip_id, title, action, item_type, category, country, classification, due_offset_days, created_by
+    ) values (
+      '94aaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+      'Musical tickets',
+      'buy',
+      'preparation',
+      'experiences',
+      'United Kingdom',
+      'optional',
+      30,
+      '94111111-1111-4111-8111-111111111111'
+    )
+  $$,
+  'a valid action value is accepted on an applied trip_tasks row'
+);
+
+select throws_ok(
+  $$
+    insert into public.trip_tasks (
+      trip_id, title, action, item_type, category, country, classification, due_offset_days, created_by
+    ) values (
+      '94aaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+      'Musical tickets',
+      'not_a_real_action',
+      'preparation',
+      'experiences',
+      'United Kingdom',
+      'optional',
+      30,
+      '94111111-1111-4111-8111-111111111111'
+    )
+  $$,
+  '23514',
+  null,
+  'an invalid action value is rejected on an applied trip_tasks row'
+);
+
 select * from finish();
 rollback;

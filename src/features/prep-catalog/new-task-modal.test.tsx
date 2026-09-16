@@ -15,11 +15,11 @@ describe("NewTaskModal", () => {
   it("is closed by default and opens the form when the trigger is clicked", () => {
     render(<NewTaskModal />);
 
-    expect(screen.queryByLabelText(/título/i)).toBeNull();
+    expect(screen.queryByLabelText(/o quê/i)).toBeNull();
 
     fireEvent.click(screen.getByRole("button", { name: "Criar Nova Tarefa" }));
 
-    expect(screen.getByLabelText(/título/i)).toBeTruthy();
+    expect(screen.getByLabelText(/o quê/i)).toBeTruthy();
   });
 
   it("uses a custom trigger label when provided", () => {
@@ -41,6 +41,6 @@ describe("NewTaskModal", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Cancelar" }));
 
-    expect(screen.queryByLabelText(/título/i)).toBeNull();
+    expect(screen.queryByLabelText(/o quê/i)).toBeNull();
   });
 });

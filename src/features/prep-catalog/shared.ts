@@ -12,6 +12,12 @@ export const timelineOffsets = [180, 120, 90, 60, 30, 7, 1] as const;
 export const classifications = ["required", "recommended", "optional"] as const;
 export type Classification = (typeof classifications)[number];
 
+// #208: the "what to do" verb shown as a prefix alongside a governed prep
+// item's title (e.g. "Comprar: Peca Rei Leao"). Optional so existing
+// templates/items created before this field existed keep working unprefixed.
+export const prepItemActions = ["buy", "book", "confirm", "validate", "renew", "schedule"] as const;
+export type PrepItemAction = (typeof prepItemActions)[number];
+
 export const continents = [
   "africa",
   "antarctica",
@@ -38,8 +44,16 @@ export function getContinentLabels(t: (continent: Continent) => string): Record<
   return Object.fromEntries(continents.map((continent) => [continent, t(continent)])) as Record<Continent, string>;
 }
 
+export function getPrepItemActionLabels(t: (action: PrepItemAction) => string): Record<PrepItemAction, string> {
+  return Object.fromEntries(prepItemActions.map((action) => [action, t(action)])) as Record<PrepItemAction, string>;
+}
+
 export function isPrepItemType(value: string): value is PrepItemType {
   return (prepItemTypes as readonly string[]).includes(value);
+}
+
+export function isPrepItemAction(value: string): value is PrepItemAction {
+  return (prepItemActions as readonly string[]).includes(value);
 }
 
 export function isClassification(value: string): value is Classification {
