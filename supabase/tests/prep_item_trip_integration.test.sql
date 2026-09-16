@@ -197,6 +197,56 @@ select lives_ok(
   'a governed item can be linked to an itinerary item in the same trip'
 );
 
+-- #210: a governed item's reservation_id follows the same same-trip-only
+-- rule as itinerary_item_id.
+insert into public.trip_reservations (id, trip_id, reservation_type, title, start_date, created_by) values
+  ('91caaaaa-caaa-4caa-8caa-caaaaaaaaaaa', '91aaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'tickets', 'Musical tickets', '2027-09-05', '91111111-1111-4111-8111-111111111111'),
+  ('91cbbbbb-cbbb-4cbb-8cbb-cbbbbbbbbbbb', '91bbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', 'tickets', 'Other trip tickets', '2027-10-03', '91111111-1111-4111-8111-111111111111');
+
+select throws_ok(
+  $$
+    insert into public.trip_tasks (
+      trip_id, title, item_type, category, continent, country, classification,
+      due_offset_days, reservation_id, created_by
+    ) values (
+      '91aaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+      'Sneaky cross-trip reservation link',
+      'preparation',
+      'other',
+      'europe',
+      'Portugal',
+      'optional',
+      10,
+      '91cbbbbb-cbbb-4cbb-8cbb-cbbbbbbbbbbb',
+      '91111111-1111-4111-8111-111111111111'
+    )
+  $$,
+  '42501',
+  null,
+  'a governed item cannot be linked to a reservation from another trip'
+);
+
+select lives_ok(
+  $$
+    insert into public.trip_tasks (
+      trip_id, title, item_type, category, continent, country, classification,
+      due_offset_days, reservation_id, created_by
+    ) values (
+      '91aaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+      'Ticket purchase follow-up',
+      'preparation',
+      'other',
+      'europe',
+      'Portugal',
+      'optional',
+      5,
+      '91caaaaa-caaa-4caa-8caa-caaaaaaaaaaa',
+      '91111111-1111-4111-8111-111111111111'
+    )
+  $$,
+  'a governed item can be linked to a reservation in the same trip'
+);
+
 -- A completed item with both amounts filled in gets exactly one linked
 -- expense when completed, and completing it again does not duplicate it.
 insert into public.trip_tasks (

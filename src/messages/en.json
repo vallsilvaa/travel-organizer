@@ -928,6 +928,32 @@
     "newTaskDescription": "Add a new template to your reusable task catalog.",
     "cancel": "Cancel"
   },
+  "taskConversionDialog": {
+    "title": "Turn this into a reservation or itinerary item?",
+    "description": "\"{title}\" is complete. You can create a reservation and/or add it to the itinerary without filling everything in again.",
+    "addReservation": "Create reservation",
+    "reservationTypeLabel": "Reservation type",
+    "startDateLabel": "Date",
+    "startTimeLabel": "Time",
+    "amountLabel": "Amount",
+    "currencyLabel": "Currency",
+    "paymentStatusLabel": "Payment status",
+    "paymentStatusPaid": "Paid",
+    "paymentStatusToPay": "To pay",
+    "responsibleLabel": "Responsible",
+    "responsibleSplitPreview": "{amount} per person ({count} responsible)",
+    "addItinerary": "Add to itinerary",
+    "itineraryDateLabel": "Date",
+    "skip": "Skip",
+    "save": "Save",
+    "savePending": "Saving...",
+    "toastSaved": "Item updated.",
+    "actionErrors": {
+      "identifyItem": "Could not identify this item.",
+      "identifyTrip": "Could not identify the trip.",
+      "addFailed": "Could not save. Check the fields and try again."
+    }
+  },
   "prepItemForm": {
     "actionLabel": "Action",
     "actionNone": "No action",

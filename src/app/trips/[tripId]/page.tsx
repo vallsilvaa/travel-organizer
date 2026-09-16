@@ -34,6 +34,7 @@ import {
 } from "@/features/tasks/actions";
 import { TaskForm } from "@/features/tasks/task-form";
 import { PrepItemForm } from "@/features/tasks/prep-item-form";
+import { TaskCompletionDialog } from "@/features/tasks/task-completion-dialog";
 import {
   taskCategories,
   getTaskCategoryLabels,
@@ -2086,18 +2087,37 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                                 </div>
                                 {!isArchived ? (
                                   <div className="flex items-center gap-2">
-                                    <form action={setTaskCompletion}>
-                                      <input type="hidden" name="tripId" value={trip.id} />
-                                      <input type="hidden" name="taskId" value={task.id} />
-                                      <input type="hidden" name="completed" value={task.completed_at ? "false" : "true"} />
-                                      <SubmitButton
-                                        pendingLabel={task.completed_at ? t("preparation.reopeningPending") : t("preparation.completingPending")}
-                                        variant="outline"
-                                        size="sm"
-                                      >
-                                        {task.completed_at ? t("preparation.reopen") : t("preparation.complete")}
-                                      </SubmitButton>
-                                    </form>
+                                    {isGovernedPrepItem ? (
+                                      <TaskCompletionDialog
+                                        tripId={trip.id}
+                                        taskId={task.id}
+                                        completed={Boolean(task.completed_at)}
+                                        title={task.title}
+                                        category={task.category}
+                                        city={task.city}
+                                        currency={task.currency}
+                                        estimatedAmount={task.estimated_amount}
+                                        paidAmount={task.paid_amount}
+                                        participants={tripParticipants}
+                                        completeLabel={t("preparation.complete")}
+                                        completingLabel={t("preparation.completingPending")}
+                                        reopenLabel={t("preparation.reopen")}
+                                        reopeningLabel={t("preparation.reopeningPending")}
+                                      />
+                                    ) : (
+                                      <form action={setTaskCompletion}>
+                                        <input type="hidden" name="tripId" value={trip.id} />
+                                        <input type="hidden" name="taskId" value={task.id} />
+                                        <input type="hidden" name="completed" value={task.completed_at ? "false" : "true"} />
+                                        <SubmitButton
+                                          pendingLabel={task.completed_at ? t("preparation.reopeningPending") : t("preparation.completingPending")}
+                                          variant="outline"
+                                          size="sm"
+                                        >
+                                          {task.completed_at ? t("preparation.reopen") : t("preparation.complete")}
+                                        </SubmitButton>
+                                      </form>
+                                    )}
                                     <ItemActionsMenu
                                       editLabel={t("preparation.editTask")}
                                       editForm={

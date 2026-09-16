@@ -30,7 +30,7 @@ vi.mock("next-intl/server", async () => {
   };
 });
 
-import { createTask, setTaskCompletion, updatePrepTripItem, updateTask } from "./actions";
+import { convertPrepTaskOnCompletion, createTask, setTaskCompletion, updatePrepTripItem, updateTask } from "./actions";
 
 const tripId = "27823996-ec50-4cc2-8506-a29d07b86f94";
 const taskId = "8f3f147b-8684-4ff1-b5c7-6814e4f57f73";
@@ -153,5 +153,150 @@ describe("task actions", () => {
       }),
     );
     expect(result.success).toBe(true);
+  });
+});
+
+describe("convertPrepTaskOnCompletion", () => {
+  const itineraryItemId = "22222222-2222-4222-8222-222222222222";
+  const reservationId = "33333333-3333-4333-8333-333333333333";
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.getUser.mockResolvedValue({ data: { user: { id: "user-123" } } });
+    mocks.createClient.mockResolvedValue({
+      auth: { getUser: mocks.getUser },
+      from: mocks.from,
+      rpc: mocks.rpc,
+    });
+    mocks.rpc.mockResolvedValue({ data: null, error: null });
+  });
+
+  function mockTables({
+    reservationInsert,
+    itineraryInsert,
+    taskUpdate,
+  }: {
+    reservationInsert: (values: Record<string, unknown>) => void;
+    itineraryInsert: (values: Record<string, unknown>) => void;
+    taskUpdate: (values: Record<string, unknown>) => void;
+  }) {
+    mocks.from.mockImplementation((table: string) => {
+      if (table === "trip_tasks") {
+        return {
+          select: () => ({
+            eq: () => ({
+              eq: () => ({
+                single: async () => ({
+                  data: { id: taskId, title: "Buy Lion King tickets", itinerary_item_id: null, reservation_id: null },
+                }),
+              }),
+            }),
+          }),
+          update: (values: Record<string, unknown>) => {
+            taskUpdate(values);
+            return { eq: () => ({ eq: async () => ({ error: null }) }) };
+          },
+        };
+      }
+      if (table === "trips") {
+        return {
+          select: () => ({
+            eq: () => ({
+              single: async () => ({ data: { start_date: "2027-06-10", end_date: "2027-06-20" } }),
+            }),
+          }),
+        };
+      }
+      if (table === "itinerary_items") {
+        return {
+          insert: (values: Record<string, unknown>) => {
+            itineraryInsert(values);
+            return { select: () => ({ single: async () => ({ data: { id: itineraryItemId }, error: null }) }) };
+          },
+        };
+      }
+      if (table === "trip_reservations") {
+        return {
+          insert: (values: Record<string, unknown>) => {
+            reservationInsert(values);
+            return { select: () => ({ single: async () => ({ data: { id: reservationId }, error: null }) }) };
+          },
+        };
+      }
+      throw new Error(`unexpected table ${table}`);
+    });
+  }
+
+  it("creates an itinerary item and a linked reservation, and stamps both ids back on the task", async () => {
+    const reservationInsert = vi.fn();
+    const itineraryInsert = vi.fn();
+    const taskUpdate = vi.fn();
+    mockTables({ reservationInsert, itineraryInsert, taskUpdate });
+
+    const formData = new FormData();
+    formData.set("tripId", tripId);
+    formData.set("taskId", taskId);
+    formData.set("addItinerary", "true");
+    formData.set("addReservation", "true");
+    formData.set("title", "Buy Lion King tickets");
+    formData.set("location", "London");
+    formData.set("date", "2027-06-15");
+    formData.set("reservationType", "tickets");
+    formData.set("startDate", "2027-06-15");
+    formData.set("paidAmount", "150");
+    formData.set("currency", "GBP");
+    formData.set("paymentStatus", "paid");
+    formData.set("responsibleIds", ownerId);
+
+    const result = await convertPrepTaskOnCompletion({}, formData);
+
+    expect(result.success).toBe(true);
+    expect(itineraryInsert).toHaveBeenCalledWith(
+      expect.objectContaining({ trip_id: tripId, item_date: "2027-06-15", title: "Buy Lion King tickets", location: "London" }),
+    );
+    expect(reservationInsert).toHaveBeenCalledWith(
+      expect.objectContaining({ itinerary_item_id: itineraryItemId, title: "Buy Lion King tickets" }),
+    );
+    expect(mocks.rpc).toHaveBeenCalledWith("sync_reservation_expense", {
+      p_reservation_id: reservationId,
+      p_responsible_ids: [ownerId],
+    });
+    expect(taskUpdate).toHaveBeenCalledWith({ itinerary_item_id: itineraryItemId, reservation_id: reservationId });
+  });
+
+  it("does nothing when neither checkbox is set", async () => {
+    const reservationInsert = vi.fn();
+    const itineraryInsert = vi.fn();
+    const taskUpdate = vi.fn();
+    mockTables({ reservationInsert, itineraryInsert, taskUpdate });
+
+    const formData = new FormData();
+    formData.set("tripId", tripId);
+    formData.set("taskId", taskId);
+
+    const result = await convertPrepTaskOnCompletion({}, formData);
+
+    expect(result.success).toBe(true);
+    expect(itineraryInsert).not.toHaveBeenCalled();
+    expect(reservationInsert).not.toHaveBeenCalled();
+  });
+
+  it("rejects an itinerary date outside the trip's range", async () => {
+    const reservationInsert = vi.fn();
+    const itineraryInsert = vi.fn();
+    const taskUpdate = vi.fn();
+    mockTables({ reservationInsert, itineraryInsert, taskUpdate });
+
+    const formData = new FormData();
+    formData.set("tripId", tripId);
+    formData.set("taskId", taskId);
+    formData.set("addItinerary", "true");
+    formData.set("title", "Buy Lion King tickets");
+    formData.set("date", "2027-07-01");
+
+    const result = await convertPrepTaskOnCompletion({}, formData);
+
+    expect(result.itineraryErrors?.date).toBeTruthy();
+    expect(itineraryInsert).not.toHaveBeenCalled();
   });
 });

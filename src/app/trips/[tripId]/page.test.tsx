@@ -84,6 +84,7 @@ const task = {
   template_key: null,
   reference_label: null,
   reference_url: null,
+  classification: null,
 };
 
 afterEach(cleanup);

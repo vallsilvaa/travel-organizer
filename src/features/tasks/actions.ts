@@ -19,6 +19,8 @@ import {
   validatePrepItemInput,
   type PrepItemFieldErrors,
 } from "./prep-item-validation";
+import { validateItineraryInput, type ItineraryFieldErrors } from "@/features/itinerary/validation";
+import { validateReservationInput, type ReservationFieldErrors } from "@/features/reservations/validation";
 
 export type TaskActionState = {
   errors?: TaskFieldErrors;
@@ -28,6 +30,13 @@ export type TaskActionState = {
 
 export type PrepItemActionState = {
   errors?: PrepItemFieldErrors;
+  message?: string;
+  success?: boolean;
+};
+
+export type ConvertPrepTaskActionState = {
+  reservationErrors?: ReservationFieldErrors;
+  itineraryErrors?: ItineraryFieldErrors;
   message?: string;
   success?: boolean;
 };
@@ -203,6 +212,163 @@ export async function setTaskCompletion(formData: FormData) {
     p_should_complete: shouldComplete,
   });
   revalidatePath(`/trips/${tripId}`);
+}
+
+// #210: after completing a governed prep item that already resulted in
+// something concrete (e.g. "Comprar ingresso rei leao" -> bought the
+// ticket), offer to turn it into a reservation and/or an itinerary item
+// instead of the traveler re-typing the same title/cost/city elsewhere.
+// Reuses the reservation and itinerary validation/insert paths as-is
+// (including sync_reservation_expense) rather than duplicating their rules.
+export async function convertPrepTaskOnCompletion(
+  _previousState: ConvertPrepTaskActionState,
+  formData: FormData,
+): Promise<ConvertPrepTaskActionState> {
+  const tI18n = await getTranslations("taskConversionDialog");
+  const tItinerary = await getTranslations("itineraryForm");
+  const tReservation = await getTranslations("reservationForm");
+  const tripId = String(formData.get("tripId") ?? "");
+  const taskId = String(formData.get("taskId") ?? "");
+  const addItinerary = formData.get("addItinerary") === "true";
+  const addReservation = formData.get("addReservation") === "true";
+
+  if (!isValidPrepItemId(tripId) || !isValidPrepItemId(taskId)) {
+    return { message: tI18n("actionErrors.identifyItem") };
+  }
+  if (!addItinerary && !addReservation) {
+    return { success: true };
+  }
+
+  const { supabase, user } = await authenticatedClient();
+  const { data: task } = await supabase
+    .from("trip_tasks")
+    .select("id, title, itinerary_item_id, reservation_id")
+    .eq("id", taskId)
+    .eq("trip_id", tripId)
+    .single();
+
+  if (!task) {
+    return { message: tI18n("actionErrors.identifyItem") };
+  }
+
+  const { data: trip } = await supabase
+    .from("trips")
+    .select("start_date, end_date")
+    .eq("id", tripId)
+    .single();
+
+  if (!trip) {
+    return { message: tI18n("actionErrors.identifyTrip") };
+  }
+
+  let itineraryItemId: string | null = task.itinerary_item_id;
+
+  if (addItinerary) {
+    const itineraryValidation = validateItineraryInput(formData);
+    if (!itineraryValidation.success) {
+      return { itineraryErrors: translateFieldErrors(tItinerary, itineraryValidation.errors) };
+    }
+
+    const endDate = trip.end_date ?? trip.start_date;
+    if (itineraryValidation.data.date < trip.start_date || itineraryValidation.data.date > endDate) {
+      return { itineraryErrors: { date: tItinerary("actionErrors.dateOutsideTripRange") } };
+    }
+
+    const { data: createdItem, error: itineraryError } = await supabase
+      .from("itinerary_items")
+      .insert({
+        trip_id: tripId,
+        item_date: itineraryValidation.data.date,
+        title: task.title,
+        location: itineraryValidation.data.location,
+        created_by: user.id,
+      })
+      .select("id")
+      .single();
+
+    if (itineraryError || !createdItem) {
+      return { message: tI18n("actionErrors.addFailed") };
+    }
+    itineraryItemId = createdItem.id;
+
+    after(() =>
+      notifyTripCollaborators({
+        supabase,
+        tripId,
+        actorId: user.id,
+        entityType: "itinerary_item",
+        entityId: createdItem.id,
+        action: "created",
+        itemLabel: task.title,
+        tab: "itinerary",
+      }),
+    );
+  }
+
+  let reservationId: string | null = task.reservation_id;
+
+  if (addReservation) {
+    const reservationValidation = validateReservationInput(formData);
+    if (!reservationValidation.success) {
+      return { reservationErrors: translateFieldErrors(tReservation, reservationValidation.errors) };
+    }
+
+    const { data: createdReservation, error: reservationError } = await supabase
+      .from("trip_reservations")
+      .insert({
+        trip_id: tripId,
+        reservation_type: reservationValidation.data.reservationType,
+        title: task.title,
+        provider: reservationValidation.data.provider,
+        confirmation_code: reservationValidation.data.confirmationCode,
+        start_date: reservationValidation.data.startDate,
+        start_time: reservationValidation.data.startTime,
+        end_date: reservationValidation.data.endDate,
+        end_time: reservationValidation.data.endTime,
+        location: reservationValidation.data.location,
+        destination_location: reservationValidation.data.destinationLocation,
+        notes: reservationValidation.data.notes,
+        itinerary_item_id: itineraryItemId,
+        paid_amount: reservationValidation.data.paidAmount,
+        currency: reservationValidation.data.currency,
+        payment_status: reservationValidation.data.paymentStatus,
+        created_by: user.id,
+      })
+      .select("id")
+      .single();
+
+    if (reservationError || !createdReservation) {
+      return { message: tI18n("actionErrors.addFailed") };
+    }
+    reservationId = createdReservation.id;
+
+    await supabase.rpc("sync_reservation_expense", {
+      p_reservation_id: reservationId,
+      p_responsible_ids: reservationValidation.data.responsibleIds,
+    });
+
+    after(() =>
+      notifyTripCollaborators({
+        supabase,
+        tripId,
+        actorId: user.id,
+        entityType: "reservation",
+        entityId: reservationId!,
+        action: "created",
+        itemLabel: task.title,
+        tab: "reservations",
+      }),
+    );
+  }
+
+  await supabase
+    .from("trip_tasks")
+    .update({ itinerary_item_id: itineraryItemId, reservation_id: reservationId })
+    .eq("id", taskId)
+    .eq("trip_id", tripId);
+
+  revalidatePath(`/trips/${tripId}`);
+  return { success: true };
 }
 
 export async function updatePrepTripItem(
