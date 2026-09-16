@@ -14,7 +14,7 @@ import {
   validateTemplateInput,
   type TemplateFieldErrors,
 } from "./validation";
-import type { Classification, Continent, PrepItemType } from "./shared";
+import type { Classification, Continent, PrepItemAction, PrepItemType } from "./shared";
 
 export type TemplateActionState = {
   errors?: TemplateFieldErrors;
@@ -32,6 +32,7 @@ type SupabaseServerClient = Awaited<ReturnType<typeof createClient>>;
 export type TemplateRow = {
   id: string;
   title: string;
+  action: PrepItemAction | null;
   item_type: PrepItemType;
   category: TaskCategory;
   continent: Continent | null;
@@ -137,6 +138,7 @@ export async function applyTemplateRowToTrip({
     .insert({
       trip_id: tripId,
       title: template.title,
+      action: template.action,
       owner_id: assignedTo,
       due_date: dueDate,
       due_offset_days: template.due_offset_days,
@@ -198,6 +200,7 @@ export async function createTemplate(
     .insert({
       owner_id: user.id,
       title: validation.data.title,
+      action: validation.data.action,
       item_type: validation.data.itemType,
       category: validation.data.category,
       continent: validation.data.continent,
@@ -210,7 +213,7 @@ export async function createTemplate(
       document_instructions: validation.data.documentInstructions,
     })
     .select(
-      "id, title, item_type, category, continent, country, city, classification, due_offset_days, currency, estimated_amount, document_instructions",
+      "id, title, action, item_type, category, continent, country, city, classification, due_offset_days, currency, estimated_amount, document_instructions",
     )
     .single();
 
@@ -266,6 +269,7 @@ export async function updateTemplate(
     .from("prep_item_templates")
     .update({
       title: validation.data.title,
+      action: validation.data.action,
       item_type: validation.data.itemType,
       category: validation.data.category,
       continent: validation.data.continent,
@@ -328,7 +332,7 @@ export async function applyPrepTemplate(
   const { data: template, error: templateError } = await supabase
     .from("prep_item_templates")
     .select(
-      "id, title, item_type, category, continent, country, city, classification, due_offset_days, currency, estimated_amount, document_instructions",
+      "id, title, action, item_type, category, continent, country, city, classification, due_offset_days, currency, estimated_amount, document_instructions",
     )
     .eq("id", templateId)
     .single();

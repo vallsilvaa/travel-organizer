@@ -372,6 +372,8 @@
       "badgeOverdue": "Overdue",
       "badgeUpcoming": "Upcoming",
       "badgeCompleted": "Completed",
+      "badgeNeedsAction": "Update item",
+      "badgeNeedsActionTooltip": "This item was created before the \"Action\" field existed. Edit it to set an action (Buy, Book...).",
       "noOwner": "Unassigned",
       "dueDate": "Due: {date}",
       "noDueDate": "No due date",
@@ -545,6 +547,14 @@
       "preparation": "Preparation task",
       "document_request": "Document request",
       "itinerary_item": "Itinerary item"
+    },
+    "prepItemAction": {
+      "buy": "Buy",
+      "book": "Book",
+      "confirm": "Confirm",
+      "validate": "Validate",
+      "renew": "Renew",
+      "schedule": "Schedule"
     }
   },
   "taskForm": {
@@ -857,7 +867,14 @@
     "reconnecting": "Reconnecting...",
     "disconnected": "Disconnected"
   },
+  "cityAutocomplete": {
+    "placeholder": "Type a city...",
+    "noMatchFallback": "No matching city - the typed text will be saved as the country."
+  },
   "templateForm": {
+    "actionLabel": "Action",
+    "actionNone": "No action",
+    "whatLabel": "What",
     "titleLabel": "Title",
     "titlePlaceholder": "Verify passport validity",
     "itemTypeLabel": "Item type",
@@ -883,6 +900,7 @@
     "toastAdded": "Template added.",
     "errors": {
       "titleRequired": "Enter a title with up to 200 characters.",
+      "actionInvalid": "Choose a valid action.",
       "itemTypeInvalid": "Choose a valid item type.",
       "categoryInvalid": "Choose a valid category.",
       "continentInvalid": "Choose a valid continent.",
@@ -912,7 +930,36 @@
     "newTaskDescription": "Add a new template to your reusable task catalog.",
     "cancel": "Cancel"
   },
+  "taskConversionDialog": {
+    "title": "Turn this into a reservation or itinerary item?",
+    "description": "\"{title}\" is complete. You can create a reservation and/or add it to the itinerary without filling everything in again.",
+    "addReservation": "Create reservation",
+    "reservationTypeLabel": "Reservation type",
+    "startDateLabel": "Date",
+    "startTimeLabel": "Time",
+    "amountLabel": "Amount",
+    "currencyLabel": "Currency",
+    "paymentStatusLabel": "Payment status",
+    "paymentStatusPaid": "Paid",
+    "paymentStatusToPay": "To pay",
+    "responsibleLabel": "Responsible",
+    "responsibleSplitPreview": "{amount} per person ({count} responsible)",
+    "addItinerary": "Add to itinerary",
+    "itineraryDateLabel": "Date",
+    "skip": "Skip",
+    "save": "Save",
+    "savePending": "Saving...",
+    "toastSaved": "Item updated.",
+    "actionErrors": {
+      "identifyItem": "Could not identify this item.",
+      "identifyTrip": "Could not identify the trip.",
+      "addFailed": "Could not save. Check the fields and try again."
+    }
+  },
   "prepItemForm": {
+    "actionLabel": "Action",
+    "actionNone": "No action",
+    "whatLabel": "What",
     "titleLabel": "Title",
     "itemTypeLabel": "Item type",
     "categoryLabel": "Category",
@@ -936,6 +983,7 @@
     "toastUpdated": "Item updated.",
     "errors": {
       "titleRequired": "Enter a title with up to 200 characters.",
+      "actionInvalid": "Choose a valid action.",
       "itemTypeInvalid": "Choose a valid item type.",
       "categoryInvalid": "Choose a valid category.",
       "continentInvalid": "Choose a valid continent.",
@@ -980,6 +1028,8 @@
       "addTemplate": "Add a template",
       "loadError": "Could not load your catalog. Try refreshing the page.",
       "editTemplate": "Edit template",
+      "badgeNeedsAction": "Update template",
+      "badgeNeedsActionTooltip": "This template was created before the \"Action\" field existed. Edit it to set an action (Buy, Book...).",
       "deleteTemplateTitle": "Remove this template?",
       "deleteTemplateDescription": "This permanently removes \"{title}\" from your catalog. Items already applied to trips are not affected.",
       "removeTemplate": "Remove",

@@ -81,7 +81,7 @@ export async function createTrip(
       const { data: templates } = await supabase
         .from("prep_item_templates")
         .select(
-          "id, title, item_type, category, continent, country, city, classification, due_offset_days, currency, estimated_amount, document_instructions",
+          "id, title, action, item_type, category, continent, country, city, classification, due_offset_days, currency, estimated_amount, document_instructions",
         )
         .in("id", taskTemplateIds);
 

@@ -23,6 +23,7 @@ describe("validateTemplateInput", () => {
       success: true,
       data: {
         title: "Check passport validity",
+        action: null,
         itemType: "preparation",
         category: "documents",
         continent: "europe",

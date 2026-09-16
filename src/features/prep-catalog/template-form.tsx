@@ -20,12 +20,15 @@ import { createTemplate, updateTemplate, type TemplateActionState } from "./acti
 import {
   classifications,
   getClassificationLabels,
+  getPrepItemActionLabels,
   getPrepItemTypeLabels,
   getTaskCategoryLabels,
+  prepItemActions,
   prepItemTypes,
   taskCategories,
   timelineOffsets,
   type Classification,
+  type PrepItemAction,
   type PrepItemType,
   type TaskCategory,
 } from "./shared";
@@ -34,6 +37,7 @@ type TemplateFormProps = {
   template?: {
     id: string;
     title: string;
+    action: PrepItemAction | null;
     item_type: PrepItemType;
     category: TaskCategory;
     country: string;
@@ -53,9 +57,11 @@ const initialState: TemplateActionState = {};
 export function TemplateForm({ template, onSuccess, cancelSlot, tripId }: TemplateFormProps) {
   const t = useTranslations("templateForm");
   const tPrepItemType = useTranslations("categories.prepItemType");
+  const tPrepItemAction = useTranslations("categories.prepItemAction");
   const tClassification = useTranslations("categories.classification");
   const tCategory = useTranslations("categories.task");
   const prepItemTypeLabels = getPrepItemTypeLabels(tPrepItemType);
+  const prepItemActionLabels = getPrepItemActionLabels(tPrepItemAction);
   const classificationLabels = getClassificationLabels(tClassification);
   const taskCategoryLabels = getTaskCategoryLabels(tCategory);
 
@@ -94,8 +100,26 @@ export function TemplateForm({ template, onSuccess, cancelSlot, tripId }: Templa
       {template ? <input type="hidden" name="templateId" value={template.id} /> : null}
       {!template && tripId ? <input type="hidden" name="tripId" value={tripId} /> : null}
 
-      <div className="space-y-2 sm:col-span-2">
-        <Label htmlFor="template-title">{t("titleLabel")}</Label>
+      <div className="space-y-2">
+        <Label htmlFor="template-action">
+          {t("actionLabel")} <span className="font-normal text-muted-foreground">{t("optional")}</span>
+        </Label>
+        <Select name="action" defaultValue={template?.action ?? "none"} items={{ none: t("actionNone"), ...prepItemActionLabels }}>
+          <SelectTrigger id="template-action" className="w-full">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="none">{t("actionNone")}</SelectItem>
+            {prepItemActions.map((action) => (
+              <SelectItem key={action} value={action}>{prepItemActionLabels[action]}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {state.errors?.action ? <p className="text-sm text-destructive">{state.errors.action}</p> : null}
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="template-title">{t("whatLabel")}</Label>
         <Input
           required
           maxLength={200}

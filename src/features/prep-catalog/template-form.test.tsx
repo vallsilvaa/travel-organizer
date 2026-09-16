@@ -32,6 +32,7 @@ describe("TemplateForm", () => {
         template={{
           id: "8f3f147b-8684-4ff1-b5c7-6814e4f57f73",
           title: "Provide visa scan",
+          action: null,
           item_type: "document_request",
           category: "documents",
           country: "Portugal",
@@ -54,6 +55,7 @@ describe("TemplateForm", () => {
         template={{
           id: "8f3f147b-8684-4ff1-b5c7-6814e4f57f73",
           title: "Check passport validity",
+          action: null,
           item_type: "preparation",
           category: "documents",
           country: "Portugal",
@@ -75,6 +77,7 @@ describe("TemplateForm", () => {
         template={{
           id: "8f3f147b-8684-4ff1-b5c7-6814e4f57f73",
           title: "Visit the Colosseum",
+          action: null,
           item_type: "itinerary_item",
           category: "experiences",
           country: "Italy",
@@ -96,6 +99,7 @@ describe("TemplateForm", () => {
         template={{
           id: "8f3f147b-8684-4ff1-b5c7-6814e4f57f73",
           title: "Custom lead time task",
+          action: null,
           item_type: "preparation",
           category: "documents",
           country: "Portugal",
@@ -119,6 +123,7 @@ describe("TemplateForm", () => {
         template={{
           id: "8f3f147b-8684-4ff1-b5c7-6814e4f57f73",
           title: "Preset lead time task",
+          action: null,
           item_type: "preparation",
           category: "documents",
           country: "Portugal",
@@ -152,6 +157,7 @@ describe("TemplateForm", () => {
         template={{
           id: "8f3f147b-8684-4ff1-b5c7-6814e4f57f73",
           title: "Check passport validity",
+          action: null,
           item_type: "preparation",
           category: "documents",
           country: "Portugal",

@@ -372,6 +372,8 @@
       "badgeOverdue": "Atrasada",
       "badgeUpcoming": "Próxima",
       "badgeCompleted": "Concluída",
+      "badgeNeedsAction": "Atualizar item",
+      "badgeNeedsActionTooltip": "Este item foi criado antes do campo \"Ação\" existir. Edite-o para definir uma ação (Comprar, Reservar...).",
       "noOwner": "Sem responsável",
       "dueDate": "Prazo: {date}",
       "noDueDate": "Sem prazo",
@@ -545,6 +547,14 @@
       "preparation": "Tarefa de preparação",
       "document_request": "Solicitação de documento",
       "itinerary_item": "Item de roteiro"
+    },
+    "prepItemAction": {
+      "buy": "Comprar",
+      "book": "Reservar",
+      "confirm": "Confirmar",
+      "validate": "Validar",
+      "renew": "Renovar",
+      "schedule": "Agendar"
     }
   },
   "taskForm": {
@@ -857,7 +867,14 @@
     "reconnecting": "Reconectando...",
     "disconnected": "Desconectado"
   },
+  "cityAutocomplete": {
+    "placeholder": "Digite uma cidade...",
+    "noMatchFallback": "Nenhuma cidade encontrada - o texto digitado será salvo como país."
+  },
   "templateForm": {
+    "actionLabel": "Ação",
+    "actionNone": "Sem ação",
+    "whatLabel": "O quê",
     "titleLabel": "Título",
     "titlePlaceholder": "Verificar a validade do passaporte",
     "itemTypeLabel": "Tipo de item",
@@ -883,6 +900,7 @@
     "toastAdded": "Modelo adicionado.",
     "errors": {
       "titleRequired": "Informe um título com até 200 caracteres.",
+      "actionInvalid": "Escolha uma ação válida.",
       "itemTypeInvalid": "Escolha um tipo de item válido.",
       "categoryInvalid": "Escolha uma categoria válida.",
       "continentInvalid": "Escolha um continente válido.",
@@ -912,7 +930,36 @@
     "newTaskDescription": "Adicione um novo modelo ao seu catálogo reutilizável de tarefas.",
     "cancel": "Cancelar"
   },
+  "taskConversionDialog": {
+    "title": "Transformar em reserva ou item do roteiro?",
+    "description": "\"{title}\" foi concluído. Você pode criar uma reserva e/ou adicionar este item ao roteiro sem preencher tudo de novo.",
+    "addReservation": "Criar reserva",
+    "reservationTypeLabel": "Tipo de reserva",
+    "startDateLabel": "Data",
+    "startTimeLabel": "Horário",
+    "amountLabel": "Valor",
+    "currencyLabel": "Moeda",
+    "paymentStatusLabel": "Situação do pagamento",
+    "paymentStatusPaid": "Pago",
+    "paymentStatusToPay": "A pagar",
+    "responsibleLabel": "Responsável(is)",
+    "responsibleSplitPreview": "{amount} por pessoa ({count} responsáveis)",
+    "addItinerary": "Adicionar ao roteiro",
+    "itineraryDateLabel": "Data",
+    "skip": "Pular",
+    "save": "Salvar",
+    "savePending": "Salvando...",
+    "toastSaved": "Item atualizado.",
+    "actionErrors": {
+      "identifyItem": "Não foi possível identificar este item.",
+      "identifyTrip": "Não foi possível identificar a viagem.",
+      "addFailed": "Não foi possível salvar. Verifique os campos e tente novamente."
+    }
+  },
   "prepItemForm": {
+    "actionLabel": "Ação",
+    "actionNone": "Sem ação",
+    "whatLabel": "O quê",
     "titleLabel": "Título",
     "itemTypeLabel": "Tipo de item",
     "categoryLabel": "Categoria",
@@ -936,6 +983,7 @@
     "toastUpdated": "Item atualizado.",
     "errors": {
       "titleRequired": "Informe um título com até 200 caracteres.",
+      "actionInvalid": "Escolha uma ação válida.",
       "itemTypeInvalid": "Escolha um tipo de item válido.",
       "categoryInvalid": "Escolha uma categoria válida.",
       "continentInvalid": "Escolha um continente válido.",
@@ -980,6 +1028,8 @@
       "addTemplate": "Adicionar modelo",
       "loadError": "Não foi possível carregar seu catálogo. Tente atualizar a página.",
       "editTemplate": "Editar modelo",
+      "badgeNeedsAction": "Atualizar modelo",
+      "badgeNeedsActionTooltip": "Este modelo foi criado antes do campo \"Ação\" existir. Edite-o para definir uma ação (Comprar, Reservar...).",
       "deleteTemplateTitle": "Remover este modelo?",
       "deleteTemplateDescription": "Isso remove permanentemente \"{title}\" do seu catálogo. Itens já aplicados a viagens não são afetados.",
       "removeTemplate": "Remover",

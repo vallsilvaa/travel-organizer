@@ -16,6 +16,7 @@ const ownerId = "8f3f147b-8684-4ff1-b5c7-6814e4f57f73";
 const baseTask = {
   id: "task-1",
   title: "Book travel insurance",
+  action: null,
   item_type: "preparation" as const,
   category: "health" as const,
   continent: "europe" as const,

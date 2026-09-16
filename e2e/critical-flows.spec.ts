@@ -140,7 +140,7 @@ test("traveler completes the critical collaborative planning journey", async ({
     await page.getByRole("button", { name: "Criar Tarefa" }).click();
 
     const dialog = page.getByRole("dialog");
-    await dialog.getByLabel("Título").fill(taskTitle);
+    await dialog.getByLabel("O quê").fill(taskTitle);
     await dialog.getByRole("combobox", { name: "Classificação" }).click();
     await page.getByRole("option", { name: "Obrigatório" }).click();
     await dialog.getByLabel("País").fill("Brasil");
