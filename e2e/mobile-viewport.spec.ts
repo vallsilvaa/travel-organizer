@@ -79,7 +79,11 @@ test("primary trip sections are navigable on a phone-sized viewport without hori
 
     for (const tabName of ["Visão geral", "Roteiro", "Despesas", "Preparação", "Colaboradores"]) {
       const tab = page.getByRole("tab", { name: tabName });
-      await tab.scrollIntoViewIfNeeded();
+      // The tab strip scrolls horizontally on narrow viewports (more tabs than
+      // fit at once). `scrollIntoViewIfNeeded` only guarantees the element is
+      // *somewhere* in the viewport, not fully clear of the strip's own clipped
+      // edge, so centering it explicitly avoids clicking a partially-clipped tab.
+      await tab.evaluate((el) => el.scrollIntoView({ block: "nearest", inline: "center" }));
       await expect(tab).toBeVisible();
       // "Visão geral" is the default/already-active tab on load - clicking
       // an already-selected tab isn't a real user action and isn't needed

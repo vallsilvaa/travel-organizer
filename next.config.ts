@@ -5,6 +5,9 @@ import createNextIntlPlugin from "next-intl/plugin";
 const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
 const nextConfig: NextConfig = {
+  // The floating dev-mode route indicator (bottom-left by default) can sit on
+  // top of interactive elements in e2e tests, which run against `next dev`.
+  devIndicators: false,
   experimental: {
     serverActions: {
       // Matches the trip-attachments storage bucket's 10 MB file_size_limit,
