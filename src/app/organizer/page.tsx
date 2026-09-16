@@ -8,6 +8,7 @@ import { TemplateForm } from "@/features/prep-catalog/template-form";
 import {
   getClassificationLabels,
   getContinentLabels,
+  getPrepItemActionLabels,
   getPrepItemTypeLabels,
   type Classification,
   type Continent,
@@ -64,6 +65,7 @@ export default async function OrganizerPage() {
   const t = await getTranslations("organizerPanel");
   const taskCategoryLabels = getTaskCategoryLabels(await getTranslations("categories.task"));
   const prepItemTypeLabels = getPrepItemTypeLabels(await getTranslations("categories.prepItemType"));
+  const prepItemActionLabels = getPrepItemActionLabels(await getTranslations("categories.prepItemAction"));
   const classificationLabels = getClassificationLabels(await getTranslations("categories.classification"));
   const continentLabels = getContinentLabels(await getTranslations("categories.continent"));
   const format = await getFormatter();
@@ -178,9 +180,20 @@ export default async function OrganizerPage() {
                           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                             <div>
                               <div className="flex flex-wrap items-center gap-2">
-                                <h3 className="font-semibold text-slate-950">{template.title}</h3>
+                                <h3 className="font-semibold text-slate-950">
+                                  {template.action ? `${prepItemActionLabels[template.action]}: ` : ""}{template.title}
+                                </h3>
                                 <Badge variant="outline">{prepItemTypeLabels[template.item_type]}</Badge>
                                 <Badge variant="outline">{classificationLabels[template.classification]}</Badge>
+                                {!template.action ? (
+                                  <Badge
+                                    className="border-amber-300 bg-amber-50 text-amber-800"
+                                    variant="outline"
+                                    title={t("catalog.badgeNeedsActionTooltip")}
+                                  >
+                                    ⚠ {t("catalog.badgeNeedsAction")}
+                                  </Badge>
+                                ) : null}
                               </div>
                               <p className="mt-2 text-sm text-slate-600">
                                 {[

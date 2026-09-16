@@ -2045,6 +2045,15 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                                     {isGovernedPrepItem && task.classification !== "required" ? (
                                       <Badge variant="outline">{classificationLabels[task.classification as Exclude<Classification, "required">]}</Badge>
                                     ) : null}
+                                    {isGovernedPrepItem && !task.action ? (
+                                      <Badge
+                                        className="border-amber-300 bg-amber-50 text-amber-800"
+                                        variant="outline"
+                                        title={t("preparation.badgeNeedsActionTooltip")}
+                                      >
+                                        ⚠ {t("preparation.badgeNeedsAction")}
+                                      </Badge>
+                                    ) : null}
                                     {task.is_critical && !task.completed_at ? <Badge className="bg-amber-100 text-amber-900">{t("preparation.badgeCritical")}</Badge> : null}
                                     {overdue ? <Badge className="bg-red-100 text-red-800">{t("preparation.badgeOverdue")}</Badge> : null}
                                     {upcoming ? <Badge className="bg-sky-100 text-sky-800">{t("preparation.badgeUpcoming")}</Badge> : null}
