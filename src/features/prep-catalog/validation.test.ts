@@ -120,9 +120,21 @@ describe("validateTemplateInput", () => {
     }
   });
 
-  it("rejects a lead time outside the fixed set, even within the old 0-730 range", () => {
+  it("accepts a custom lead time outside the fixed presets, within the 0-730 range (#206)", () => {
     const formData = validForm();
     formData.set("dueOffsetDays", "45");
+
+    const result = validateTemplateInput(formData);
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.dueOffsetDays).toBe(45);
+    }
+  });
+
+  it("rejects a lead time outside the 0-730 range", () => {
+    const formData = validForm();
+    formData.set("dueOffsetDays", "731");
 
     const result = validateTemplateInput(formData);
 

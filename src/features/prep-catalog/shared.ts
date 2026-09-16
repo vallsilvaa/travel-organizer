@@ -3,15 +3,11 @@ export { taskCategories, getTaskCategoryLabels, type TaskCategory } from "@/feat
 export const prepItemTypes = ["preparation", "document_request", "itinerary_item"] as const;
 export type PrepItemType = (typeof prepItemTypes)[number];
 
-// The fixed set of lead times a "Preparação para viagem" template can use
-// (issue #149) - 1 stands for "véspera" (the day before departure), the
-// rest are days before. Not required for the other two item types.
+// Quick-pick presets shown above the "Personalizado" custom option (#206) -
+// 1 stands for "véspera" (the day before departure), the rest are days
+// before. Not required for the other two item types. Any whole number of
+// days between 0 and 730 is valid too, not just these presets.
 export const timelineOffsets = [180, 120, 90, 60, 30, 7, 1] as const;
-export type TimelineOffset = (typeof timelineOffsets)[number];
-
-export function isTimelineOffset(value: number): value is TimelineOffset {
-  return (timelineOffsets as readonly number[]).includes(value);
-}
 
 export const classifications = ["required", "recommended", "optional"] as const;
 export type Classification = (typeof classifications)[number];

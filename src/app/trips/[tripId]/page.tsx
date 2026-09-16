@@ -196,7 +196,7 @@ type TripReservation = {
   itinerary_item_id: string | null;
   paid_amount: string | null;
   currency: string | null;
-  payer_id: string | null;
+  payment_status: "paid" | "to_pay" | null;
   expense_id: string | null;
 };
 
@@ -231,6 +231,7 @@ const reservationBadgeVariant: Record<ReservationType, "default" | "secondary" |
   flight: "default",
   lodging: "secondary",
   transport: "outline",
+  tickets: "secondary",
 };
 
 export default async function TripPage({ params, searchParams }: TripPageProps) {
@@ -374,7 +375,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
         .order("start_time", { ascending: true, nullsFirst: false }),
       supabase
         .from("trip_reservations")
-        .select("id, reservation_type, title, provider, confirmation_code, start_date, start_time, end_date, end_time, location, destination_location, notes, itinerary_item_id, paid_amount, currency, payer_id, expense_id")
+        .select("id, reservation_type, title, provider, confirmation_code, start_date, start_time, end_date, end_time, location, destination_location, notes, itinerary_item_id, paid_amount, currency, payment_status, expense_id")
         .eq("trip_id", trip.id)
         .order("start_date", { ascending: true })
         .order("start_time", { ascending: true, nullsFirst: false }),
@@ -629,6 +630,16 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
     shares.push(share);
     sharesByExpense.set(share.expense_id, shares);
   }
+  // A reservation's "responsible people" (#205) live only on its linked
+  // expense's shares, not on trip_reservations itself.
+  const responsibleIdsByReservation = new Map<string, string[]>(
+    tripReservations
+      .filter((reservation) => reservation.expense_id)
+      .map((reservation) => [
+        reservation.id,
+        (sharesByExpense.get(reservation.expense_id as string) ?? []).map((share) => share.user_id),
+      ]),
+  );
   const totalsByCurrency = Array.from(
     tripExpenses.reduce((totals, expense) => {
       totals.set(
@@ -788,7 +799,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
             ) : null}
             {reservationForExpense.get(expense.id) ? (
               <Link
-                href={`/trips/${trip.id}?tab=itinerary#reservation-${reservationForExpense.get(expense.id)!.id}`}
+                href={`/trips/${trip.id}?tab=reservations#reservation-${reservationForExpense.get(expense.id)!.id}`}
                 className="inline-flex items-center rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-800 hover:bg-sky-100"
               >
                 {t("expenses.originReservation")}
@@ -896,7 +907,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
     params.set("tab", "expenses");
     return `/trips/${trip.id}?${params.toString()}`;
   };
-  const validTabs = ["overview", "itinerary", "expenses", "preparation", "documents", "organizer"];
+  const validTabs = ["overview", "itinerary", "reservations", "expenses", "preparation", "documents", "organizer"];
   const defaultTab = validTabs.includes(filters.tab ?? "")
     ? (filters.tab as string)
     : filters.status || filters.owner || filters.category || criticalOnlyFilter || overdueOnlyFilter
@@ -1078,6 +1089,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
           <TabsList className="w-full overflow-x-auto sm:w-auto sm:overflow-visible">
             <TabsTrigger value="overview" className="shrink-0 sm:flex-1 sm:shrink">{t("tabs.overview")}</TabsTrigger>
             <TabsTrigger value="itinerary" className="shrink-0 sm:flex-1 sm:shrink">{t("tabs.itinerary")}</TabsTrigger>
+            <TabsTrigger value="reservations" className="shrink-0 sm:flex-1 sm:shrink">{t("tabs.reservations")}</TabsTrigger>
             <TabsTrigger value="expenses" className="shrink-0 sm:flex-1 sm:shrink">{t("tabs.expenses")}</TabsTrigger>
             <TabsTrigger value="preparation" className="shrink-0 sm:flex-1 sm:shrink">{t("tabs.preparation")}</TabsTrigger>
             <TabsTrigger value="documents" className="shrink-0 sm:flex-1 sm:shrink">{t("tabs.documents")}</TabsTrigger>
@@ -1345,7 +1357,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                                         {(reservationsByItineraryItemId.get(item.id) ?? []).map((reservation) => (
                                           <Link
                                             key={reservation.id}
-                                            href={`/trips/${trip.id}?tab=itinerary#reservation-${reservation.id}`}
+                                            href={`/trips/${trip.id}?tab=reservations#reservation-${reservation.id}`}
                                             className="inline-flex items-center gap-1 rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-800 hover:bg-sky-100"
                                           >
                                             {t("itinerary.linkedReservation", { title: reservation.title })}
@@ -1404,8 +1416,10 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
               )}
             </CardContent>
           </Card>
+          </TabsContent>
 
-          <Card className="mt-8 [--card-spacing:--spacing(6)]">
+          <TabsContent value="reservations">
+          <Card className="[--card-spacing:--spacing(6)]">
             <CardHeader>
               <CardTitle className="text-2xl">{t("itinerary.reservationsTitle")}</CardTitle>
               <CardDescription>
@@ -1472,10 +1486,15 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                           ) : null}
                           {reservation.paid_amount && reservation.currency ? (
                             <p className="mt-2 text-sm text-slate-600">
-                              {t("itinerary.reservationPaid", {
-                                amount: formatMoney(reservation.paid_amount, reservation.currency),
-                                payer: participantNames.get(reservation.payer_id ?? "") ?? tCommon("traveler"),
-                              })}
+                              {(() => {
+                                const responsibleNames = (responsibleIdsByReservation.get(reservation.id) ?? [])
+                                  .map((id) => namesIncludingRemoved.get(id) ?? tCommon("traveler"))
+                                  .join(", ");
+                                const amount = formatMoney(reservation.paid_amount as string, reservation.currency as string);
+                                return reservation.payment_status === "to_pay"
+                                  ? t("itinerary.reservationToPay", { amount, responsible: responsibleNames })
+                                  : t("itinerary.reservationPaid", { amount, responsible: responsibleNames });
+                              })()}
                               {reservation.expense_id ? ` · ${t("itinerary.reservationExpenseLinked")}` : ""}
                             </p>
                           ) : null}
@@ -1507,7 +1526,17 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                         {!isArchived ? (
                           <ItemActionsMenu
                             editLabel={t("itinerary.editReservation")}
-                            editForm={<ReservationForm itineraryItems={itineraryItemOptions} participants={tripParticipants} reservation={reservation} tripId={trip.id} />}
+                            editForm={
+                              <ReservationForm
+                                itineraryItems={itineraryItemOptions}
+                                participants={tripParticipants}
+                                reservation={{
+                                  ...reservation,
+                                  responsible_ids: responsibleIdsByReservation.get(reservation.id) ?? [],
+                                }}
+                                tripId={trip.id}
+                              />
+                            }
                             deleteAction={deleteReservation}
                             deleteHiddenFields={{ tripId: trip.id, reservationId: reservation.id }}
                             deleteTitle={t("itinerary.deleteReservationTitle")}

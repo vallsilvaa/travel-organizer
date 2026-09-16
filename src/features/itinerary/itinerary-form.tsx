@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
@@ -47,6 +47,15 @@ export function ItineraryForm({ existingCities = [], item, tripId }: ItineraryFo
   const periodLabels = getItineraryPeriodLabels(tPeriods);
   const action = item ? updateItineraryItem : createItineraryItem;
   const [state, formAction, pending] = useActionState(action, initialState);
+  const [formKey, setFormKey] = useState(0);
+  const [lastHandledState, setLastHandledState] = useState(state);
+
+  if (state !== lastHandledState) {
+    setLastHandledState(state);
+    if (state.success && !item) {
+      setFormKey((key) => key + 1);
+    }
+  }
 
   useEffect(() => {
     if (state.success) {
@@ -57,7 +66,7 @@ export function ItineraryForm({ existingCities = [], item, tripId }: ItineraryFo
   }, [state, item, t]);
 
   return (
-    <form action={formAction} className="grid gap-4 sm:grid-cols-2">
+    <form key={formKey} action={formAction} className="grid gap-4 sm:grid-cols-2">
       <input type="hidden" name="tripId" value={tripId} />
       {item ? <input type="hidden" name="itemId" value={item.id} /> : null}
       <div className="space-y-2">

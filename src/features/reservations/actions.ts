@@ -67,7 +67,7 @@ export async function createReservation(
       itinerary_item_id: validation.data.itineraryItemId,
       paid_amount: validation.data.paidAmount,
       currency: validation.data.currency,
-      payer_id: validation.data.payerId,
+      payment_status: validation.data.paymentStatus,
       created_by: user.id,
     })
     .select("id")
@@ -77,7 +77,10 @@ export async function createReservation(
     return { message: t("actionErrors.addFailed") };
   }
 
-  await supabase.rpc("sync_reservation_expense", { p_reservation_id: created.id });
+  await supabase.rpc("sync_reservation_expense", {
+    p_reservation_id: created.id,
+    p_responsible_ids: validation.data.responsibleIds,
+  });
 
   revalidatePath(`/trips/${tripId}`);
   after(() =>
@@ -89,7 +92,7 @@ export async function createReservation(
       entityId: created.id,
       action: "created",
       itemLabel: validation.data.title,
-      tab: "itinerary",
+      tab: "reservations",
     }),
   );
   return { success: true };
@@ -129,7 +132,7 @@ export async function updateReservation(
       itinerary_item_id: validation.data.itineraryItemId,
       paid_amount: validation.data.paidAmount,
       currency: validation.data.currency,
-      payer_id: validation.data.payerId,
+      payment_status: validation.data.paymentStatus,
       updated_at: new Date().toISOString(),
     })
     .eq("id", reservationId)
@@ -139,7 +142,10 @@ export async function updateReservation(
     return { message: t("actionErrors.updateFailed") };
   }
 
-  await supabase.rpc("sync_reservation_expense", { p_reservation_id: reservationId });
+  await supabase.rpc("sync_reservation_expense", {
+    p_reservation_id: reservationId,
+    p_responsible_ids: validation.data.responsibleIds,
+  });
 
   revalidatePath(`/trips/${tripId}`);
   after(() =>
@@ -151,7 +157,7 @@ export async function updateReservation(
       entityId: reservationId,
       action: "updated",
       itemLabel: validation.data.title,
-      tab: "itinerary",
+      tab: "reservations",
     }),
   );
   return { success: true };
@@ -185,7 +191,7 @@ export async function deleteReservation(formData: FormData) {
         entityId: reservationId,
         action: "deleted",
         itemLabel: deleted.title,
-        tab: "itinerary",
+        tab: "reservations",
       }),
     );
   }

@@ -87,7 +87,7 @@ describe("GET /api/trips/[tripId]/reservations/[reservationId]/ics", () => {
     expect(body).toContain("SUMMARY:LIS to CDG");
     expect(body).toContain("LOCATION:LIS → CDG");
     expect(body).toContain("ABC123");
-    expect(unfolded).toContain(`/trips/${tripId}?tab=itinerary#reservation-${reservationId}`);
+    expect(unfolded).toContain(`/trips/${tripId}?tab=reservations#reservation-${reservationId}`);
   });
 
   it("returns 401 when the caller is not signed in", async () => {

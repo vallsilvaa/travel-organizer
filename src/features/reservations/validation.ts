@@ -5,7 +5,7 @@ const timePattern = /^([01]\d|2[0-3]):[0-5]\d$/;
 const amountPattern = /^\d{1,12}(?:\.\d{1,2})?$/;
 const currencyPattern = /^[A-Z]{3}$/;
 
-export const reservationTypes = ["flight", "lodging", "transport"] as const;
+export const reservationTypes = ["flight", "lodging", "transport", "tickets"] as const;
 export type ReservationType = (typeof reservationTypes)[number];
 
 // Built from a translator scoped to "categories.reservationType" at each call
@@ -13,6 +13,9 @@ export type ReservationType = (typeof reservationTypes)[number];
 export function getReservationTypeLabels(t: (type: ReservationType) => string): Record<ReservationType, string> {
   return Object.fromEntries(reservationTypes.map((type) => [type, t(type)])) as Record<ReservationType, string>;
 }
+
+export const reservationPaymentStatuses = ["paid", "to_pay"] as const;
+export type ReservationPaymentStatus = (typeof reservationPaymentStatuses)[number];
 
 export type ReservationFieldErrors = Partial<
   Record<
@@ -30,7 +33,8 @@ export type ReservationFieldErrors = Partial<
     | "itineraryItemId"
     | "paidAmount"
     | "currency"
-    | "payerId",
+    | "paymentStatus"
+    | "responsibleIds",
     string
   >
 >;
@@ -50,7 +54,12 @@ export type ReservationInput = {
   itineraryItemId: string | null;
   paidAmount: string | null;
   currency: string | null;
-  payerId: string | null;
+  paymentStatus: ReservationPaymentStatus | null;
+  /** Who's responsible for this cost: whoever paid (when "paid" - normally
+   * one person, but more than one is allowed for a jointly-fronted cost)
+   * or whoever owes an equal share (when "to_pay"). Empty unless payment
+   * info was provided at all. */
+  responsibleIds: string[];
 };
 
 function optionalValue(value: FormDataEntryValue | null) {
@@ -64,6 +73,10 @@ export function isValidReservationId(value: string) {
 
 export function isReservationType(value: string): value is ReservationType {
   return (reservationTypes as readonly string[]).includes(value);
+}
+
+export function isReservationPaymentStatus(value: string): value is ReservationPaymentStatus {
+  return (reservationPaymentStatuses as readonly string[]).includes(value);
 }
 
 export function validateReservationInput(formData: FormData):
@@ -84,8 +97,8 @@ export function validateReservationInput(formData: FormData):
   const itineraryItemId = rawItineraryItemId === "none" ? null : rawItineraryItemId;
   const rawPaidAmount = optionalValue(formData.get("paidAmount"));
   const currency = optionalValue(formData.get("currency"))?.toUpperCase() ?? null;
-  const rawPayerId = optionalValue(formData.get("payerId"));
-  const payerId = rawPayerId === "none" ? null : rawPayerId;
+  const rawPaymentStatus = optionalValue(formData.get("paymentStatus"));
+  const responsibleIds = formData.getAll("responsibleIds").map(String).filter(Boolean);
   const errors: ReservationFieldErrors = {};
 
   if (itineraryItemId && !uuidPattern.test(itineraryItemId)) {
@@ -130,9 +143,14 @@ export function validateReservationInput(formData: FormData):
     errors.notes = "notesTooLong";
   }
 
-  // Paid amount, currency, and payer travel together: either all three are
-  // present (the reservation has been paid for) or none are (#171) - the
-  // same all-or-nothing shape the database constraint enforces.
+  // Amount, currency, payment status, and at least one responsible person
+  // travel together: either all are present (the reservation has a known
+  // cost, paid or not) or none are (#171, extended by #205) - the same
+  // all-or-nothing shape the database constraint enforces. Unlike #171's
+  // single required payer, "to_pay" is now a valid status with no payer at
+  // all (nobody has paid yet), and either status accepts more than one
+  // responsible person, split equally.
+  const hasAnyPaymentField = Boolean(rawPaidAmount || currency || rawPaymentStatus || responsibleIds.length);
   let paidAmount: string | null = null;
   if (rawPaidAmount) {
     if (!amountPattern.test(rawPaidAmount) || Number(rawPaidAmount) <= 0) {
@@ -140,18 +158,32 @@ export function validateReservationInput(formData: FormData):
     } else {
       paidAmount = Number(rawPaidAmount).toFixed(2);
     }
+  } else if (hasAnyPaymentField) {
+    errors.paidAmount = "paidAmountRequiredWithPaymentInfo";
   }
+
   if (currency && !currencyPattern.test(currency)) {
     errors.currency = "currencyInvalid";
+  } else if (!currency && hasAnyPaymentField) {
+    errors.currency = "currencyRequiredWithPaymentInfo";
   }
-  if (payerId && !uuidPattern.test(payerId)) {
-    errors.payerId = "payerInvalid";
+
+  let paymentStatus: ReservationPaymentStatus | null = null;
+  if (rawPaymentStatus) {
+    if (!isReservationPaymentStatus(rawPaymentStatus)) {
+      errors.paymentStatus = "paymentStatusInvalid";
+    } else {
+      paymentStatus = rawPaymentStatus;
+    }
+  } else if (hasAnyPaymentField) {
+    errors.paymentStatus = "paymentStatusRequiredWithPaymentInfo";
   }
-  if (paidAmount && !currency) {
-    errors.currency = "currencyRequiredWithPaidAmount";
-  }
-  if (paidAmount && !payerId) {
-    errors.payerId = "payerRequiredWithPaidAmount";
+
+  const invalidResponsibleId = responsibleIds.find((id) => !uuidPattern.test(id));
+  if (invalidResponsibleId) {
+    errors.responsibleIds = "responsibleInvalid";
+  } else if (hasAnyPaymentField && responsibleIds.length === 0) {
+    errors.responsibleIds = "responsibleRequiredWithPaymentInfo";
   }
 
   return Object.keys(errors).length
@@ -172,8 +204,9 @@ export function validateReservationInput(formData: FormData):
           notes,
           itineraryItemId,
           paidAmount,
-          currency: paidAmount ? currency : null,
-          payerId: paidAmount ? payerId : null,
+          currency,
+          paymentStatus,
+          responsibleIds,
         },
       };
 }
