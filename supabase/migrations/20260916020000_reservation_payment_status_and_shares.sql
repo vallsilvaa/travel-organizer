@@ -5,6 +5,12 @@
 alter table public.trip_reservations
   add column payment_status text check (payment_status is null or payment_status in ('paid', 'to_pay'));
 
+-- Every existing reservation with a paid_amount was recorded under the old
+-- single-payer model, which only ever represented an already-paid cost.
+update public.trip_reservations
+set payment_status = 'paid'
+where paid_amount is not null;
+
 -- payer_id (a single FK) can't represent more than one responsible person.
 -- Who's responsible now lives only on the linked expense's shares
 -- (trip_expense_shares, via expense_id) - the reservation itself no longer
