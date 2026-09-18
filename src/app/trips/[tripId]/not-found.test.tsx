@@ -22,11 +22,11 @@ describe("TripNotFound", () => {
     expect(message.textContent).toMatch(/não ter.*acesso/i);
   });
 
-  it("offers a way back to the dashboard", async () => {
+  it("offers a way back to the trips list", async () => {
     render(await TripNotFound());
 
-    expect(screen.getByRole("link", { name: "Ir para o painel" }).getAttribute("href")).toBe(
-      "/dashboard",
+    expect(screen.getByRole("link", { name: "Ir para minhas viagens" }).getAttribute("href")).toBe(
+      "/trips",
     );
   });
 });

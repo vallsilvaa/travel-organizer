@@ -35,6 +35,8 @@ export async function updateSession(request: NextRequest) {
   const isAuthenticated = Boolean(data?.user);
   const isProtectedRoute =
     request.nextUrl.pathname.startsWith("/dashboard") ||
+    request.nextUrl.pathname.startsWith("/profile") ||
+    request.nextUrl.pathname.startsWith("/trips") ||
     request.nextUrl.pathname.startsWith("/organizer") ||
     request.nextUrl.pathname.startsWith("/auth/choose-mode");
   const isAuthRoute =

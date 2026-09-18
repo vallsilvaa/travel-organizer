@@ -77,6 +77,28 @@ describe("updateSession", () => {
     expect(location.searchParams.get("error")).toBe("authentication_required");
   });
 
+  it("redirects an unauthenticated visitor away from the profile page", async () => {
+    mocks.getUser.mockResolvedValue({ data: { user: null } });
+
+    const response = await updateSession(makeRequest("/profile"));
+
+    expect(response.status).toBe(307);
+    const location = new URL(response.headers.get("location")!);
+    expect(location.pathname).toBe("/auth/sign-in");
+    expect(location.searchParams.get("error")).toBe("authentication_required");
+  });
+
+  it("redirects an unauthenticated visitor away from the trips page", async () => {
+    mocks.getUser.mockResolvedValue({ data: { user: null } });
+
+    const response = await updateSession(makeRequest("/trips"));
+
+    expect(response.status).toBe(307);
+    const location = new URL(response.headers.get("location")!);
+    expect(location.pathname).toBe("/auth/sign-in");
+    expect(location.searchParams.get("error")).toBe("authentication_required");
+  });
+
   it("redirects an unauthenticated visitor away from the mode selector", async () => {
     mocks.getUser.mockResolvedValue({ data: { user: null } });
 

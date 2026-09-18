@@ -170,13 +170,13 @@ export async function changePassword(formData: FormData) {
 
   const errorCode = await applyNewPassword(supabase, formData);
   if (errorCode) {
-    authRedirect("/dashboard", "passwordError", errorCode);
+    authRedirect("/profile", "passwordError", errorCode);
   }
 
-  authRedirect("/dashboard", "passwordMessage", "password_updated");
+  authRedirect("/profile", "passwordMessage", "password_updated");
 }
 
-export async function updateDisplayName(formData: FormData) {
+export async function updateProfile(formData: FormData) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -186,19 +186,36 @@ export async function updateDisplayName(formData: FormData) {
     redirect("/auth/sign-in?error=authentication_required");
   }
 
-  const displayName = formValue(formData, "displayName");
-  if (displayName.length < 2 || displayName.length > 100) {
-    authRedirect("/dashboard", "profileError", "invalid_display_name");
+  const firstName = formValue(formData, "firstName");
+  const lastName = formValue(formData, "lastName");
+  const birthDate = formValue(formData, "birthDate");
+
+  if (firstName.length < 1 || firstName.length > 100) {
+    authRedirect("/profile", "profileError", "invalid_first_name");
   }
+  if (lastName.length > 100) {
+    authRedirect("/profile", "profileError", "invalid_last_name");
+  }
+  if (birthDate && Number.isNaN(Date.parse(birthDate))) {
+    authRedirect("/profile", "profileError", "invalid_birth_date");
+  }
+
+  const displayName = [firstName, lastName].filter(Boolean).join(" ").trim();
 
   const { error } = await supabase
     .from("profiles")
-    .update({ display_name: displayName, updated_at: new Date().toISOString() })
+    .update({
+      first_name: firstName,
+      last_name: lastName || null,
+      birth_date: birthDate || null,
+      display_name: displayName,
+      updated_at: new Date().toISOString(),
+    })
     .eq("id", user.id);
 
   if (error) {
-    authRedirect("/dashboard", "profileError", "profile_update_failed");
+    authRedirect("/profile", "profileError", "profile_update_failed");
   }
 
-  authRedirect("/dashboard", "profileMessage", "profile_updated");
+  authRedirect("/profile", "profileMessage", "profile_updated");
 }

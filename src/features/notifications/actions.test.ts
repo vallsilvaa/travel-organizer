@@ -55,6 +55,8 @@ describe("notification actions", () => {
     expect(mocks.eq).toHaveBeenNthCalledWith(2, "user_id", "user-123");
     expect(mocks.is).toHaveBeenCalledWith("read_at", null);
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/dashboard");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/profile");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/trips");
   });
 
   it("ignores an invalid notification id without touching the database", async () => {
@@ -73,5 +75,7 @@ describe("notification actions", () => {
     expect(mocks.eq).toHaveBeenCalledWith("user_id", "user-123");
     expect(mocks.is).toHaveBeenCalledWith("read_at", null);
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/dashboard");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/profile");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/trips");
   });
 });

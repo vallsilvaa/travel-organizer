@@ -10,16 +10,14 @@ export default function DashboardLoading() {
           <Skeleton className="mt-2 h-4 w-96" />
         </div>
 
-        <div className="rounded-xl bg-card p-8 ring-1 ring-foreground/10">
-          <Skeleton className="h-6 w-40" />
-          <Skeleton className="mt-2 h-4 w-72" />
-        </div>
-
-        <div className="rounded-xl bg-card p-8 ring-1 ring-foreground/10">
-          <Skeleton className="h-6 w-32" />
-          <div className="mt-6 grid gap-4 sm:grid-cols-2">
-            <Skeleton className="h-20 rounded-2xl" />
-            <Skeleton className="h-20 rounded-2xl" />
+        <div className="grid gap-6 sm:grid-cols-2">
+          <div className="rounded-xl bg-card p-8 ring-1 ring-foreground/10">
+            <Skeleton className="h-6 w-32" />
+            <Skeleton className="mt-2 h-4 w-56" />
+          </div>
+          <div className="rounded-xl bg-card p-8 ring-1 ring-foreground/10">
+            <Skeleton className="h-6 w-32" />
+            <Skeleton className="mt-2 h-4 w-56" />
           </div>
         </div>
       </div>

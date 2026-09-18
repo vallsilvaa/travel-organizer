@@ -90,6 +90,10 @@ test("traveler completes the critical collaborative planning journey", async ({
   });
 
   await test.step("create and open a trip", async () => {
+    await page.getByRole("link", { name: /viagens/i }).click();
+    await expect(page).toHaveURL(/\/trips$/);
+    await page.getByRole("button", { name: "Nova viagem" }).click();
+
     await page.getByLabel("Título").fill(tripTitle);
     await page.getByLabel(/Destino 1/).fill(destination);
     await page.getByLabel("Data de início").fill("2027-05-10");
@@ -178,6 +182,8 @@ test("traveler completes the critical collaborative planning journey", async ({
 
     await signOut(page);
     await signIn(page, organizerEmail);
+    await page.getByRole("link", { name: /viagens/i }).click();
+    await expect(page).toHaveURL(/\/trips$/);
     const invitation = page.locator("li").filter({ hasText: destination });
     await invitation.getByRole("button", { name: "Aceitar" }).click();
     await expect(page).toHaveURL(/\/trips\/[0-9a-f-]+$/);

@@ -34,7 +34,11 @@ export async function markNotificationRead(notificationId: string) {
     .eq("user_id", user.id)
     .is("read_at", null);
 
+  // The notification bell now renders on all three account pages (shared
+  // DashboardTopBar), so a read receipt has to invalidate all of them.
   revalidatePath("/dashboard");
+  revalidatePath("/profile");
+  revalidatePath("/trips");
 }
 
 export async function markAllNotificationsRead() {
@@ -46,6 +50,8 @@ export async function markAllNotificationsRead() {
     .is("read_at", null);
 
   revalidatePath("/dashboard");
+  revalidatePath("/profile");
+  revalidatePath("/trips");
 }
 
 export async function updateCollaborationEmailPreference(formData: FormData) {
@@ -58,5 +64,5 @@ export async function updateCollaborationEmailPreference(formData: FormData) {
     })
     .eq("id", user.id);
 
-  revalidatePath("/dashboard");
+  revalidatePath("/profile");
 }

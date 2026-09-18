@@ -129,7 +129,7 @@ describe("createTrip", () => {
         position: 0,
       }),
     ]);
-    expect(mocks.revalidatePath).toHaveBeenCalledWith("/dashboard");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/trips");
 
     // Creating a trip is how an account becomes an organizer (#150).
     expect(mocks.from).toHaveBeenCalledWith("profiles");
@@ -325,7 +325,7 @@ describe("updateTrip", () => {
         position: 0,
       }),
     ]);
-    expect(mocks.revalidatePath).toHaveBeenCalledWith("/dashboard");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/trips");
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/trips/27823996-ec50-4cc2-8506-a29d07b86f94");
     expect(result.success).toBe(true);
   });
@@ -373,14 +373,14 @@ describe("deleteTrip", () => {
     });
   });
 
-  it("deletes the creator's trip and returns to the dashboard", async () => {
+  it("deletes the creator's trip and returns to the trips list", async () => {
     const formData = new FormData();
     formData.set("tripId", "27823996-ec50-4cc2-8506-a29d07b86f94");
 
-    await expect(deleteTrip(formData)).rejects.toThrow("NEXT_REDIRECT:/dashboard");
+    await expect(deleteTrip(formData)).rejects.toThrow("NEXT_REDIRECT:/trips");
 
     expect(mocks.deleteEq).toHaveBeenCalledWith("created_by", "user-123");
-    expect(mocks.revalidatePath).toHaveBeenCalledWith("/dashboard");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/trips");
   });
 
   it("keeps the trip when authorization denies deletion", async () => {
@@ -427,7 +427,7 @@ describe("archiveTrip and restoreTrip", () => {
       expect.objectContaining({ archived_at: expect.any(String) }),
     );
     expect(mocks.updateEq).toHaveBeenCalledWith("created_by", "user-123");
-    expect(mocks.revalidatePath).toHaveBeenCalledWith("/dashboard");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/trips");
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/trips/27823996-ec50-4cc2-8506-a29d07b86f94");
   });
 
