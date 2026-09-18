@@ -124,15 +124,33 @@ export function TaskCompletionDialog({
   }, [state, t]);
 
   function handleToggle() {
+    if (!completed) {
+      // Only opens the dialog here - the task itself is marked complete by
+      // convertPrepTaskOnCompletion once the visitor finishes with it
+      // (Salvar or Pular), not the instant it's clicked. Completing (and
+      // revalidating) immediately used to remove this task's row from the
+      // default "open tasks" view before there was time to interact with
+      // the dialog's checkboxes.
+      setOpen(true);
+      return;
+    }
     startToggleTransition(async () => {
       const formData = new FormData();
       formData.set("tripId", tripId);
       formData.set("taskId", taskId);
-      formData.set("completed", completed ? "false" : "true");
+      formData.set("completed", "false");
       await setTaskCompletion(formData);
-      if (!completed) {
-        setOpen(true);
-      }
+    });
+  }
+
+  function handleSkip() {
+    setOpen(false);
+    startToggleTransition(async () => {
+      const formData = new FormData();
+      formData.set("tripId", tripId);
+      formData.set("taskId", taskId);
+      formData.set("completed", "true");
+      await setTaskCompletion(formData);
     });
   }
 
@@ -142,7 +160,20 @@ export function TaskCompletionDialog({
         {isTogglePending ? (completed ? reopeningLabel : completingLabel) : completed ? reopenLabel : completeLabel}
       </Button>
 
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog
+        open={open}
+        onOpenChange={(nextOpen) => {
+          // Dismissing via the backdrop/Escape/close button is the same as
+          // clicking "Pular" - the task still needs to end up marked
+          // complete, since opening this dialog is now the only signal
+          // that it was.
+          if (!nextOpen) {
+            handleSkip();
+          } else {
+            setOpen(true);
+          }
+        }}
+      >
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>{t("title")}</DialogTitle>
@@ -315,7 +346,7 @@ export function TaskCompletionDialog({
             ) : null}
 
             <div className="flex items-center justify-end gap-3">
-              <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+              <Button type="button" variant="outline" disabled={isTogglePending} onClick={handleSkip}>
                 {t("skip")}
               </Button>
               <Button type="submit" disabled={pending || (!addReservation && !addItinerary)}>

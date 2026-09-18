@@ -161,6 +161,12 @@ test("traveler completes the critical collaborative planning journey", async ({
     await expect(taskItem).toBeVisible();
     await taskItem.getByRole("button", { name: "Concluir" }).click();
 
+    // Completing a governed task offers to convert it into a reservation or
+    // itinerary item first - the task itself is only marked complete once
+    // that dialog is dismissed (Pular here, since this flow doesn't need
+    // either conversion).
+    await page.getByRole("button", { name: "Pular" }).click();
+
     // Completing a task removes it from the default "Em aberto" view (#171) -
     // switch to "Todos os status" to confirm it now shows as done.
     await page.getByRole("combobox", { name: "Status" }).click();

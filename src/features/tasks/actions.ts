@@ -235,11 +235,21 @@ export async function convertPrepTaskOnCompletion(
   if (!isValidPrepItemId(tripId) || !isValidPrepItemId(taskId)) {
     return { message: tI18n("actionErrors.identifyItem") };
   }
+
+  const { supabase, user } = await authenticatedClient();
+
+  // Marking the task complete happens here - when the visitor is done with
+  // the dialog (Salvar) - rather than the moment the dialog opens. Doing it
+  // earlier used to revalidate the trip page immediately, which could drop
+  // this task's row (and the dialog mounted inside it) from the default
+  // "open tasks" view before there was any time to check a box.
+  await supabase.rpc("complete_prep_item", { p_task_id: taskId, p_should_complete: true });
+
   if (!addItinerary && !addReservation) {
+    revalidatePath(`/trips/${tripId}`);
     return { success: true };
   }
 
-  const { supabase, user } = await authenticatedClient();
   const { data: task } = await supabase
     .from("trip_tasks")
     .select("id, title, itinerary_item_id, reservation_id")
