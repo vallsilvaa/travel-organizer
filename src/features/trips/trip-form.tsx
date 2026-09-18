@@ -83,18 +83,18 @@ export function TripForm({ trip, cancelSlot, extraFields, onSuccess }: TripFormP
     <form action={formAction} className="mt-6 grid gap-5 sm:grid-cols-2">
       {trip ? <input type="hidden" name="tripId" value={trip.id} /> : null}
       <div className="space-y-2 sm:col-span-2">
-        <Label htmlFor="title">{t("titleLabel")}</Label>
+        <Label htmlFor="trip-title">{t("titleLabel")}</Label>
         <Input
           required
           maxLength={200}
-          id="title"
+          id="trip-title"
           name="title"
           placeholder={t("titlePlaceholder")}
           defaultValue={trip?.title}
-          aria-describedby={state.errors?.title ? "title-error" : undefined}
+          aria-describedby={state.errors?.title ? "trip-title-error" : undefined}
         />
         {state.errors?.title ? (
-          <p id="title-error" className="text-sm text-destructive">
+          <p id="trip-title-error" className="text-sm text-destructive">
             {state.errors.title}
           </p>
         ) : null}
