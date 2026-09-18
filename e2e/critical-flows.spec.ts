@@ -7,6 +7,7 @@ const runId = randomUUID().slice(0, 8);
 const password = `E2e-safe-${runId}!`;
 const creatorEmail = `creator-${runId}@example.com`;
 const organizerEmail = `organizer-${runId}@example.com`;
+const tripTitle = `Viagem E2E ${runId}`;
 const destination = `Lisboa E2E ${runId}`;
 const itineraryTitle = `Museu E2E ${runId}`;
 const taskTitle = `Seguro E2E ${runId}`;
@@ -89,13 +90,14 @@ test("traveler completes the critical collaborative planning journey", async ({
   });
 
   await test.step("create and open a trip", async () => {
-    await page.getByLabel("Destino").fill(destination);
+    await page.getByLabel("Título").fill(tripTitle);
+    await page.getByLabel(/Destino 1/).fill(destination);
     await page.getByLabel("Data de início").fill("2027-05-10");
     await page.getByLabel(/Data de término/).fill("2027-05-17");
     await page.getByRole("button", { name: "Criar viagem" }).click();
 
     await expect(page).toHaveURL(/\/trips\/[0-9a-f-]+$/);
-    await expect(page.getByRole("heading", { level: 1, name: destination })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1, name: tripTitle })).toBeVisible();
   });
 
   await test.step("create an itinerary item and comment", async () => {
@@ -179,7 +181,7 @@ test("traveler completes the critical collaborative planning journey", async ({
     const invitation = page.locator("li").filter({ hasText: destination });
     await invitation.getByRole("button", { name: "Aceitar" }).click();
     await expect(page).toHaveURL(/\/trips\/[0-9a-f-]+$/);
-    await expect(page.getByRole("heading", { level: 1, name: destination })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1, name: tripTitle })).toBeVisible();
   });
 
   await signOut(page);

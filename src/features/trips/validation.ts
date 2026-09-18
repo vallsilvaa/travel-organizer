@@ -1,4 +1,5 @@
-import { isSupportedTimeZone } from "@/lib/timezone";
+import { isContinent, type Continent } from "@/features/prep-catalog/shared";
+import { isSupportedTimeZone, todayInTimeZone } from "@/lib/timezone";
 
 // A subset of the trip-attachments bucket's allowed_mime_types (see the
 // trip_attachments migration) restricted to images, since a cover photo
@@ -28,10 +29,21 @@ export function validateCoverImageUpload(file: File | null): { success: true } |
   return { success: true };
 }
 
+export type DestinationGranularity = "city" | "country";
+
+export type DestinationInput = {
+  label: string;
+  city: string | null;
+  country: string;
+  continent: Continent | null;
+  granularity: DestinationGranularity;
+};
+
 export type TripInput = {
-  destination: string;
+  title: string;
+  destinations: DestinationInput[];
   startDate: string;
-  endDate: string | null;
+  endDate: string;
   timezone: string;
 };
 
@@ -50,37 +62,97 @@ function isIsoDate(value: string) {
   return !Number.isNaN(date.valueOf()) && date.toISOString().slice(0, 10) === value;
 }
 
-export function validateTripInput(formData: FormData) {
-  const destination = String(formData.get("destination") ?? "").trim();
+// A trip's destination(s) are submitted as parallel repeated fields (one
+// entry per destination-list-field row, in DOM order) rather than indexed
+// names - see DestinationAutocomplete's hidden inputs.
+function parseDestinations(formData: FormData): DestinationInput[] {
+  const labels = formData.getAll("destinationLabel").map(String);
+  const cities = formData.getAll("destinationCity").map(String);
+  const countries = formData.getAll("destinationCountry").map(String);
+  const continents = formData.getAll("destinationContinent").map(String);
+  const granularities = formData.getAll("destinationGranularity").map(String);
+
+  const destinations: DestinationInput[] = [];
+  for (let index = 0; index < countries.length; index++) {
+    // Sliced to match trip_destinations' own check constraints (200 chars
+    // for label/country/city), since the free-text fallback (typed but
+    // never selected from the dropdown) has no client-side length cap.
+    const country = (countries[index] ?? "").trim().slice(0, 200);
+    if (!country) {
+      continue;
+    }
+    const granularity: DestinationGranularity = granularities[index] === "city" ? "city" : "country";
+    const city = granularity === "city" ? (cities[index] ?? "").trim().slice(0, 200) || null : null;
+    const continentRaw = (continents[index] ?? "").trim();
+    const continent = isContinent(continentRaw) ? continentRaw : null;
+    const label = ((labels[index] ?? "").trim() || (city ? `${city}, ${country}` : country)).slice(0, 200);
+    destinations.push({ label, city, country, continent, granularity });
+  }
+  return destinations;
+}
+
+export type ValidateTripInputOptions = {
+  // Only enforced when a trip is first created (see createTrip) - once
+  // saved, the creator can freely correct dates even on a trip that has
+  // already started.
+  requireFutureStartDate?: boolean;
+};
+
+export function validateTripInput(formData: FormData, options: ValidateTripInputOptions = {}) {
+  const title = String(formData.get("title") ?? "").trim();
+  const destinations = parseDestinations(formData);
   const startDate = String(formData.get("startDate") ?? "").trim();
-  const rawEndDate = String(formData.get("endDate") ?? "").trim();
-  const endDate = rawEndDate || null;
+  const endDate = String(formData.get("endDate") ?? "").trim();
   const timezone = String(formData.get("timezone") ?? "").trim();
   const errors: TripFieldErrors = {};
 
-  if (!destination) {
-    errors.destination = "destinationRequired";
-  } else if (destination.length > 200) {
-    errors.destination = "destinationTooLong";
+  if (!title) {
+    errors.title = "titleRequired";
+  } else if (title.length > 200) {
+    errors.title = "titleTooLong";
   }
 
-  if (!isIsoDate(startDate)) {
-    errors.startDate = "startDateInvalid";
-  }
-
-  if (endDate && !isIsoDate(endDate)) {
-    errors.endDate = "endDateInvalid";
-  } else if (endDate && isIsoDate(startDate) && endDate < startDate) {
-    errors.endDate = "endDateBeforeStart";
+  if (!destinations.length) {
+    errors.destinations = "destinationsRequired";
   }
 
   if (!timezone || !isSupportedTimeZone(timezone)) {
     errors.timezone = "timezoneInvalid";
   }
 
+  if (!isIsoDate(startDate)) {
+    errors.startDate = "startDateInvalid";
+  } else if (options.requireFutureStartDate && startDate <= todayInTimeZone(timezone || "UTC")) {
+    errors.startDate = "startDateMustBeFuture";
+  }
+
+  if (!endDate) {
+    errors.endDate = "endDateRequired";
+  } else if (!isIsoDate(endDate)) {
+    errors.endDate = "endDateInvalid";
+  } else if (isIsoDate(startDate) && endDate < startDate) {
+    errors.endDate = "endDateBeforeStart";
+  }
+
   return {
-    data: { destination, startDate, endDate, timezone } satisfies TripInput,
+    data: { title, destinations, startDate, endDate, timezone } satisfies TripInput,
     errors,
     success: Object.keys(errors).length === 0,
   };
+}
+
+// The legacy trips.destination free-text column is kept as an
+// automatically-derived summary of the structured destinations, so every
+// existing reader of trip.destination (invitation emails, page titles,
+// cover alt text, delete confirmations, dashboard cards, ...) keeps working
+// unchanged.
+export function summarizeDestinations(destinations: DestinationInput[]): string {
+  if (!destinations.length) {
+    return "";
+  }
+  const [first, ...rest] = destinations;
+  const summary = rest.length ? `${first.label} +${rest.length}` : first.label;
+  // Guards trips.destination's 200-char check constraint even if a single
+  // destination's label is already close to that limit.
+  return summary.slice(0, 200);
 }

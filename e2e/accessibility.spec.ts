@@ -7,6 +7,7 @@ import { createClient, type User } from "@supabase/supabase-js";
 const runId = randomUUID().slice(0, 8);
 const password = `E2e-safe-${runId}!`;
 const creatorEmail = `a11y-${runId}@example.com`;
+const tripTitle = `Viagem A11y ${runId}`;
 const destination = `Praga A11y ${runId}`;
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -79,7 +80,8 @@ test.describe("automated accessibility checks (WCAG 2 A/AA)", () => {
     await expect(page).toHaveURL(/\/dashboard$/);
     await assertNoViolations(page, "dashboard");
 
-    await page.getByLabel("Destino").fill(destination);
+    await page.getByLabel("Título").fill(tripTitle);
+    await page.getByLabel(/Destino 1/).fill(destination);
     await page.getByLabel("Data de início").fill("2027-07-01");
     await page.getByLabel(/Data de término/).fill("2027-07-08");
     await page.getByRole("button", { name: "Criar viagem" }).click();

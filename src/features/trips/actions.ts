@@ -7,7 +7,14 @@ import { redirect } from "next/navigation";
 
 import { translateFieldErrors } from "@/i18n/translate-field-errors";
 import { createClient } from "@/lib/supabase/server";
-import { isValidTripId, validateCoverImageUpload, validateTripInput, type TripFieldErrors } from "./validation";
+import {
+  isValidTripId,
+  summarizeDestinations,
+  validateCoverImageUpload,
+  validateTripInput,
+  type DestinationInput,
+  type TripFieldErrors,
+} from "./validation";
 import { sanitizeFileNameForStorage } from "@/features/attachments/validation";
 import { inviteParticipant } from "@/features/invitations/actions";
 import { applyTemplateRowToTrip, type TemplateRow } from "@/features/prep-catalog/actions";
@@ -19,12 +26,27 @@ export type CreateTripState = {
   success?: boolean;
 };
 
+function toDestinationRows(tripId: string, destinations: DestinationInput[]) {
+  return destinations.map((destination, position) => ({
+    trip_id: tripId,
+    label: destination.label,
+    city: destination.city,
+    country: destination.country,
+    continent: destination.continent,
+    granularity: destination.granularity,
+    position,
+  }));
+}
+
 export async function createTrip(
   _previousState: CreateTripState,
   formData: FormData,
 ): Promise<CreateTripState> {
   const t = await getTranslations("trip.editForm");
-  const validation = validateTripInput(formData);
+  // A brand-new trip's start date must lie in the future - once saved, the
+  // creator can freely correct dates even on a trip already under way (see
+  // updateTrip, which doesn't pass this option).
+  const validation = validateTripInput(formData, { requireFutureStartDate: true });
 
   if (!validation.success) {
     return { errors: translateFieldErrors(t, validation.errors) };
@@ -42,7 +64,11 @@ export async function createTrip(
   const tripId = randomUUID();
   const { error } = await supabase.from("trips").insert({
     id: tripId,
-    destination: validation.data.destination,
+    title: validation.data.title,
+    // The legacy free-text column is kept as an auto-derived summary of the
+    // structured destinations below, so every existing reader of
+    // trip.destination keeps working unchanged.
+    destination: summarizeDestinations(validation.data.destinations),
     start_date: validation.data.startDate,
     end_date: validation.data.endDate,
     timezone: validation.data.timezone,
@@ -51,6 +77,17 @@ export async function createTrip(
 
   if (error) {
     return { message: t("actionErrors.createFailed") };
+  }
+
+  const { error: destinationsError } = await supabase
+    .from("trip_destinations")
+    .insert(toDestinationRows(tripId, validation.data.destinations));
+
+  if (destinationsError) {
+    // Best-effort rollback so a half-created trip (title/dates but no
+    // destinations) never lingers for the creator to stumble onto.
+    await supabase.from("trips").delete().eq("id", tripId);
+    return { message: t("actionErrors.destinationsSaveFailed") };
   }
 
   // Creating a trip is how an account becomes an organizer (issue #150) -
@@ -154,7 +191,8 @@ export async function updateTrip(
   const { data: updatedTrip, error } = await supabase
     .from("trips")
     .update({
-      destination: validation.data.destination,
+      title: validation.data.title,
+      destination: summarizeDestinations(validation.data.destinations),
       start_date: validation.data.startDate,
       end_date: validation.data.endDate,
       timezone: validation.data.timezone,
@@ -167,6 +205,17 @@ export async function updateTrip(
 
   if (error || !updatedTrip) {
     return { message: t("actionErrors.onlyCreatorCanEdit") };
+  }
+
+  // Destinations have no stable identity across a full form re-submit, so
+  // the whole set is replaced rather than diffed.
+  await supabase.from("trip_destinations").delete().eq("trip_id", tripId);
+  const { error: destinationsError } = await supabase
+    .from("trip_destinations")
+    .insert(toDestinationRows(tripId, validation.data.destinations));
+
+  if (destinationsError) {
+    return { message: t("actionErrors.destinationsSaveFailed") };
   }
 
   revalidatePath("/dashboard");

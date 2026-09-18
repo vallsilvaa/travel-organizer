@@ -27,6 +27,7 @@ import { LanguageSwitcher } from "@/components/language-switcher";
 import { SubmitButton } from "@/components/submit-button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { daysUntil, todayInTimeZone } from "@/lib/timezone";
+import { tripStatus, type TripStatus } from "@/lib/trip-status";
 import {
   Card,
   CardAction,
@@ -68,28 +69,11 @@ type DashboardTripStats = {
   participant_count: number;
 };
 
-type TripStatus = "upcoming" | "active" | "completed" | "archived";
-
 const statusFilters = ["all", "upcoming", "active", "completed", "archived"] as const;
 type StatusFilter = (typeof statusFilters)[number];
 
 const sortOptions = ["date", "recent"] as const;
 type SortOption = (typeof sortOptions)[number];
-
-function tripStatus(trip: Trip): TripStatus {
-  if (trip.archived_at) {
-    return "archived";
-  }
-  const today = todayInTimeZone(trip.timezone);
-  const endDate = trip.end_date ?? trip.start_date;
-  if (today < trip.start_date) {
-    return "upcoming";
-  }
-  if (today > endDate) {
-    return "completed";
-  }
-  return "active";
-}
 
 export default async function DashboardPage({ searchParams }: DashboardPageProps) {
   const params = await searchParams;

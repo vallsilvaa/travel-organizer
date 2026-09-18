@@ -439,6 +439,7 @@
       "removeParticipantTitle": "Remover este participante?",
       "removeParticipantDescription": "{name} perderá acesso imediato a esta viagem.",
       "removeAccess": "Remover acesso",
+      "inviteLockedNotice": "Novos participantes só podem ser convidados enquanto a viagem estiver futura.",
       "invitationExpires": "Expira em {date}",
       "shareLink": {
         "title": "Link de compartilhamento (somente leitura)",
@@ -463,9 +464,19 @@
       "cancelInvitationDescription": "O convite para {email} não poderá mais ser aceito.",
       "cancel": "Cancelar"
     },
+    "destinationAutocomplete": {
+      "placeholder": "Digite uma cidade ou país...",
+      "noMatchFallback": "Nenhum resultado - o texto digitado será salvo como país.",
+      "cityBadge": "cidade",
+      "countryBadge": "país"
+    },
     "editForm": {
-      "destinationLabel": "Destino",
-      "destinationPlaceholder": "Londres, Reino Unido",
+      "titleLabel": "Título",
+      "titlePlaceholder": "Ex. Partiu Minas, Inglaterra…",
+      "destinationsLabel": "Destino(s)",
+      "destinationInputLabel": "Destino {index}",
+      "addDestinationButton": "Adicionar mais destinos",
+      "removeDestinationButton": "Remover destino",
       "startDateLabel": "Data de início",
       "endDateLabel": "Data de término",
       "timezoneLabel": "Fuso horário",
@@ -476,9 +487,12 @@
       "create": "Criar viagem",
       "cancel": "Cancelar",
       "errors": {
-        "destinationRequired": "O destino é obrigatório.",
-        "destinationTooLong": "O destino deve ter no máximo 200 caracteres.",
+        "titleRequired": "O título é obrigatório.",
+        "titleTooLong": "O título deve ter no máximo 200 caracteres.",
+        "destinationsRequired": "Adicione pelo menos um destino.",
         "startDateInvalid": "Informe uma data de início válida.",
+        "startDateMustBeFuture": "A data de início deve ser uma data futura.",
+        "endDateRequired": "A data de término é obrigatória.",
         "endDateInvalid": "Informe uma data de término válida.",
         "endDateBeforeStart": "A data de término não pode ser anterior à data de início.",
         "timezoneInvalid": "Selecione um fuso horário válido."
@@ -486,6 +500,7 @@
       "actionErrors": {
         "identifyTrip": "Não foi possível identificar a viagem.",
         "createFailed": "Não foi possível criar a viagem. Tente novamente.",
+        "destinationsSaveFailed": "Não foi possível salvar os destinos da viagem. Tente novamente.",
         "onlyCreatorCanEdit": "Somente quem criou a viagem pode editar esses dados.",
         "updated": "Viagem atualizada com sucesso.",
         "created": "Viagem criada com sucesso.",
@@ -746,6 +761,7 @@
     "emailInvalid": "Informe um e-mail válido.",
     "alreadyHasAccess": "Você já tem acesso a esta viagem.",
     "onlyCreatorCanInvite": "Somente quem criou a viagem pode enviar convites.",
+    "onlyDuringUpcoming": "Novos participantes só podem ser convidados enquanto a viagem estiver futura.",
     "duplicatePending": "Já existe um convite pendente para este e-mail.",
     "createFailed": "Não foi possível criar o convite. Tente novamente.",
     "sentTo": "Convite enviado para {email}.",
@@ -828,9 +844,11 @@
     "fileLabel": "Imagem de capa",
     "fileHint": "JPEG, PNG, WEBP ou HEIC, até 10 MB.",
     "submitPending": "Enviando...",
-    "submit": "Salvar capa",
-    "change": "Trocar capa",
-    "remove": "Remover capa",
+    "addCover": "Adicionar capa",
+    "editCover": "Editar capa",
+    "removeCover": "Remover capa",
+    "saveCover": "Salvar capa",
+    "cancel": "Cancelar",
     "alt": "Foto de capa da viagem para {destination}",
     "actionErrors": {
       "identifyTrip": "Não foi possível identificar a viagem.",

@@ -439,6 +439,7 @@
       "removeParticipantTitle": "Remove this participant?",
       "removeParticipantDescription": "{name} will immediately lose access to this trip.",
       "removeAccess": "Remove access",
+      "inviteLockedNotice": "New participants can only be invited while the trip is upcoming.",
       "invitationExpires": "Expires on {date}",
       "shareLink": {
         "title": "Share link (read-only)",
@@ -463,9 +464,19 @@
       "cancelInvitationDescription": "The invitation for {email} will no longer be acceptable.",
       "cancel": "Cancel"
     },
+    "destinationAutocomplete": {
+      "placeholder": "Type a city or country...",
+      "noMatchFallback": "No match - the typed text will be saved as the country.",
+      "cityBadge": "city",
+      "countryBadge": "country"
+    },
     "editForm": {
-      "destinationLabel": "Destination",
-      "destinationPlaceholder": "London, United Kingdom",
+      "titleLabel": "Title",
+      "titlePlaceholder": "E.g. Off to Minas, England…",
+      "destinationsLabel": "Destination(s)",
+      "destinationInputLabel": "Destination {index}",
+      "addDestinationButton": "Add more destinations",
+      "removeDestinationButton": "Remove destination",
       "startDateLabel": "Start date",
       "endDateLabel": "End date",
       "timezoneLabel": "Time zone",
@@ -476,9 +487,12 @@
       "create": "Create trip",
       "cancel": "Cancel",
       "errors": {
-        "destinationRequired": "Destination is required.",
-        "destinationTooLong": "Destination must be up to 200 characters.",
+        "titleRequired": "Title is required.",
+        "titleTooLong": "Title must be up to 200 characters.",
+        "destinationsRequired": "Add at least one destination.",
         "startDateInvalid": "Enter a valid start date.",
+        "startDateMustBeFuture": "The start date must be in the future.",
+        "endDateRequired": "End date is required.",
         "endDateInvalid": "Enter a valid end date.",
         "endDateBeforeStart": "The end date can't be before the start date.",
         "timezoneInvalid": "Select a valid time zone."
@@ -486,6 +500,7 @@
       "actionErrors": {
         "identifyTrip": "Could not identify the trip.",
         "createFailed": "Could not create the trip. Please try again.",
+        "destinationsSaveFailed": "Could not save the trip's destinations. Please try again.",
         "onlyCreatorCanEdit": "Only the trip's creator can edit this data.",
         "updated": "Trip updated successfully.",
         "created": "Trip created successfully.",
@@ -746,6 +761,7 @@
     "emailInvalid": "Enter a valid email.",
     "alreadyHasAccess": "You already have access to this trip.",
     "onlyCreatorCanInvite": "Only the trip's creator can send invitations.",
+    "onlyDuringUpcoming": "New participants can only be invited while the trip is upcoming.",
     "duplicatePending": "There's already a pending invitation for this email.",
     "createFailed": "Could not create the invitation. Please try again.",
     "sentTo": "Invitation sent to {email}.",
@@ -828,9 +844,11 @@
     "fileLabel": "Cover image",
     "fileHint": "JPEG, PNG, WEBP, or HEIC, up to 10 MB.",
     "submitPending": "Uploading...",
-    "submit": "Save cover",
-    "change": "Change cover",
-    "remove": "Remove cover",
+    "addCover": "Add cover",
+    "editCover": "Edit cover",
+    "removeCover": "Remove cover",
+    "saveCover": "Save cover",
+    "cancel": "Cancel",
     "alt": "Cover photo for the trip to {destination}",
     "actionErrors": {
       "identifyTrip": "Could not identify the trip.",

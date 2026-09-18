@@ -81,7 +81,14 @@ describe("invitation actions", () => {
 
   it("creates a pending organizer invitation by email and sends the branded email", async () => {
     mocks.single.mockResolvedValue({
-      data: { id: tripId, destination: "London" },
+      data: {
+        id: tripId,
+        destination: "London",
+        start_date: "2099-01-10",
+        end_date: "2099-01-20",
+        archived_at: null,
+        timezone: "UTC",
+      },
       error: null,
     });
     mocks.insert.mockResolvedValue({ error: null });
@@ -112,7 +119,14 @@ describe("invitation actions", () => {
 
   it("creates a pending traveler invitation when the traveler role is chosen", async () => {
     mocks.single.mockResolvedValue({
-      data: { id: tripId, destination: "London" },
+      data: {
+        id: tripId,
+        destination: "London",
+        start_date: "2099-01-10",
+        end_date: "2099-01-20",
+        archived_at: null,
+        timezone: "UTC",
+      },
       error: null,
     });
     mocks.insert.mockResolvedValue({ error: null });
@@ -134,7 +148,14 @@ describe("invitation actions", () => {
 
   it("defaults to organizer when no role is given", async () => {
     mocks.single.mockResolvedValue({
-      data: { id: tripId, destination: "London" },
+      data: {
+        id: tripId,
+        destination: "London",
+        start_date: "2099-01-10",
+        end_date: "2099-01-20",
+        archived_at: null,
+        timezone: "UTC",
+      },
       error: null,
     });
     mocks.insert.mockResolvedValue({ error: null });
@@ -150,9 +171,40 @@ describe("invitation actions", () => {
     );
   });
 
+  it("rejects a new invitation once the trip is no longer upcoming", async () => {
+    mocks.single.mockResolvedValue({
+      data: {
+        id: tripId,
+        destination: "London",
+        start_date: "2000-01-10",
+        end_date: "2000-01-20",
+        archived_at: null,
+        timezone: "UTC",
+      },
+      error: null,
+    });
+
+    const formData = new FormData();
+    formData.set("tripId", tripId);
+    formData.set("email", "organizer@example.com");
+    formData.set("role", "organizer");
+
+    const result = await inviteParticipant({}, formData);
+
+    expect(result.error).toBe("Novos participantes só podem ser convidados enquanto a viagem estiver futura.");
+    expect(mocks.insert).not.toHaveBeenCalled();
+  });
+
   it("still creates the invitation when email delivery fails", async () => {
     mocks.single.mockResolvedValue({
-      data: { id: tripId, destination: "London" },
+      data: {
+        id: tripId,
+        destination: "London",
+        start_date: "2099-01-10",
+        end_date: "2099-01-20",
+        archived_at: null,
+        timezone: "UTC",
+      },
       error: null,
     });
     mocks.insert.mockResolvedValue({ error: null });

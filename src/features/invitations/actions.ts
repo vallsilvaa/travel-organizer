@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 
 import { sendEmail } from "@/lib/email";
 import { createClient } from "@/lib/supabase/server";
+import { tripStatus } from "@/lib/trip-status";
 import { buildInvitationEmail } from "./email";
 import {
   isInvitationRole,
@@ -77,13 +78,19 @@ export async function inviteParticipant(
 
   const { data: trip, error: tripError } = await supabase
     .from("trips")
-    .select("id, destination")
+    .select("id, destination, start_date, end_date, archived_at, timezone")
     .eq("id", tripId)
     .eq("created_by", user.id)
     .single();
 
   if (tripError || !trip) {
     return { error: t("onlyCreatorCanInvite") };
+  }
+
+  // New participants can only join while the trip is still "Futura" - once
+  // it's under way, finished, or archived, its guest list is locked (#213).
+  if (tripStatus(trip) !== "upcoming") {
+    return { error: t("onlyDuringUpcoming") };
   }
 
   const { error } = await supabase.from("trip_invitations").insert({
