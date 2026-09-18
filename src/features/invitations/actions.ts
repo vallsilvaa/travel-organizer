@@ -201,7 +201,7 @@ export async function respondToInvitation(formData: FormData) {
     !isValidInvitationId(invitationId) ||
     (response !== "accepted" && response !== "declined")
   ) {
-    redirect("/dashboard?invitationError=invalid_invitation");
+    redirect("/trips?invitationError=invalid_invitation");
   }
 
   const supabase = await createClient();
@@ -226,15 +226,15 @@ export async function respondToInvitation(formData: FormData) {
     .single();
 
   if (error || !invitation) {
-    redirect("/dashboard?invitationError=invitation_unavailable");
+    redirect("/trips?invitationError=invitation_unavailable");
   }
 
-  revalidatePath("/dashboard");
+  revalidatePath("/trips");
   revalidatePath(`/trips/${invitation.trip_id}`);
 
   if (response === "accepted") {
     redirect(`/trips/${invitation.trip_id}`);
   }
 
-  redirect("/dashboard");
+  redirect("/trips");
 }

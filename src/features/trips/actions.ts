@@ -160,7 +160,7 @@ export async function createTrip(
     };
   }
 
-  revalidatePath("/dashboard");
+  revalidatePath("/trips");
   redirect(`/trips/${tripId}`);
 }
 
@@ -218,7 +218,7 @@ export async function updateTrip(
     return { message: t("actionErrors.destinationsSaveFailed") };
   }
 
-  revalidatePath("/dashboard");
+  revalidatePath("/trips");
   revalidatePath(`/trips/${tripId}`);
   return { success: true, message: t("actionErrors.updated") };
 }
@@ -226,7 +226,7 @@ export async function updateTrip(
 async function setTripArchived(formData: FormData, archived: boolean): Promise<void> {
   const tripId = String(formData.get("tripId") ?? "");
   if (!isValidTripId(tripId)) {
-    redirect("/dashboard?tripError=invalid_trip");
+    redirect("/trips?tripError=invalid_trip");
   }
 
   const supabase = await createClient();
@@ -250,7 +250,7 @@ async function setTripArchived(formData: FormData, archived: boolean): Promise<v
     redirect(`/trips/${tripId}?tripError=archive_not_allowed`);
   }
 
-  revalidatePath("/dashboard");
+  revalidatePath("/trips");
   revalidatePath(`/trips/${tripId}`);
 }
 
@@ -265,7 +265,7 @@ export async function restoreTrip(formData: FormData): Promise<void> {
 export async function deleteTrip(formData: FormData): Promise<void> {
   const tripId = String(formData.get("tripId") ?? "");
   if (!isValidTripId(tripId)) {
-    redirect("/dashboard?tripError=invalid_trip");
+    redirect("/trips?tripError=invalid_trip");
   }
 
   const supabase = await createClient();
@@ -289,8 +289,8 @@ export async function deleteTrip(formData: FormData): Promise<void> {
     redirect(`/trips/${tripId}?tripError=delete_not_allowed`);
   }
 
-  revalidatePath("/dashboard");
-  redirect("/dashboard");
+  revalidatePath("/trips");
+  redirect("/trips");
 }
 
 export type CoverImageActionState = {
@@ -368,7 +368,7 @@ export async function updateTripCoverImage(
     await supabase.storage.from("trip-attachments").remove([previousPath]);
   }
 
-  revalidatePath("/dashboard");
+  revalidatePath("/trips");
   revalidatePath(`/trips/${tripId}`);
   return { success: true, message: t("actionErrors.updated") };
 }
@@ -404,6 +404,6 @@ export async function removeTripCoverImage(formData: FormData): Promise<void> {
     await supabase.storage.from("trip-attachments").remove([previousPath]);
   }
 
-  revalidatePath("/dashboard");
+  revalidatePath("/trips");
   revalidatePath(`/trips/${tripId}`);
 }

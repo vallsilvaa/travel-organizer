@@ -30,7 +30,8 @@
   },
   "tripNotFound": {
     "title": "Trip unavailable",
-    "description": "This trip couldn't be opened. It may no longer exist, may have been deleted by the person who created it, or you may not (or no longer) have access to it."
+    "description": "This trip couldn't be opened. It may no longer exist, may have been deleted by the person who created it, or you may not (or no longer) have access to it.",
+    "goToTrips": "Go to my trips"
   },
   "errorBoundary": {
     "title": "Something went wrong",
@@ -97,7 +98,9 @@
       "reset_link_invalid": "The reset link is invalid or expired. Request a new one.",
       "password_update_failed": "Could not update your password. Please try again.",
       "password_updated": "Password updated successfully.",
-      "invalid_display_name": "Enter a name with at least two characters.",
+      "invalid_first_name": "Enter a first name with at least one character.",
+      "invalid_last_name": "Last name must be at most 100 characters.",
+      "invalid_birth_date": "Enter a valid birth date.",
       "profile_update_failed": "Could not update your profile. Please try again.",
       "profile_updated": "Profile updated successfully.",
       "organizer_access_required": "You don't have access to the Organizer Panel yet. Create a trip to become an organizer."
@@ -112,14 +115,39 @@
   "dashboard": {
     "welcome": "Welcome, {name}",
     "welcomeDescription": "Create a trip and keep your planning details in a private space.",
-    "signOutPending": "Signing out...",
-    "signOut": "Sign out",
-    "editProfile": {
-      "title": "Edit profile",
-      "description": "This is the name shown to other participants on your trips.",
-      "displayNameLabel": "Display name",
+    "topBar": {
+      "signOutPending": "Signing out...",
+      "signOut": "Sign out",
+      "organizerPanelLink": "Organizer panel"
+    },
+    "hub": {
+      "profile": {
+        "title": "Profile",
+        "description": "Personal data, language, theme, and notifications."
+      },
+      "trips": {
+        "title": "Trips",
+        "description": "Your trips, pending invitations, and creating new trips."
+      }
+    }
+  },
+  "profile": {
+    "pageTitle": "Profile",
+    "backToHub": "← Back to home",
+    "personalData": {
+      "title": "Personal data",
+      "description": "Update your identifying information.",
+      "firstNameLabel": "First name",
+      "lastNameLabel": "Last name",
+      "birthDateLabel": "Birth date",
+      "emailLabel": "Email",
       "savePending": "Saving...",
-      "save": "Save name"
+      "save": "Save data"
+    },
+    "display": {
+      "title": "Display preferences",
+      "languageLabel": "Language",
+      "themeLabel": "Theme"
     },
     "reminders": {
       "title": "Notification center",
@@ -138,7 +166,11 @@
       "confirmPassword": "Confirm new password",
       "savePending": "Saving...",
       "save": "Update password"
-    },
+    }
+  },
+  "trips": {
+    "pageTitle": "Trips",
+    "backToHub": "← Back to home",
     "invitations": {
       "title": "Trip invitations",
       "loadError": "Could not load your invitations.",
@@ -150,7 +182,8 @@
     },
     "createTrip": {
       "title": "Create a trip",
-      "description": "Start with the destination and dates. More planning tools will be added inside the trip."
+      "description": "Start with the destination and dates. More planning tools will be added inside the trip.",
+      "triggerLabel": "Create trip"
     },
     "yourTrips": {
       "title": "Your trips",
@@ -183,11 +216,10 @@
       "active": "in progress",
       "completed": "completed",
       "archived": "archived"
-    },
-    "organizerPanelLink": "Organizer panel"
+    }
   },
   "trip": {
-    "backToDashboard": "← Back to dashboard",
+    "backToTrips": "← Back to trips",
     "eyebrow": "Trip overview",
     "countdown": {
       "inProgress": "The trip is in progress",

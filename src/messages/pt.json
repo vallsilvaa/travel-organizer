@@ -30,7 +30,8 @@
   },
   "tripNotFound": {
     "title": "Viagem indisponível",
-    "description": "Não foi possível abrir esta viagem. Ela pode não existir mais, ter sido excluída pela pessoa que a criou, ou você pode não ter (ou não ter mais) acesso a ela."
+    "description": "Não foi possível abrir esta viagem. Ela pode não existir mais, ter sido excluída pela pessoa que a criou, ou você pode não ter (ou não ter mais) acesso a ela.",
+    "goToTrips": "Ir para minhas viagens"
   },
   "errorBoundary": {
     "title": "Algo deu errado",
@@ -97,7 +98,9 @@
       "reset_link_invalid": "O link de redefinição é inválido ou expirou. Solicite um novo.",
       "password_update_failed": "Não foi possível atualizar sua senha. Tente novamente.",
       "password_updated": "Senha atualizada com sucesso.",
-      "invalid_display_name": "Informe um nome com pelo menos dois caracteres.",
+      "invalid_first_name": "Informe um nome com pelo menos um caractere.",
+      "invalid_last_name": "O sobrenome deve ter no máximo 100 caracteres.",
+      "invalid_birth_date": "Informe uma data de nascimento válida.",
       "profile_update_failed": "Não foi possível atualizar seu perfil. Tente novamente.",
       "profile_updated": "Perfil atualizado com sucesso.",
       "organizer_access_required": "Você ainda não tem acesso ao Painel do Organizador. Crie uma viagem para se tornar organizador."
@@ -112,14 +115,39 @@
   "dashboard": {
     "welcome": "Bem-vindo, {name}",
     "welcomeDescription": "Crie uma viagem e mantenha os detalhes do planejamento em um espaço privado.",
-    "signOutPending": "Saindo...",
-    "signOut": "Sair",
-    "editProfile": {
-      "title": "Editar perfil",
-      "description": "Esse é o nome exibido para outros participantes nas suas viagens.",
-      "displayNameLabel": "Nome de exibição",
+    "topBar": {
+      "signOutPending": "Saindo...",
+      "signOut": "Sair",
+      "organizerPanelLink": "Painel do organizador"
+    },
+    "hub": {
+      "profile": {
+        "title": "Perfil",
+        "description": "Dados pessoais, idioma, tema e notificações."
+      },
+      "trips": {
+        "title": "Viagens",
+        "description": "Suas viagens, convites pendentes e criação de novas viagens."
+      }
+    }
+  },
+  "profile": {
+    "pageTitle": "Perfil",
+    "backToHub": "← Voltar ao início",
+    "personalData": {
+      "title": "Dados pessoais",
+      "description": "Atualize seus dados de identificação.",
+      "firstNameLabel": "Nome",
+      "lastNameLabel": "Sobrenome",
+      "birthDateLabel": "Data de nascimento",
+      "emailLabel": "E-mail",
       "savePending": "Salvando...",
-      "save": "Salvar nome"
+      "save": "Salvar dados"
+    },
+    "display": {
+      "title": "Preferências de exibição",
+      "languageLabel": "Idioma",
+      "themeLabel": "Tema"
     },
     "reminders": {
       "title": "Central de notificações",
@@ -138,7 +166,11 @@
       "confirmPassword": "Confirmar nova senha",
       "savePending": "Salvando...",
       "save": "Atualizar senha"
-    },
+    }
+  },
+  "trips": {
+    "pageTitle": "Viagens",
+    "backToHub": "← Voltar ao início",
     "invitations": {
       "title": "Convites de viagem",
       "loadError": "Não foi possível carregar seus convites.",
@@ -150,7 +182,8 @@
     },
     "createTrip": {
       "title": "Criar uma viagem",
-      "description": "Comece com o destino e as datas. Mais ferramentas de planejamento serão adicionadas dentro da viagem."
+      "description": "Comece com o destino e as datas. Mais ferramentas de planejamento serão adicionadas dentro da viagem.",
+      "triggerLabel": "Criar viagem"
     },
     "yourTrips": {
       "title": "Suas viagens",
@@ -183,11 +216,10 @@
       "active": "em andamento",
       "completed": "concluída",
       "archived": "arquivada"
-    },
-    "organizerPanelLink": "Painel do organizador"
+    }
   },
   "trip": {
-    "backToDashboard": "← Voltar ao painel",
+    "backToTrips": "← Voltar às viagens",
     "eyebrow": "Visão geral da viagem",
     "countdown": {
       "inProgress": "A viagem está em andamento",

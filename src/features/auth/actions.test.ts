@@ -37,7 +37,7 @@ import {
   signIn,
   signOut,
   signUp,
-  updateDisplayName,
+  updateProfile,
 } from "./actions";
 import { postSignInPath } from "./post-sign-in-path";
 
@@ -193,7 +193,7 @@ describe("authentication actions", () => {
     expect(mocks.updateUser).not.toHaveBeenCalled();
   });
 
-  it("lets a signed-in user change their password from the dashboard", async () => {
+  it("lets a signed-in user change their password from the profile page", async () => {
     mocks.getUser.mockResolvedValue({ data: { user: { id: "user-1" } } });
     mocks.updateUser.mockResolvedValue({ error: null });
     const formData = new FormData();
@@ -201,7 +201,7 @@ describe("authentication actions", () => {
     formData.set("passwordConfirmation", "new-safe-pass");
 
     await expect(changePassword(formData)).rejects.toThrow(
-      "NEXT_REDIRECT:/dashboard?passwordMessage=password_updated",
+      "NEXT_REDIRECT:/profile?passwordMessage=password_updated",
     );
     expect(mocks.signOut).not.toHaveBeenCalled();
   });
@@ -217,28 +217,35 @@ describe("authentication actions", () => {
     );
   });
 
-  it("lets a signed-in user update their display name", async () => {
+  it("lets a signed-in user update their profile", async () => {
     mocks.getUser.mockResolvedValue({ data: { user: { id: "user-1" } } });
     const formData = new FormData();
-    formData.set("displayName", "  Nova Viajante  ");
+    formData.set("firstName", "  Nova  ");
+    formData.set("lastName", "  Viajante  ");
+    formData.set("birthDate", "1990-05-20");
 
-    await expect(updateDisplayName(formData)).rejects.toThrow(
-      "NEXT_REDIRECT:/dashboard?profileMessage=profile_updated",
+    await expect(updateProfile(formData)).rejects.toThrow(
+      "NEXT_REDIRECT:/profile?profileMessage=profile_updated",
     );
     expect(mocks.from).toHaveBeenCalledWith("profiles");
     expect(mocks.update).toHaveBeenCalledWith(
-      expect.objectContaining({ display_name: "Nova Viajante" }),
+      expect.objectContaining({
+        first_name: "Nova",
+        last_name: "Viajante",
+        birth_date: "1990-05-20",
+        display_name: "Nova Viajante",
+      }),
     );
     expect(mocks.eq).toHaveBeenCalledWith("id", "user-1");
   });
 
-  it("rejects a display name that is too short", async () => {
+  it("rejects an empty first name", async () => {
     mocks.getUser.mockResolvedValue({ data: { user: { id: "user-1" } } });
     const formData = new FormData();
-    formData.set("displayName", "A");
+    formData.set("firstName", "");
 
-    await expect(updateDisplayName(formData)).rejects.toThrow(
-      "NEXT_REDIRECT:/dashboard?profileError=invalid_display_name",
+    await expect(updateProfile(formData)).rejects.toThrow(
+      "NEXT_REDIRECT:/profile?profileError=invalid_first_name",
     );
     expect(mocks.from).not.toHaveBeenCalled();
   });
@@ -247,19 +254,19 @@ describe("authentication actions", () => {
     mocks.getUser.mockResolvedValue({ data: { user: { id: "user-1" } } });
     mocks.eq.mockResolvedValue({ error: { message: "boom" } });
     const formData = new FormData();
-    formData.set("displayName", "Valeria");
+    formData.set("firstName", "Valeria");
 
-    await expect(updateDisplayName(formData)).rejects.toThrow(
-      "NEXT_REDIRECT:/dashboard?profileError=profile_update_failed",
+    await expect(updateProfile(formData)).rejects.toThrow(
+      "NEXT_REDIRECT:/profile?profileError=profile_update_failed",
     );
   });
 
-  it("requires authentication to update the display name", async () => {
+  it("requires authentication to update the profile", async () => {
     mocks.getUser.mockResolvedValue({ data: { user: null } });
     const formData = new FormData();
-    formData.set("displayName", "Valeria");
+    formData.set("firstName", "Valeria");
 
-    await expect(updateDisplayName(formData)).rejects.toThrow(
+    await expect(updateProfile(formData)).rejects.toThrow(
       "NEXT_REDIRECT:/auth/sign-in?error=authentication_required",
     );
     expect(mocks.from).not.toHaveBeenCalled();

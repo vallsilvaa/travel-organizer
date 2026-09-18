@@ -49,6 +49,6 @@ describe("updateReminderPreference", () => {
     expect(mocks.update).toHaveBeenCalledWith(
       expect.objectContaining({ task_reminders_enabled: false }),
     );
-    expect(mocks.revalidatePath).toHaveBeenCalledWith("/dashboard");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/profile");
   });
 });

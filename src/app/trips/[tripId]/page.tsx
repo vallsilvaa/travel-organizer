@@ -980,10 +980,10 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
             ) : null}
           <CardContent>
             <Link
-              href="/dashboard"
+              href="/trips"
               className="text-sm font-semibold text-primary hover:text-primary/80"
             >
-              {t("backToDashboard")}
+              {t("backToTrips")}
             </Link>
 
             <div className="mt-8 flex flex-wrap items-center justify-between gap-3">

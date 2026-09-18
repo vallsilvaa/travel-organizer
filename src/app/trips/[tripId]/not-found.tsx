@@ -23,9 +23,9 @@ export default async function TripNotFound() {
         <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
           <Link
             className="inline-flex min-h-11 items-center justify-center rounded-xl bg-sky-700 px-5 py-3 font-semibold text-white transition hover:bg-sky-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-700"
-            href="/dashboard"
+            href="/trips"
           >
-            {t("notFound.goToDashboard")}
+            {t("tripNotFound.goToTrips")}
           </Link>
         </div>
       </section>

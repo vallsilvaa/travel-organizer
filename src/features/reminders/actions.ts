@@ -20,5 +20,5 @@ export async function updateReminderPreference(formData: FormData) {
       updated_at: new Date().toISOString(),
     })
     .eq("id", user.id);
-  revalidatePath("/dashboard");
+  revalidatePath("/profile");
 }
