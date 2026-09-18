@@ -10,16 +10,18 @@ import { Label } from "@/components/ui/label";
 import { IANA_TIME_ZONES } from "@/lib/timezone";
 
 import { createTrip, updateTrip, type CreateTripState } from "./actions";
+import { DestinationListField, type DestinationFieldValue } from "./destination-list-field";
 
 const initialState: CreateTripState = {};
 
 type TripFormProps = {
   trip?: {
     id: string;
-    destination: string;
+    title: string;
     start_date: string;
-    end_date: string | null;
+    end_date: string;
     timezone: string;
+    destinations?: DestinationFieldValue[];
   };
   cancelSlot?: ReactNode;
   extraFields?: ReactNode;
@@ -28,12 +30,25 @@ type TripFormProps = {
 
 export function TripForm({ trip, cancelSlot, extraFields, onSuccess }: TripFormProps = {}) {
   const t = useTranslations("trip.editForm");
-  const tCommon = useTranslations("common");
   const [state, formAction, pending] = useActionState(
     trip ? updateTrip : createTrip,
     initialState,
   );
   const timezoneRef = useRef<HTMLSelectElement>(null);
+  const startDateRef = useRef<HTMLInputElement>(null);
+
+  // Server-rendered markup omits `min` (the server has no notion of "the
+  // visitor's today") - only a *new* trip's start date gets one, patched in
+  // once the browser's own date is known client-side, same reasoning as the
+  // timezone auto-detect below.
+  useEffect(() => {
+    if (trip || !startDateRef.current) {
+      return;
+    }
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    startDateRef.current.min = tomorrow.toISOString().slice(0, 10);
+  }, [trip]);
 
   // Pre-selects the visitor's own zone for a *new* trip, once the browser's
   // timezone is known client-side. Server-rendered markup always defaults
@@ -68,20 +83,27 @@ export function TripForm({ trip, cancelSlot, extraFields, onSuccess }: TripFormP
     <form action={formAction} className="mt-6 grid gap-5 sm:grid-cols-2">
       {trip ? <input type="hidden" name="tripId" value={trip.id} /> : null}
       <div className="space-y-2 sm:col-span-2">
-        <Label htmlFor="destination">{t("destinationLabel")}</Label>
+        <Label htmlFor="trip-title">{t("titleLabel")}</Label>
         <Input
           required
           maxLength={200}
-          id="destination"
-          name="destination"
-          placeholder={t("destinationPlaceholder")}
-          defaultValue={trip?.destination}
-          aria-describedby={state.errors?.destination ? "destination-error" : undefined}
+          id="trip-title"
+          name="title"
+          placeholder={t("titlePlaceholder")}
+          defaultValue={trip?.title}
+          aria-describedby={state.errors?.title ? "trip-title-error" : undefined}
         />
-        {state.errors?.destination ? (
-          <p id="destination-error" className="text-sm text-destructive">
-            {state.errors.destination}
+        {state.errors?.title ? (
+          <p id="trip-title-error" className="text-sm text-destructive">
+            {state.errors.title}
           </p>
+        ) : null}
+      </div>
+
+      <div className="sm:col-span-2">
+        <DestinationListField initialDestinations={trip?.destinations} />
+        {state.errors?.destinations ? (
+          <p className="text-sm text-destructive">{state.errors.destinations}</p>
         ) : null}
       </div>
 
@@ -89,6 +111,7 @@ export function TripForm({ trip, cancelSlot, extraFields, onSuccess }: TripFormP
         <Label htmlFor="startDate">{t("startDateLabel")}</Label>
         <Input
           required
+          ref={startDateRef}
           id="startDate"
           name="startDate"
           type="date"
@@ -103,14 +126,13 @@ export function TripForm({ trip, cancelSlot, extraFields, onSuccess }: TripFormP
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="endDate">
-          {t("endDateLabel")} <span className="font-normal text-muted-foreground">{tCommon("optional")}</span>
-        </Label>
+        <Label htmlFor="endDate">{t("endDateLabel")}</Label>
         <Input
+          required
           id="endDate"
           name="endDate"
           type="date"
-          defaultValue={trip?.end_date ?? undefined}
+          defaultValue={trip?.end_date}
           aria-describedby={state.errors?.endDate ? "end-date-error" : undefined}
         />
         {state.errors?.endDate ? (

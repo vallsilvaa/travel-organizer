@@ -83,6 +83,7 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { addDays, daysUntil, todayInTimeZone } from "@/lib/timezone";
+import { tripStatus } from "@/lib/trip-status";
 
 type TripPageProps = {
   params: Promise<{ tripId: string }>;
@@ -93,6 +94,16 @@ type TripParticipant = {
   user_id: string;
   display_name: string;
   role: string;
+};
+
+type TripDestination = {
+  id: string;
+  label: string;
+  city: string | null;
+  country: string;
+  continent: Continent | null;
+  granularity: "city" | "country";
+  position: number;
 };
 
 type CatalogTemplate = {
@@ -251,7 +262,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
 
   const { data: trip, error } = await supabase
     .from("trips")
-    .select("id, destination, start_date, end_date, created_at, created_by, archived_at, timezone, cover_image_path, destination_guide_content, destination_guide_source, destination_guide_reviewed_at")
+    .select("id, title, destination, start_date, end_date, created_at, created_by, archived_at, timezone, cover_image_path, destination_guide_content, destination_guide_source, destination_guide_reviewed_at")
     .eq("id", tripId)
     .single();
 
@@ -333,6 +344,10 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
 
   const isCreator = trip.created_by === user.id;
   const isArchived = Boolean(trip.archived_at);
+  const currentTripStatus = tripStatus(trip);
+  // New participants can only be invited while the trip is still "Futura"
+  // (#213) - the same rule is enforced server-side in inviteParticipant.
+  const canInviteParticipants = currentTripStatus === "upcoming";
   // "Em aberto" is the default (#171) - "all" only applies when the URL
   // explicitly asks for it, so landing on the tab with no query params
   // never shows completed tasks mixed in.
@@ -357,6 +372,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
     : "all";
 
   const [
+    { data: destinations },
     { data: itineraryItems, error: itineraryError },
     { data: reservations, error: reservationsError },
     { data: attachments, error: attachmentsError },
@@ -372,6 +388,11 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
     { data: shareLinks },
   ] =
     await Promise.all([
+      supabase
+        .from("trip_destinations")
+        .select("id, label, city, country, continent, granularity, position")
+        .eq("trip_id", trip.id)
+        .order("position", { ascending: true }),
       supabase
         .from("itinerary_items")
         .select("id, item_date, start_time, title, location, notes, period, city")
@@ -442,6 +463,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
             .limit(1)
         : Promise.resolve({ data: [] }),
     ]);
+  const tripDestinations = (destinations ?? []) as TripDestination[];
   const invitations = invitationResult.data;
   const catalogTemplates = (templatesResult.data ?? []) as CatalogTemplate[];
   const tripParticipants = (participants ?? []) as TripParticipant[];
@@ -975,8 +997,19 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
               </div>
             </div>
             <h1 className="mt-3 text-4xl font-semibold tracking-tight text-slate-950">
-              {trip.destination}
+              {trip.title}
             </h1>
+            {tripDestinations.length ? (
+              <ul className="mt-3 flex flex-wrap gap-2">
+                {tripDestinations.map((destination) => (
+                  <li key={destination.id}>
+                    <Badge variant="outline" className="bg-card">
+                      {destination.label}
+                    </Badge>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
             {countdownLabel && !isArchived ? (
               <p className="mt-2 text-sm font-medium text-primary">{countdownLabel}</p>
             ) : null}
@@ -1050,7 +1083,22 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                   <summary className="cursor-pointer font-semibold text-slate-900">
                     {t("editTrip")}
                   </summary>
-                  <TripForm trip={trip} />
+                  <TripForm
+                    trip={{
+                      id: trip.id,
+                      title: trip.title,
+                      start_date: trip.start_date,
+                      end_date: trip.end_date,
+                      timezone: trip.timezone,
+                      destinations: tripDestinations.map((destination) => ({
+                        label: destination.label,
+                        city: destination.city,
+                        country: destination.country,
+                        continent: destination.continent,
+                        granularity: destination.granularity,
+                      })),
+                    }}
+                  />
                 </details>
                 <div className="mt-4 flex justify-end gap-4">
                   <form action={isArchived ? restoreTrip : archiveTrip}>
@@ -2308,7 +2356,13 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                   </div>
 
                   <div className="mt-8">
-                  <InviteForm tripId={trip.id} />
+                  {canInviteParticipants ? (
+                    <InviteForm tripId={trip.id} />
+                  ) : (
+                    <p className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+                      {t("organizer.inviteLockedNotice")}
+                    </p>
+                  )}
 
                   {invitations?.length ? (
                     <ul className="mt-6 divide-y divide-slate-200 border-t border-slate-200">

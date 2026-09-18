@@ -6,25 +6,11 @@ import { useTranslations } from "next-intl";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
+import { normalize, useCityRows, type CityRow } from "./city-dataset";
 import type { Continent } from "./shared";
-
-// Bundled locally (GeoNames "cities15000", CC BY 4.0 - https://www.geonames.org)
-// so the autocomplete works fully offline with no API key or recurring cost
-// (#209). [name, country, continent] tuples, sorted by population descending
-// so more likely matches surface first once the list is truncated.
-type CityRow = [string, string, Continent];
 
 const MIN_QUERY_LENGTH = 2;
 const MAX_RESULTS = 8;
-
-const diacriticsPattern = new RegExp("[\\u0300-\\u036f]", "g");
-
-function normalize(value: string) {
-  return value
-    .normalize("NFD")
-    .replace(diacriticsPattern, "")
-    .toLowerCase();
-}
 
 export type CitySelection = {
   city: string;
@@ -54,7 +40,7 @@ export function CityAutocomplete({
   required,
 }: CityAutocompleteProps) {
   const t = useTranslations("cityAutocomplete");
-  const [rows, setRows] = useState<CityRow[] | null>(null);
+  const { rows, loadRows } = useCityRows();
   const [query, setQuery] = useState(() =>
     defaultCity && defaultCountry ? `${defaultCity}, ${defaultCountry}` : (defaultCountry ?? ""),
   );
@@ -75,16 +61,6 @@ export function CityAutocomplete({
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-
-  const rowsLoading = useRef(false);
-
-  function loadRows() {
-    if (rows || rowsLoading.current) return;
-    rowsLoading.current = true;
-    import("./cities.json").then((module) => {
-      setRows(module.default as CityRow[]);
-    });
-  }
 
   const normalizedQuery = normalize(query.trim());
   const matches = useMemo(() => {

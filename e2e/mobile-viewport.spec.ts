@@ -6,6 +6,7 @@ import { createClient, type User } from "@supabase/supabase-js";
 const runId = randomUUID().slice(0, 8);
 const password = `E2e-safe-${runId}!`;
 const creatorEmail = `mobile-${runId}@example.com`;
+const tripTitle = `Viagem Mobile ${runId}`;
 const destination = `Porto Mobile ${runId}`;
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -67,7 +68,8 @@ test("primary trip sections are navigable on a phone-sized viewport without hori
   });
 
   await test.step("create a trip from the dashboard", async () => {
-    await page.getByLabel("Destino").fill(destination);
+    await page.getByLabel("Título").fill(tripTitle);
+    await page.getByLabel(/Destino 1/).fill(destination);
     await page.getByLabel("Data de início").fill("2027-06-10");
     await page.getByLabel(/Data de término/).fill("2027-06-17");
     await page.getByRole("button", { name: "Criar viagem" }).click();

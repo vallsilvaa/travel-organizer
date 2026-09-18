@@ -48,9 +48,14 @@ import { archiveTrip, createTrip, deleteTrip, restoreTrip, updateTrip } from "./
 
 function validTripForm() {
   const formData = new FormData();
-  formData.set("destination", "London");
-  formData.set("startDate", "2026-10-10");
-  formData.set("endDate", "2026-10-18");
+  formData.set("title", "Partiu Londres");
+  formData.append("destinationLabel", "London, United Kingdom");
+  formData.append("destinationCity", "London");
+  formData.append("destinationCountry", "United Kingdom");
+  formData.append("destinationContinent", "europe");
+  formData.append("destinationGranularity", "city");
+  formData.set("startDate", "2027-10-10");
+  formData.set("endDate", "2027-10-18");
   formData.set("timezone", "Europe/London");
   return formData;
 }
@@ -101,16 +106,29 @@ describe("createTrip", () => {
     );
 
     expect(mocks.from).toHaveBeenCalledWith("trips");
+    expect(mocks.from).toHaveBeenCalledWith("trip_destinations");
     expect(mocks.from).not.toHaveBeenCalledWith("trip_tasks");
     expect(mocks.insert).toHaveBeenCalledWith(
       expect.objectContaining({
-        destination: "London",
-        start_date: "2026-10-10",
-        end_date: "2026-10-18",
+        title: "Partiu Londres",
+        destination: "London, United Kingdom",
+        start_date: "2027-10-10",
+        end_date: "2027-10-18",
         timezone: "Europe/London",
         created_by: "user-123",
       }),
     );
+    expect(mocks.insert).toHaveBeenCalledWith([
+      expect.objectContaining({
+        trip_id: expect.any(String),
+        label: "London, United Kingdom",
+        city: "London",
+        country: "United Kingdom",
+        continent: "europe",
+        granularity: "city",
+        position: 0,
+      }),
+    ]);
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/dashboard");
 
     // Creating a trip is how an account becomes an organizer (#150).
@@ -177,6 +195,9 @@ describe("createTrip - organizer panel context (#154)", () => {
           insert: () => chain({ error: null }),
           select: () => chain({ data: { id: "trip-id", start_date: "2027-01-01", destination: "London" } }),
         };
+      }
+      if (table === "trip_destinations") {
+        return { insert: () => chain({ error: null }) };
       }
       if (table === "trip_tasks") {
         return {
@@ -270,24 +291,40 @@ describe("updateTrip", () => {
       data: { id: "27823996-ec50-4cc2-8506-a29d07b86f94" },
       error: null,
     });
-    mocks.from.mockReturnValue({ update: mocks.update });
+    mocks.deleteEq.mockResolvedValue({ error: null });
+    mocks.remove.mockReturnValue({ eq: mocks.deleteEq });
+    mocks.insert.mockResolvedValue({ error: null });
+    mocks.from.mockReturnValue({ update: mocks.update, delete: mocks.remove, insert: mocks.insert });
     mocks.createClient.mockResolvedValue({
       auth: { getUser: mocks.getUser },
       from: mocks.from,
     });
   });
 
-  it("updates destination and dates for the trip creator", async () => {
+  it("updates title, destinations, and dates for the trip creator", async () => {
     const result = await updateTrip({}, editableTripForm());
 
     expect(mocks.update).toHaveBeenCalledWith(expect.objectContaining({
-      destination: "London",
-      start_date: "2026-10-10",
-      end_date: "2026-10-18",
+      title: "Partiu Londres",
+      destination: "London, United Kingdom",
+      start_date: "2027-10-10",
+      end_date: "2027-10-18",
       timezone: "Europe/London",
     }));
     expect(mocks.updateEq).toHaveBeenCalledWith("id", "27823996-ec50-4cc2-8506-a29d07b86f94");
     expect(mocks.updateEq).toHaveBeenCalledWith("created_by", "user-123");
+    expect(mocks.deleteEq).toHaveBeenCalledWith("trip_id", "27823996-ec50-4cc2-8506-a29d07b86f94");
+    expect(mocks.insert).toHaveBeenCalledWith([
+      expect.objectContaining({
+        trip_id: "27823996-ec50-4cc2-8506-a29d07b86f94",
+        label: "London, United Kingdom",
+        city: "London",
+        country: "United Kingdom",
+        continent: "europe",
+        granularity: "city",
+        position: 0,
+      }),
+    ]);
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/dashboard");
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/trips/27823996-ec50-4cc2-8506-a29d07b86f94");
     expect(result.success).toBe(true);

@@ -59,6 +59,7 @@ const userId = "8f3f147b-8684-4ff1-b5c7-6814e4f57f73";
 
 const trip = {
   id: tripId,
+  title: "Partiu Lisboa",
   destination: "Lisbon",
   start_date: "2026-09-01",
   end_date: "2026-09-10",
@@ -329,7 +330,7 @@ describe("TripPage", () => {
 
       const image = screen.getByRole("img", { name: /foto de capa da viagem para lisbon/i });
       expect(image.getAttribute("src")).toBe("https://storage.example/signed-cover.jpg");
-      expect(screen.getByRole("button", { name: "Trocar capa" })).toBeTruthy();
+      expect(screen.getByRole("button", { name: "Editar capa" })).toBeTruthy();
       expect(screen.getByRole("button", { name: "Remover capa" })).toBeTruthy();
     });
 
@@ -350,7 +351,7 @@ describe("TripPage", () => {
       }));
 
       expect(screen.getByRole("img", { name: /foto de capa da viagem para lisbon/i })).toBeTruthy();
-      expect(screen.queryByRole("button", { name: "Trocar capa" })).toBeNull();
+      expect(screen.queryByRole("button", { name: "Editar capa" })).toBeNull();
     });
   });
 
@@ -825,6 +826,76 @@ describe("TripPage", () => {
       expect(screen.getByRole("button", { name: "Copiar" })).toBeTruthy();
       expect(screen.getByRole("button", { name: "Revogar" })).toBeTruthy();
       expect(screen.queryByRole("button", { name: "Gerar link" })).toBeNull();
+    });
+  });
+
+  describe("destinations and invite lock", () => {
+    it("renders each structured destination as a badge in the trip header", async () => {
+      mocks.from.mockImplementation((table: string) => {
+        if (table === "trips") return queryBuilder({ data: trip, error: null });
+        if (table === "trip_destinations") {
+          return queryBuilder({
+            data: [
+              { id: "d1", label: "Lisboa, Portugal", city: "Lisboa", country: "Portugal", continent: "europe", granularity: "city", position: 0 },
+              { id: "d2", label: "Porto, Portugal", city: "Porto", country: "Portugal", continent: "europe", granularity: "city", position: 1 },
+            ],
+            error: null,
+          });
+        }
+        if (table === "trip_tasks") return queryBuilder({ data: [], error: null });
+        if (table === "itinerary_items") return queryBuilder({ data: [], error: null });
+        if (table === "item_comments") return queryBuilder({ data: [], error: null });
+        if (table === "trip_expenses") return queryBuilder({ data: [], error: null });
+        if (table === "trip_expense_shares") return queryBuilder({ data: [], error: null });
+        if (table === "trip_invitations") return queryBuilder({ data: [], error: null });
+        return queryBuilder({ data: null, error: null });
+      });
+
+      render(await TripPage({
+        params: Promise.resolve({ tripId }),
+        searchParams: Promise.resolve({}),
+      }));
+
+      expect(screen.getByText("Lisboa, Portugal")).toBeTruthy();
+      expect(screen.getByText("Porto, Portugal")).toBeTruthy();
+    });
+
+    it("shows an invite-locked notice instead of the invite form once the trip is no longer upcoming", async () => {
+      // The shared `trip` fixture (2026-09-01 to 2026-09-10) is already in
+      // the past relative to the real clock, so its status is "completed".
+      render(await TripPage({
+        params: Promise.resolve({ tripId }),
+        searchParams: Promise.resolve({ tab: "organizer" }),
+      }));
+
+      expect(screen.queryByLabelText("E-mail do convidado")).toBeNull();
+      expect(
+        screen.getByText("Novos participantes só podem ser convidados enquanto a viagem estiver futura."),
+      ).toBeTruthy();
+    });
+
+    it("shows the invite form while the trip is still upcoming", async () => {
+      const upcomingTrip = { ...trip, start_date: "2099-01-10", end_date: "2099-01-20" };
+      mocks.from.mockImplementation((table: string) => {
+        if (table === "trips") return queryBuilder({ data: upcomingTrip, error: null });
+        if (table === "trip_tasks") return queryBuilder({ data: [], error: null });
+        if (table === "itinerary_items") return queryBuilder({ data: [], error: null });
+        if (table === "item_comments") return queryBuilder({ data: [], error: null });
+        if (table === "trip_expenses") return queryBuilder({ data: [], error: null });
+        if (table === "trip_expense_shares") return queryBuilder({ data: [], error: null });
+        if (table === "trip_invitations") return queryBuilder({ data: [], error: null });
+        return queryBuilder({ data: null, error: null });
+      });
+
+      render(await TripPage({
+        params: Promise.resolve({ tripId }),
+        searchParams: Promise.resolve({ tab: "organizer" }),
+      }));
+
+      expect(screen.getByLabelText("E-mail do convidado")).toBeTruthy();
+      expect(
+        screen.queryByText("Novos participantes só podem ser convidados enquanto a viagem estiver futura."),
+      ).toBeNull();
     });
   });
 
