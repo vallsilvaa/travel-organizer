@@ -262,9 +262,13 @@ describe("convertPrepTaskOnCompletion", () => {
       p_responsible_ids: [ownerId],
     });
     expect(taskUpdate).toHaveBeenCalledWith({ itinerary_item_id: itineraryItemId, reservation_id: reservationId });
+    expect(mocks.rpc).toHaveBeenCalledWith("complete_prep_item", {
+      p_task_id: taskId,
+      p_should_complete: true,
+    });
   });
 
-  it("does nothing when neither checkbox is set", async () => {
+  it("still marks the task complete when neither checkbox is set (e.g. Pular)", async () => {
     const reservationInsert = vi.fn();
     const itineraryInsert = vi.fn();
     const taskUpdate = vi.fn();
@@ -277,6 +281,10 @@ describe("convertPrepTaskOnCompletion", () => {
     const result = await convertPrepTaskOnCompletion({}, formData);
 
     expect(result.success).toBe(true);
+    expect(mocks.rpc).toHaveBeenCalledWith("complete_prep_item", {
+      p_task_id: taskId,
+      p_should_complete: true,
+    });
     expect(itineraryInsert).not.toHaveBeenCalled();
     expect(reservationInsert).not.toHaveBeenCalled();
   });

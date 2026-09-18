@@ -47,21 +47,20 @@ function renderDialog(completed = false) {
 }
 
 describe("TaskCompletionDialog", () => {
-  it("completes the task and opens the conversion dialog", async () => {
-    mocks.setTaskCompletion.mockResolvedValue(undefined);
-
+  it("opens the conversion dialog immediately, without completing the task yet", async () => {
     renderDialog(false);
 
     fireEvent.click(screen.getByRole("button", { name: "Concluir" }));
 
-    await waitFor(() => {
-      expect(mocks.setTaskCompletion).toHaveBeenCalled();
-    });
     expect(await screen.findByText("Transformar em reserva ou item do roteiro?")).toBeTruthy();
+    // Completion is deferred to Salvar/Pular (see below) - opening the
+    // dialog must not revalidate the page and drop this task's row (and
+    // the dialog with it) before there's time to interact with it.
+    expect(mocks.setTaskCompletion).not.toHaveBeenCalled();
+    expect(mocks.convertPrepTaskOnCompletion).not.toHaveBeenCalled();
   });
 
   it("reveals reservation fields, pre-filled with the task's paid amount, once checked", async () => {
-    mocks.setTaskCompletion.mockResolvedValue(undefined);
     renderDialog(false);
     fireEvent.click(screen.getByRole("button", { name: "Concluir" }));
     await screen.findByText("Transformar em reserva ou item do roteiro?");
@@ -69,6 +68,23 @@ describe("TaskCompletionDialog", () => {
     fireEvent.click(screen.getByLabelText("Criar reserva"));
 
     expect((screen.getByLabelText("Valor") as HTMLInputElement).value).toBe("150.00");
+  });
+
+  it("marks the task complete when skipped, without going through the conversion action", async () => {
+    mocks.setTaskCompletion.mockResolvedValue(undefined);
+    renderDialog(false);
+    fireEvent.click(screen.getByRole("button", { name: "Concluir" }));
+    await screen.findByText("Transformar em reserva ou item do roteiro?");
+
+    fireEvent.click(screen.getByRole("button", { name: "Pular" }));
+
+    await waitFor(() => {
+      expect(mocks.setTaskCompletion).toHaveBeenCalled();
+    });
+    const submittedFormData = mocks.setTaskCompletion.mock.calls[0][0] as FormData;
+    expect(submittedFormData.get("completed")).toBe("true");
+    expect(mocks.convertPrepTaskOnCompletion).not.toHaveBeenCalled();
+    expect(screen.queryByText("Transformar em reserva ou item do roteiro?")).toBeNull();
   });
 
   it("does not open the dialog when reopening an already-completed task", async () => {
