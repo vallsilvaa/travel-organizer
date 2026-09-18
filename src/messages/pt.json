@@ -183,7 +183,7 @@
     "createTrip": {
       "title": "Criar uma viagem",
       "description": "Comece com o destino e as datas. Mais ferramentas de planejamento serão adicionadas dentro da viagem.",
-      "triggerLabel": "Criar viagem"
+      "triggerLabel": "Nova viagem"
     },
     "yourTrips": {
       "title": "Suas viagens",

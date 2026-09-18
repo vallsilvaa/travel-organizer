@@ -80,6 +80,11 @@ test.describe("automated accessibility checks (WCAG 2 A/AA)", () => {
     await expect(page).toHaveURL(/\/dashboard$/);
     await assertNoViolations(page, "dashboard");
 
+    await page.getByRole("link", { name: /viagens/i }).click();
+    await expect(page).toHaveURL(/\/trips$/);
+    await assertNoViolations(page, "trips");
+    await page.getByRole("button", { name: "Nova viagem" }).click();
+
     await page.getByLabel("Título").fill(tripTitle);
     await page.getByLabel(/Destino 1/).fill(destination);
     await page.getByLabel("Data de início").fill("2027-07-01");

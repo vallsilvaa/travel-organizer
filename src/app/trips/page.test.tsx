@@ -142,7 +142,7 @@ describe("TripsPage", () => {
       const button = screen.getByRole("button", { name });
       expect(button.getAttribute("type")).toBe("submit");
     }
-    expect(screen.getByRole("button", { name: /criar viagem/i })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /nova viagem/i })).toBeTruthy();
   });
 
   it("does not show an invitation the user sent to someone else's email as one addressed to them", async () => {

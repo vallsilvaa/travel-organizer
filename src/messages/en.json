@@ -183,7 +183,7 @@
     "createTrip": {
       "title": "Create a trip",
       "description": "Start with the destination and dates. More planning tools will be added inside the trip.",
-      "triggerLabel": "Create trip"
+      "triggerLabel": "New trip"
     },
     "yourTrips": {
       "title": "Your trips",
