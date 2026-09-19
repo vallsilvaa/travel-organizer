@@ -44,9 +44,14 @@ export function CityAutocomplete({
   const [query, setQuery] = useState(() =>
     defaultCity && defaultCountry ? `${defaultCity}, ${defaultCountry}` : (defaultCountry ?? ""),
   );
+  // City is optional on a governed item (e.g. "renew passport" can apply to
+  // a whole country) - requiring it here too used to leave `selected` null
+  // for any item saved without one, which then submitted an empty
+  // `continent` on the next edit (continent is otherwise only ever set
+  // together with a selection) and silently failed validation.
   const [selected, setSelected] = useState<CitySelection | null>(
-    defaultCity && defaultCountry && defaultContinent
-      ? { city: defaultCity, country: defaultCountry, continent: defaultContinent }
+    defaultCountry && defaultContinent
+      ? { city: defaultCity ?? "", country: defaultCountry, continent: defaultContinent }
       : null,
   );
   const [isOpen, setIsOpen] = useState(false);

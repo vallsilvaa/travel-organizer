@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { createTranslator } from "@/i18n/test-mocks";
 
 import { PrepItemForm } from "./prep-item-form";
+import { validatePrepItemInput } from "./prep-item-validation";
 
 vi.mock("next-intl", () => ({
   useTranslations: (namespace?: string) => createTranslator(namespace),
@@ -76,5 +77,26 @@ describe("PrepItemForm", () => {
     );
 
     expect(screen.getByDisplayValue("Upload a clear scan of your visa page.")).toBeTruthy();
+  });
+
+  it("resubmits a valid continent for an item saved with a country but no city", () => {
+    // baseTask.city is already null (a legitimately country-wide item, e.g.
+    // "renew passport") - re-saving it unchanged used to submit an empty
+    // continent and fail validation completely silently (no toast, no
+    // inline error), because the field wasn't pre-selected without a city.
+    const { container } = render(
+      <PrepItemForm
+        itineraryItems={[]}
+        participants={[]}
+        task={baseTask}
+        tripId="27823996-ec50-4cc2-8506-a29d07b86f94"
+      />,
+    );
+
+    const formData = new FormData(container.querySelector("form") as HTMLFormElement);
+    expect(formData.get("continent")).toBe("europe");
+
+    const validation = validatePrepItemInput(formData);
+    expect(validation.success).toBe(true);
   });
 });

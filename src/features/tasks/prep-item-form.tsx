@@ -82,6 +82,12 @@ export function PrepItemForm({ itineraryItems, participants, task, tripId }: Pre
       toast.success(t("toastUpdated"));
     } else if (state.message) {
       toast.error(state.message);
+    } else if (state.errors && Object.keys(state.errors).length) {
+      // Not every field renders its own inline error below (e.g.
+      // continent, category, classification) - a validation failure on one
+      // of those used to fail completely silently. This is the fallback so
+      // a rejected save is always visible somehow.
+      toast.error(t("actionErrors.updateFailed"));
     }
   }, [state, t]);
 
@@ -182,6 +188,7 @@ export function PrepItemForm({ itineraryItems, participants, task, tripId }: Pre
           required
         />
         {state.errors?.country ? <p className="text-sm text-destructive">{state.errors.country}</p> : null}
+        {state.errors?.continent ? <p className="text-sm text-destructive">{state.errors.continent}</p> : null}
       </div>
 
       <div className="space-y-2">
