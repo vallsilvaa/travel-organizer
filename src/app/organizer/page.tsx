@@ -10,9 +10,9 @@ import {
   getContinentLabels,
   getPrepItemActionLabels,
   getPrepItemTypeLabels,
+  resolveActionLabel,
   type Classification,
   type Continent,
-  type PrepItemAction,
   type PrepItemType,
 } from "@/features/prep-catalog/shared";
 import { getTaskCategoryLabels, type TaskCategory } from "@/features/tasks/templates";
@@ -48,7 +48,7 @@ type DashboardTripStats = {
 type Template = {
   id: string;
   title: string;
-  action: PrepItemAction | null;
+  action: string | null;
   item_type: PrepItemType;
   category: TaskCategory;
   continent: Continent | null;
@@ -124,6 +124,13 @@ export default async function OrganizerPage() {
     ((tripStats ?? []) as DashboardTripStats[]).map((stats) => [stats.trip_id, stats]),
   );
   const templateList = (templates ?? []) as Template[];
+  const existingTemplateActions = Array.from(
+    new Set(
+      templateList
+        .map((template) => template.action)
+        .filter((action): action is string => Boolean(action)),
+    ),
+  );
 
   return (
     <main className="min-h-screen bg-slate-50 px-6 py-12">
@@ -149,7 +156,7 @@ export default async function OrganizerPage() {
           <CardContent>
             <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
               <NewTripModal templates={templateList} />
-              <NewTaskModal />
+              <NewTaskModal existingTemplateActions={existingTemplateActions} />
             </div>
           </CardContent>
         </Card>
@@ -159,7 +166,12 @@ export default async function OrganizerPage() {
             <CardTitle className="text-2xl">{t("catalog.title")}</CardTitle>
             <CardDescription>{t("catalog.description")}</CardDescription>
             <CardAction>
-              <NewTaskModal triggerLabel={t("catalog.addTemplate")} triggerVariant="outline" triggerSize="default" />
+              <NewTaskModal
+                triggerLabel={t("catalog.addTemplate")}
+                triggerVariant="outline"
+                triggerSize="default"
+                existingTemplateActions={existingTemplateActions}
+              />
             </CardAction>
           </CardHeader>
           <CardContent>
@@ -181,7 +193,7 @@ export default async function OrganizerPage() {
                             <div>
                               <div className="flex flex-wrap items-center gap-2">
                                 <h3 className="font-semibold text-slate-950">
-                                  {template.action ? `${prepItemActionLabels[template.action]}: ` : ""}{template.title}
+                                  {resolveActionLabel(template.action, prepItemActionLabels) ? `${resolveActionLabel(template.action, prepItemActionLabels)}: ` : ""}{template.title}
                                 </h3>
                                 <Badge variant="outline">{prepItemTypeLabels[template.item_type]}</Badge>
                                 <Badge variant="outline">{classificationLabels[template.classification]}</Badge>
@@ -213,7 +225,7 @@ export default async function OrganizerPage() {
                             </div>
                             <ItemActionsMenu
                               editLabel={t("catalog.editTemplate")}
-                              editForm={<TemplateForm template={template} />}
+                              editForm={<TemplateForm template={template} existingTemplateActions={existingTemplateActions} />}
                               deleteAction={deleteTemplate}
                               deleteHiddenFields={{ templateId: template.id }}
                               deleteTitle={t("catalog.deleteTemplateTitle")}

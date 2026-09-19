@@ -23,10 +23,10 @@ import {
   getTaskCategoryLabels,
   prepItemActions,
   prepItemTypes,
+  resolveActionLabel,
   taskCategories,
   type Classification,
   type Continent,
-  type PrepItemAction,
   type PrepItemType,
   type TaskCategory,
 } from "@/features/prep-catalog/shared";
@@ -43,7 +43,7 @@ type PrepItemFormProps = {
   task: {
     id: string;
     title: string;
-    action: PrepItemAction | null;
+    action: string | null;
     item_type: PrepItemType;
     category: TaskCategory;
     continent: Continent;
@@ -59,11 +59,12 @@ type PrepItemFormProps = {
     itinerary_item_id: string | null;
   };
   tripId: string;
+  existingTemplateActions?: string[];
 };
 
 const initialState: PrepItemActionState = {};
 
-export function PrepItemForm({ itineraryItems, participants, task, tripId }: PrepItemFormProps) {
+export function PrepItemForm({ itineraryItems, participants, task, tripId, existingTemplateActions }: PrepItemFormProps) {
   const t = useTranslations("prepItemForm");
   const tPrepItemType = useTranslations("categories.prepItemType");
   const tPrepItemAction = useTranslations("categories.prepItemAction");
@@ -76,6 +77,12 @@ export function PrepItemForm({ itineraryItems, participants, task, tripId }: Pre
 
   const [state, formAction, pending] = useActionState(updatePrepTripItem, initialState);
   const [itemType, setItemType] = useState<PrepItemType>(task.item_type);
+  const actionSuggestions = Array.from(
+    new Set([
+      ...prepItemActions.map((action) => prepItemActionLabels[action]),
+      ...(existingTemplateActions ?? []),
+    ]),
+  );
 
   useEffect(() => {
     if (state.success) {
@@ -100,17 +107,19 @@ export function PrepItemForm({ itineraryItems, participants, task, tripId }: Pre
         <Label htmlFor={`prep-action-${task.id}`}>
           {t("actionLabel")} <span className="font-normal text-muted-foreground">{t("optional")}</span>
         </Label>
-        <Select name="action" defaultValue={task.action ?? "none"} items={{ none: t("actionNone"), ...prepItemActionLabels }}>
-          <SelectTrigger id={`prep-action-${task.id}`} className="w-full">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="none">{t("actionNone")}</SelectItem>
-            {prepItemActions.map((action) => (
-              <SelectItem key={action} value={action}>{prepItemActionLabels[action]}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <Input
+          maxLength={50}
+          id={`prep-action-${task.id}`}
+          name="action"
+          list={`prep-action-options-${task.id}`}
+          defaultValue={resolveActionLabel(task.action, prepItemActionLabels) ?? ""}
+          placeholder={t("actionPlaceholder")}
+        />
+        <datalist id={`prep-action-options-${task.id}`}>
+          {actionSuggestions.map((option) => (
+            <option key={option} value={option} />
+          ))}
+        </datalist>
         {state.errors?.action ? <p className="text-sm text-destructive">{state.errors.action}</p> : null}
       </div>
 

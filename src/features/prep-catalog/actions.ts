@@ -14,7 +14,7 @@ import {
   validateTemplateInput,
   type TemplateFieldErrors,
 } from "./validation";
-import type { Classification, Continent, PrepItemAction, PrepItemType } from "./shared";
+import type { Classification, Continent, PrepItemType } from "./shared";
 
 export type TemplateActionState = {
   errors?: TemplateFieldErrors;
@@ -32,7 +32,7 @@ type SupabaseServerClient = Awaited<ReturnType<typeof createClient>>;
 export type TemplateRow = {
   id: string;
   title: string;
-  action: PrepItemAction | null;
+  action: string | null;
   item_type: PrepItemType;
   category: TaskCategory;
   continent: Continent | null;
@@ -102,14 +102,19 @@ export async function applyTemplateRowToTrip({
         trip_id: tripId,
         item_date: itemDate,
         title: template.title,
-        location: template.city,
+        city: template.city,
+        action: template.action,
+        template_id: template.id,
         created_by: userId,
       })
       .select("id")
       .single();
 
     if (itineraryError) {
-      return { ok: false, reason: "insert_failed" };
+      // Same rationale as the trip_tasks branch below: the partial unique
+      // index on (trip_id, template_id) is what actually prevents applying
+      // the same catalog item twice on this trip.
+      return { ok: false, reason: itineraryError.code === "23505" ? "duplicate" : "insert_failed" };
     }
 
     revalidatePath("/organizer");

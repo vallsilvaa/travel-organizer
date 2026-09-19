@@ -289,6 +289,14 @@
       "description": "Mantenha atividades, reservas e pontos de encontro em ordem cronológica.",
       "exportIcs": "Exportar .ics",
       "addItem": "Adicionar item ao roteiro",
+      "addFromCatalog": "Adicionar do catálogo",
+      "newFromCatalog": "Novo item do catálogo",
+      "catalogModalTitle": "Adicionar item de roteiro do catálogo",
+      "catalogModalDescription": "Escolha um item salvo no seu catálogo pessoal para adicionar ao roteiro desta viagem.",
+      "catalogModalNoTemplates": "Você ainda não tem itens de roteiro salvos no catálogo.",
+      "catalogModalToast": "Item de roteiro adicionado a partir do catálogo.",
+      "actionPresetCheckIn": "Check-in",
+      "actionPresetCheckOut": "Check-out",
       "loadError": "Não foi possível carregar o roteiro. Tente atualizar a página.",
       "noTimeSet": "Horário não definido",
       "editItem": "Editar item",
@@ -690,6 +698,8 @@
     "periodLabel": "Período do dia",
     "periodNone": "Nenhum período específico",
     "cityLabel": "Local",
+    "actionLabel": "Ação",
+    "actionPlaceholder": "Check-in, Check-out...",
     "titleLabel": "Título",
     "titlePlaceholder": "Visita ao museu",
     "locationLabel": "Endereço",
@@ -707,7 +717,8 @@
       "titleRequired": "Informe um título com até 200 caracteres.",
       "locationTooLong": "O local deve ter até 200 caracteres.",
       "notesTooLong": "As notas devem ter até 2.000 caracteres.",
-      "cityTooLong": "A cidade deve ter até 200 caracteres."
+      "cityTooLong": "A cidade deve ter até 200 caracteres.",
+      "actionTooLong": "A ação deve ter até 50 caracteres."
     },
     "actionErrors": {
       "identifyTrip": "Não foi possível identificar a viagem.",
@@ -922,7 +933,7 @@
   },
   "templateForm": {
     "actionLabel": "Ação",
-    "actionNone": "Sem ação",
+    "actionPlaceholder": "Comprar, reservar, trocar moeda...",
     "whatLabel": "O quê",
     "titleLabel": "Título",
     "titlePlaceholder": "Verificar a validade do passaporte",
@@ -945,7 +956,7 @@
     "toastAdded": "Modelo adicionado.",
     "errors": {
       "titleRequired": "Informe um título com até 200 caracteres.",
-      "actionInvalid": "Escolha uma ação válida.",
+      "actionTooLong": "A ação deve ter até 50 caracteres.",
       "itemTypeInvalid": "Escolha um tipo de item válido.",
       "categoryInvalid": "Escolha uma categoria válida.",
       "continentInvalid": "Escolha um continente válido.",
@@ -991,6 +1002,8 @@
     "responsibleSplitPreview": "{amount} por pessoa ({count} responsáveis)",
     "addItinerary": "Adicionar ao roteiro",
     "itineraryDateLabel": "Data",
+    "itineraryActionLabel": "Ação",
+    "itineraryActionPlaceholder": "Check-in, Check-out...",
     "skip": "Pular",
     "save": "Salvar",
     "savePending": "Salvando...",
@@ -1003,7 +1016,7 @@
   },
   "prepItemForm": {
     "actionLabel": "Ação",
-    "actionNone": "Sem ação",
+    "actionPlaceholder": "Comprar, reservar, trocar moeda...",
     "whatLabel": "O quê",
     "titleLabel": "Título",
     "itemTypeLabel": "Tipo de item",
@@ -1026,7 +1039,7 @@
     "toastUpdated": "Item atualizado.",
     "errors": {
       "titleRequired": "Informe um título com até 200 caracteres.",
-      "actionInvalid": "Escolha uma ação válida.",
+      "actionTooLong": "A ação deve ter até 50 caracteres.",
       "itemTypeInvalid": "Escolha um tipo de item válido.",
       "categoryInvalid": "Escolha uma categoria válida.",
       "continentInvalid": "Escolha um continente válido.",

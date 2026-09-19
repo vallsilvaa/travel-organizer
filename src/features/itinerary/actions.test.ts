@@ -108,6 +108,7 @@ describe("itinerary actions", () => {
       notes: "Bring the tickets",
       period: "morning",
       city: "Lisbon",
+      action: null,
       created_by: "user-123",
     });
     expect(result.success).toBe(true);

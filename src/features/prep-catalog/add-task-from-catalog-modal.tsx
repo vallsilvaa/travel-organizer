@@ -60,6 +60,15 @@ type AddTaskFromCatalogModalProps = Labels & {
   participants: Participant[];
   itineraryItems: ItineraryItemOption[];
   appliedTemplateIds: string[];
+  // Every one of these defaults to the Preparação-tab copy (the modal's
+  // original, only home) - overridable so the exact same component reads
+  // naturally when reused for the itinerary catalog (#222) instead of
+  // forking it just to change a few strings.
+  triggerLabel?: string;
+  title?: string;
+  description?: string;
+  noTemplatesMessage?: string;
+  toastMessage?: string;
 };
 
 export function AddTaskFromCatalogModal({
@@ -68,6 +77,11 @@ export function AddTaskFromCatalogModal({
   participants,
   itineraryItems,
   appliedTemplateIds,
+  triggerLabel,
+  title,
+  description,
+  noTemplatesMessage,
+  toastMessage,
   ...labels
 }: AddTaskFromCatalogModalProps) {
   const appliedIds = new Set(appliedTemplateIds);
@@ -113,12 +127,12 @@ export function AddTaskFromCatalogModal({
       }}
     >
       <DialogTrigger render={<Button type="button" size="lg" variant="outline" />}>
-        {tTrigger("addTaskFromCatalog")}
+        {triggerLabel ?? tTrigger("addTaskFromCatalog")}
       </DialogTrigger>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>{t("title")}</DialogTitle>
-          <DialogDescription>{t("description")}</DialogDescription>
+          <DialogTitle>{title ?? t("title")}</DialogTitle>
+          <DialogDescription>{description ?? t("description")}</DialogDescription>
         </DialogHeader>
 
         {selected ? (
@@ -127,6 +141,7 @@ export function AddTaskFromCatalogModal({
             tripId={tripId}
             participants={participants}
             itineraryItems={itineraryItems}
+            toastMessage={toastMessage}
             {...labels}
             onBack={() => setSelected(null)}
             onSuccess={() => setOpen(false)}
@@ -144,7 +159,7 @@ export function AddTaskFromCatalogModal({
             </div>
 
             {templates.length === 0 ? (
-              <p className="text-sm text-muted-foreground">{t("noTemplates")}</p>
+              <p className="text-sm text-muted-foreground">{noTemplatesMessage ?? t("noTemplates")}</p>
             ) : filtered.length === 0 ? (
               <p className="text-sm text-muted-foreground">{t("noResults")}</p>
             ) : (
@@ -189,6 +204,7 @@ type TemplatePreviewAndConfirmProps = Labels & {
   tripId: string;
   participants: Participant[];
   itineraryItems: ItineraryItemOption[];
+  toastMessage?: string;
   onBack: () => void;
   onSuccess: () => void;
 };
@@ -200,6 +216,7 @@ function TemplatePreviewAndConfirm({
   tripId,
   participants,
   itineraryItems,
+  toastMessage,
   taskCategoryLabels,
   prepItemTypeLabels,
   classificationLabels,
@@ -212,12 +229,12 @@ function TemplatePreviewAndConfirm({
 
   useEffect(() => {
     if (state.success) {
-      toast.success(t("toastApplied"));
+      toast.success(toastMessage ?? t("toastApplied"));
       onSuccess();
     } else if (state.message) {
       toast.error(state.message);
     }
-  }, [state, t, onSuccess]);
+  }, [state, t, toastMessage, onSuccess]);
 
   return (
     <div className="space-y-4">
