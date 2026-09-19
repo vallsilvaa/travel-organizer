@@ -20,6 +20,10 @@ export default getRequestConfig(async () => {
         short: { dateStyle: "short" },
         medium: { dateStyle: "medium" },
         long: { dateStyle: "long" },
+        // A standalone format, not an extra option alongside `dateStyle` -
+        // ECMA-402 throws if `weekday` is combined with `dateStyle` in the
+        // same Intl.DateTimeFormat options.
+        weekday: { weekday: "long" },
       },
     },
     onError: (error) => {

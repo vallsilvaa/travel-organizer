@@ -41,9 +41,13 @@ export function CityAutocomplete({
 }: CityAutocompleteProps) {
   const t = useTranslations("cityAutocomplete");
   const { rows, loadRows } = useCityRows();
-  const [query, setQuery] = useState(() =>
-    defaultCity && defaultCountry ? `${defaultCity}, ${defaultCountry}` : (defaultCountry ?? ""),
-  );
+  const [query, setQuery] = useState(() => {
+    if (defaultCity && defaultCountry) return `${defaultCity}, ${defaultCountry}`;
+    // A caller with no country concept at all (e.g. an itinerary item, which
+    // only ever tracks a city) still needs the saved value to show up.
+    if (defaultCity) return defaultCity;
+    return defaultCountry ?? "";
+  });
   // City is optional on a governed item (e.g. "renew passport" can apply to
   // a whole country) - requiring it here too used to leave `selected` null
   // for any item saved without one, which then submitted an empty

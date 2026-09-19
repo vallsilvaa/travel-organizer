@@ -46,4 +46,31 @@ describe("ItineraryForm", () => {
       expect((screen.getByLabelText("Título") as HTMLInputElement).value).toBe("");
     });
   });
+
+  it("uses a single 'Local' city search and keeps the address field separately labeled 'Endereço'", () => {
+    render(<ItineraryForm tripId="27823996-ec50-4cc2-8506-a29d07b86f94" />);
+
+    expect(screen.getByLabelText(/^Local/)).toBeTruthy();
+    expect(screen.getByLabelText(/^Endereço/)).toBeTruthy();
+  });
+
+  it("pre-fills the city search with a previously saved city", () => {
+    render(
+      <ItineraryForm
+        tripId="27823996-ec50-4cc2-8506-a29d07b86f94"
+        item={{
+          id: "8f3f147b-8684-4ff1-b5c7-6814e4f57f73",
+          item_date: "2026-09-20",
+          start_time: null,
+          title: "Museu do Louvre",
+          location: null,
+          notes: null,
+          period: null,
+          city: "Paris",
+        }}
+      />,
+    );
+
+    expect((screen.getByLabelText(/^Local/) as HTMLInputElement).value).toBe("Paris");
+  });
 });

@@ -88,6 +88,36 @@ describe("validateItineraryInput", () => {
     }
   });
 
+  it("falls back to the autocomplete's country slot when city wasn't picked from a suggestion", () => {
+    // CityAutocomplete only fills its `city` hidden field when a suggestion
+    // is selected; free text typed without picking one lands in its
+    // `country` field instead (there's no country concept on an itinerary
+    // item, so whichever slot has something is the intended city).
+    const formData = validForm();
+    formData.set("city", "");
+    formData.set("country", "Smallville");
+
+    const result = validateItineraryInput(formData);
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.city).toBe("Smallville");
+    }
+  });
+
+  it("prefers a selected city over a stray country value", () => {
+    const formData = validForm();
+    formData.set("city", "Lisbon");
+    formData.set("country", "Portugal");
+
+    const result = validateItineraryInput(formData);
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.city).toBe("Lisbon");
+    }
+  });
+
   it("rejects an invalid period", () => {
     const formData = validForm();
     formData.set("period", "midnight");

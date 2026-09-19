@@ -113,7 +113,7 @@ test("traveler completes the critical collaborative planning journey", async ({
     await form.getByLabel("Data").fill("2027-05-11");
     await form.getByLabel("Horário").fill("10:30");
     await form.getByLabel("Título").fill(itineraryTitle);
-    await form.getByLabel("Local").fill("Centro");
+    await form.getByLabel("Endereço").fill("Centro");
     await form.getByRole("button", { name: "Adicionar ao roteiro" }).click();
 
     const item = page.locator("li").filter({
@@ -149,7 +149,7 @@ test("traveler completes the critical collaborative planning journey", async ({
     await dialog.getByLabel("O quê").fill(taskTitle);
     await dialog.getByRole("combobox", { name: "Classificação" }).click();
     await page.getByRole("option", { name: "Obrigatório" }).click();
-    await dialog.getByLabel("País").fill("Brasil");
+    await dialog.getByLabel("Local").fill("Brasil");
     await dialog.getByRole("combobox", { name: "Dias antes da partida" }).click();
     await page.getByRole("option", { name: "30 dias antes" }).click();
     await dialog.getByRole("button", { name: "Adicionar modelo" }).click();

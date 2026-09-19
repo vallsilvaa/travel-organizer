@@ -292,6 +292,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
   const locale = await getLocale();
   const format = await getFormatter();
   const formatDate = (value: string) => format.dateTime(new Date(`${value}T00:00:00Z`), "long");
+  const formatWeekday = (value: string) => format.dateTime(new Date(`${value}T00:00:00Z`), "weekday");
   const formatTime = (value: string | null) => (value ? value.slice(0, 5) : t("itinerary.noTimeSet"));
   const itineraryPeriodRank = (period: string | null) => {
     const index = period ? itineraryPeriods.indexOf(period as (typeof itineraryPeriods)[number]) : -1;
@@ -1298,7 +1299,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                     {t("itinerary.addItem")}
                   </summary>
                   <div className="mt-5">
-                    <ItineraryForm existingCities={tripCities} tripId={trip.id} />
+                    <ItineraryForm tripId={trip.id} />
                   </div>
                 </details>
               ) : null}
@@ -1362,7 +1363,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                             <span>{formatDate(item.item_date)} · {item.title}</span>
                             <ItemActionsMenu
                               editLabel={t("itinerary.editItem")}
-                              editForm={<ItineraryForm existingCities={tripCities} item={item} tripId={trip.id} />}
+                              editForm={<ItineraryForm item={item} tripId={trip.id} />}
                               deleteAction={deleteItineraryItem}
                               deleteHiddenFields={{ tripId: trip.id, itemId: item.id }}
                               deleteTitle={t("itinerary.deleteItemTitle")}
@@ -1387,7 +1388,11 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                       <TabsContent key={group.date} value={group.date} keepMounted className="mt-4">
                       <section>
                         <h3 className="text-sm font-semibold uppercase tracking-[0.12em] text-slate-500">
-                          {t("itinerary.dayHeading", { day: group.dayNumber, date: formatDate(group.date) })}
+                          {t("itinerary.dayHeading", {
+                            day: group.dayNumber,
+                            weekday: formatWeekday(group.date),
+                            date: formatDate(group.date),
+                          })}
                         </h3>
                         {group.items.length ? (
                           <ol className="mt-3 space-y-4">
@@ -1435,7 +1440,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                                   {!isArchived ? (
                                     <ItemActionsMenu
                                       editLabel={t("itinerary.editItem")}
-                                      editForm={<ItineraryForm existingCities={tripCities} item={item} tripId={trip.id} />}
+                                      editForm={<ItineraryForm item={item} tripId={trip.id} />}
                                       deleteAction={deleteItineraryItem}
                                       deleteHiddenFields={{ tripId: trip.id, itemId: item.id }}
                                       deleteTitle={t("itinerary.deleteItemTitle")}

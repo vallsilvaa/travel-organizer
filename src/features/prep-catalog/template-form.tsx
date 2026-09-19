@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+import { CityAutocomplete } from "./city-autocomplete";
 import { createTemplate, updateTemplate, type TemplateActionState } from "./actions";
 import {
   classifications,
@@ -28,6 +29,7 @@ import {
   taskCategories,
   timelineOffsets,
   type Classification,
+  type Continent,
   type PrepItemAction,
   type PrepItemType,
   type TaskCategory,
@@ -40,7 +42,9 @@ type TemplateFormProps = {
     action: PrepItemAction | null;
     item_type: PrepItemType;
     category: TaskCategory;
+    continent: Continent | null;
     country: string;
+    city: string | null;
     classification: Classification;
     due_offset_days: number | null;
     currency: string | null;
@@ -188,16 +192,19 @@ export function TemplateForm({ template, onSuccess, cancelSlot, tripId }: Templa
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="template-country">{t("countryLabel")}</Label>
-        <Input
+        <Label htmlFor="template-location">{t("countryLabel")}</Label>
+        <CityAutocomplete
+          id="template-location"
+          defaultCity={template?.city ?? null}
+          defaultCountry={template?.country}
+          defaultContinent={template?.continent ?? null}
+          countryInputName="country"
+          cityInputName="city"
+          continentInputName="continent"
           required
-          maxLength={100}
-          id="template-country"
-          name="country"
-          defaultValue={template?.country}
-          placeholder={t("countryPlaceholder")}
         />
         {state.errors?.country ? <p className="text-sm text-destructive">{state.errors.country}</p> : null}
+        {state.errors?.city ? <p className="text-sm text-destructive">{state.errors.city}</p> : null}
       </div>
 
       {itemType === "preparation" ? (

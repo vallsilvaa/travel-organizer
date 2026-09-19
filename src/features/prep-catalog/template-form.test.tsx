@@ -19,11 +19,11 @@ describe("TemplateForm", () => {
     expect(button.getAttribute("type")).toBe("submit");
   });
 
-  it("does not show continent or city fields (#165)", () => {
+  it("does not show a separate continent field, but does offer a Local (city/country) search", () => {
     render(<TemplateForm />);
 
     expect(screen.queryByLabelText(/continente/i)).toBeNull();
-    expect(screen.queryByLabelText(/^cidade/i)).toBeNull();
+    expect(screen.getByLabelText("Local")).toBeTruthy();
   });
 
   it("shows document instructions for an existing document_request template", () => {
@@ -35,7 +35,9 @@ describe("TemplateForm", () => {
           action: null,
           item_type: "document_request",
           category: "documents",
+          continent: "europe",
           country: "Portugal",
+          city: null,
           classification: "required",
           due_offset_days: 90,
           currency: "EUR",
@@ -58,7 +60,9 @@ describe("TemplateForm", () => {
           action: null,
           item_type: "preparation",
           category: "documents",
+          continent: "europe",
           country: "Portugal",
+          city: null,
           classification: "required",
           due_offset_days: 180,
           currency: null,
@@ -80,7 +84,9 @@ describe("TemplateForm", () => {
           action: null,
           item_type: "itinerary_item",
           category: "experiences",
+          continent: "europe",
           country: "Italy",
+          city: null,
           classification: "recommended",
           due_offset_days: null,
           currency: null,
@@ -102,7 +108,9 @@ describe("TemplateForm", () => {
           action: null,
           item_type: "preparation",
           category: "documents",
+          continent: "europe",
           country: "Portugal",
+          city: null,
           classification: "required",
           due_offset_days: 45,
           currency: null,
@@ -126,7 +134,9 @@ describe("TemplateForm", () => {
           action: null,
           item_type: "preparation",
           category: "documents",
+          continent: "europe",
           country: "Portugal",
+          city: null,
           classification: "required",
           due_offset_days: 30,
           currency: null,
@@ -160,7 +170,9 @@ describe("TemplateForm", () => {
           action: null,
           item_type: "preparation",
           category: "documents",
+          continent: "europe",
           country: "Portugal",
+          city: null,
           classification: "required",
           due_offset_days: 180,
           currency: null,
@@ -170,5 +182,32 @@ describe("TemplateForm", () => {
       />,
     );
     expect(document.querySelector('input[name="tripId"]')).toBeNull();
+  });
+
+  it("resubmits the saved city, country, and continent unchanged", () => {
+    const { container } = render(
+      <TemplateForm
+        template={{
+          id: "8f3f147b-8684-4ff1-b5c7-6814e4f57f73",
+          title: "Check passport validity",
+          action: null,
+          item_type: "preparation",
+          category: "documents",
+          continent: "europe",
+          country: "Portugal",
+          city: "Lisboa",
+          classification: "required",
+          due_offset_days: 180,
+          currency: null,
+          estimated_amount: null,
+          document_instructions: null,
+        }}
+      />,
+    );
+
+    const formData = new FormData(container.querySelector("form") as HTMLFormElement);
+    expect(formData.get("city")).toBe("Lisboa");
+    expect(formData.get("country")).toBe("Portugal");
+    expect(formData.get("continent")).toBe("europe");
   });
 });
