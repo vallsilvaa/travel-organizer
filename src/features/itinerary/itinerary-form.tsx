@@ -16,6 +16,8 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 
+import { CityAutocomplete } from "@/features/prep-catalog/city-autocomplete";
+
 import {
   createItineraryItem,
   updateItineraryItem,
@@ -24,7 +26,6 @@ import {
 import { getItineraryPeriodLabels, itineraryPeriods } from "./validation";
 
 type ItineraryFormProps = {
-  existingCities?: string[];
   item?: {
     id: string;
     item_date: string;
@@ -40,7 +41,7 @@ type ItineraryFormProps = {
 
 const initialState: ItineraryActionState = {};
 
-export function ItineraryForm({ existingCities = [], item, tripId }: ItineraryFormProps) {
+export function ItineraryForm({ item, tripId }: ItineraryFormProps) {
   const t = useTranslations("itineraryForm");
   const tCommon = useTranslations("common");
   const tPeriods = useTranslations("categories.itineraryPeriod");
@@ -85,19 +86,13 @@ export function ItineraryForm({ existingCities = [], item, tripId }: ItineraryFo
         <Label htmlFor="city">
           {t("cityLabel")} <span className="font-normal text-muted-foreground">{tCommon("optional")}</span>
         </Label>
-        <Input
-          maxLength={200}
+        <CityAutocomplete
           id="city"
-          name="city"
-          list="itinerary-city-options"
-          defaultValue={item?.city ?? ""}
-          placeholder={t("cityPlaceholder")}
+          defaultCity={item?.city ?? null}
+          countryInputName="country"
+          cityInputName="city"
+          continentInputName="continent"
         />
-        {existingCities.length ? (
-          <datalist id="itinerary-city-options">
-            {existingCities.map((city) => <option key={city} value={city} />)}
-          </datalist>
-        ) : null}
         {state.errors?.city ? <p className="text-sm text-destructive">{state.errors.city}</p> : null}
       </div>
       <div className="space-y-2">

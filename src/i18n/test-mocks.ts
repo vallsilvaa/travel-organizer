@@ -15,6 +15,7 @@ const dateTimeFormats = {
   short: { dateStyle: "short" },
   medium: { dateStyle: "medium" },
   long: { dateStyle: "long" },
+  weekday: { weekday: "long" },
 } as const;
 
 export function createTranslator(namespace?: string) {

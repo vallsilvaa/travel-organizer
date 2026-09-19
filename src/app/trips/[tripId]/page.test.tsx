@@ -829,6 +829,45 @@ describe("TripPage", () => {
     });
   });
 
+  describe("itinerary day heading", () => {
+    it("shows the day of week alongside the day number and date", async () => {
+      // The day-by-day view only renders once the trip has at least one
+      // itinerary item - an empty trip shows an empty state instead.
+      mocks.from.mockImplementation((table: string) => {
+        if (table === "trips") return queryBuilder({ data: trip, error: null });
+        if (table === "trip_tasks") return queryBuilder({ data: [], error: null });
+        if (table === "itinerary_items") {
+          return queryBuilder({
+            data: [{
+              id: "11111111-1111-1111-1111-111111111111",
+              item_date: "2026-09-01",
+              start_time: null,
+              title: "Chegada",
+              location: null,
+              notes: null,
+              period: null,
+              city: null,
+            }],
+            error: null,
+          });
+        }
+        if (table === "item_comments") return queryBuilder({ data: [], error: null });
+        if (table === "trip_expenses") return queryBuilder({ data: [], error: null });
+        if (table === "trip_expense_shares") return queryBuilder({ data: [], error: null });
+        if (table === "trip_invitations") return queryBuilder({ data: [], error: null });
+        return queryBuilder({ data: null, error: null });
+      });
+
+      render(await TripPage({
+        params: Promise.resolve({ tripId }),
+        searchParams: Promise.resolve({ tab: "itinerary" }),
+      }));
+
+      // trip.start_date is 2026-09-01, a Tuesday.
+      expect(screen.getByText("Dia 1 · terça-feira, 1 de setembro de 2026")).toBeTruthy();
+    });
+  });
+
   describe("destinations and invite lock", () => {
     it("renders each structured destination as a badge in the trip header", async () => {
       mocks.from.mockImplementation((table: string) => {

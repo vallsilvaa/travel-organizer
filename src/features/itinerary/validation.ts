@@ -47,7 +47,13 @@ export function validateItineraryInput(formData: FormData):
   const title = String(formData.get("title") ?? "").trim();
   const location = optionalValue(formData.get("location"));
   const notes = optionalValue(formData.get("notes"));
-  const city = optionalValue(formData.get("city"));
+  // CityAutocomplete only fills its `city` hidden field when a suggestion
+  // is actually picked - free text typed without selecting one (e.g. a
+  // small town not in the bundled dataset) lands in its `country` field
+  // instead (the component's fallback for callers where country is the
+  // meaningful field). itinerary_items has no country concept at all, so
+  // whichever of the two actually has something is the city the visitor meant.
+  const city = optionalValue(formData.get("city")) ?? optionalValue(formData.get("country"));
   const rawPeriodField = optionalValue(formData.get("period"));
   const rawPeriod = rawPeriodField === "none" ? null : rawPeriodField;
   const errors: ItineraryFieldErrors = {};
