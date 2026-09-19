@@ -243,6 +243,7 @@ describe("applyPrepTemplate", () => {
     const template = {
       id: templateId,
       title: "Visit the Colosseum",
+      action: null,
       item_type: "itinerary_item",
       category: "experiences",
       continent: null,
@@ -290,7 +291,9 @@ describe("applyPrepTemplate", () => {
         trip_id: tripId,
         item_date: "2027-09-10",
         title: "Visit the Colosseum",
-        location: "Rome",
+        city: "Rome",
+        action: null,
+        template_id: templateId,
         created_by: userId,
       }),
     );

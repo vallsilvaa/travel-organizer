@@ -26,11 +26,11 @@ import {
   getTaskCategoryLabels,
   prepItemActions,
   prepItemTypes,
+  resolveActionLabel,
   taskCategories,
   timelineOffsets,
   type Classification,
   type Continent,
-  type PrepItemAction,
   type PrepItemType,
   type TaskCategory,
 } from "./shared";
@@ -39,7 +39,7 @@ type TemplateFormProps = {
   template?: {
     id: string;
     title: string;
-    action: PrepItemAction | null;
+    action: string | null;
     item_type: PrepItemType;
     category: TaskCategory;
     continent: Continent | null;
@@ -54,11 +54,19 @@ type TemplateFormProps = {
   onSuccess?: () => void;
   cancelSlot?: ReactNode;
   tripId?: string;
+  // Lets a caller open this form pre-set to a specific catalog type - e.g.
+  // the Roteiro tab's "new catalog item" entry point (#222) shouldn't make
+  // the visitor manually switch away from the "preparation" default every
+  // time. Ignored once editing an existing template (its own type wins).
+  defaultItemType?: PrepItemType;
+  // Free-text suggestions for the "Ação" combobox - values already used in
+  // your own catalog templates, alongside the 6 built-in presets (#222).
+  existingTemplateActions?: string[];
 };
 
 const initialState: TemplateActionState = {};
 
-export function TemplateForm({ template, onSuccess, cancelSlot, tripId }: TemplateFormProps) {
+export function TemplateForm({ template, onSuccess, cancelSlot, tripId, defaultItemType, existingTemplateActions }: TemplateFormProps) {
   const t = useTranslations("templateForm");
   const tPrepItemType = useTranslations("categories.prepItemType");
   const tPrepItemAction = useTranslations("categories.prepItemAction");
@@ -73,7 +81,7 @@ export function TemplateForm({ template, onSuccess, cancelSlot, tripId }: Templa
     template ? updateTemplate : createTemplate,
     initialState,
   );
-  const [itemType, setItemType] = useState<PrepItemType>(template?.item_type ?? "preparation");
+  const [itemType, setItemType] = useState<PrepItemType>(template?.item_type ?? defaultItemType ?? "preparation");
   const initialOffsetIsCustom = Boolean(
     template?.due_offset_days != null && !(timelineOffsets as readonly number[]).includes(template.due_offset_days),
   );
@@ -84,6 +92,12 @@ export function TemplateForm({ template, onSuccess, cancelSlot, tripId }: Templa
     timelineOffsets.map((offset) => [
       offset,
       offset === 1 ? t("timelineOffsetEve") : t("timelineOffsetDays", { count: offset }),
+    ]),
+  );
+  const actionSuggestions = Array.from(
+    new Set([
+      ...prepItemActions.map((action) => prepItemActionLabels[action]),
+      ...(existingTemplateActions ?? []),
     ]),
   );
 
@@ -108,17 +122,19 @@ export function TemplateForm({ template, onSuccess, cancelSlot, tripId }: Templa
         <Label htmlFor="template-action">
           {t("actionLabel")} <span className="font-normal text-muted-foreground">{t("optional")}</span>
         </Label>
-        <Select name="action" defaultValue={template?.action ?? "none"} items={{ none: t("actionNone"), ...prepItemActionLabels }}>
-          <SelectTrigger id="template-action" className="w-full">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="none">{t("actionNone")}</SelectItem>
-            {prepItemActions.map((action) => (
-              <SelectItem key={action} value={action}>{prepItemActionLabels[action]}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <Input
+          maxLength={50}
+          id="template-action"
+          name="action"
+          list="template-action-options"
+          defaultValue={resolveActionLabel(template?.action ?? null, prepItemActionLabels) ?? ""}
+          placeholder={t("actionPlaceholder")}
+        />
+        <datalist id="template-action-options">
+          {actionSuggestions.map((option) => (
+            <option key={option} value={option} />
+          ))}
+        </datalist>
         {state.errors?.action ? <p className="text-sm text-destructive">{state.errors.action}</p> : null}
       </div>
 
@@ -155,41 +171,52 @@ export function TemplateForm({ template, onSuccess, cancelSlot, tripId }: Templa
         {state.errors?.itemType ? <p className="text-sm text-destructive">{state.errors.itemType}</p> : null}
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="template-category">{t("categoryLabel")}</Label>
-        <Select name="category" defaultValue={template?.category ?? "other"} items={taskCategoryLabels}>
-          <SelectTrigger id="template-category" className="w-full">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {taskCategories.map((category) => (
-              <SelectItem key={category} value={category}>{taskCategoryLabels[category]}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        {state.errors?.category ? <p className="text-sm text-destructive">{state.errors.category}</p> : null}
-      </div>
+      {itemType !== "itinerary_item" ? (
+        <div className="space-y-2">
+          <Label htmlFor="template-category">{t("categoryLabel")}</Label>
+          <Select name="category" defaultValue={template?.category ?? "other"} items={taskCategoryLabels}>
+            <SelectTrigger id="template-category" className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {taskCategories.map((category) => (
+                <SelectItem key={category} value={category}>{taskCategoryLabels[category]}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {state.errors?.category ? <p className="text-sm text-destructive">{state.errors.category}</p> : null}
+        </div>
+      ) : (
+        <input type="hidden" name="category" value="other" />
+      )}
 
-      <div className="space-y-2">
-        <Label htmlFor="template-classification">{t("classificationLabel")}</Label>
-        <Select
-          name="classification"
-          defaultValue={template?.classification ?? "recommended"}
-          items={classificationLabels}
-        >
-          <SelectTrigger id="template-classification" className="w-full">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {classifications.map((classification) => (
-              <SelectItem key={classification} value={classification}>
-                {classificationLabels[classification]}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        {state.errors?.classification ? <p className="text-sm text-destructive">{state.errors.classification}</p> : null}
-      </div>
+      {itemType !== "itinerary_item" ? (
+        <div className="space-y-2">
+          <Label htmlFor="template-classification">{t("classificationLabel")}</Label>
+          <Select
+            name="classification"
+            defaultValue={template?.classification ?? "recommended"}
+            items={classificationLabels}
+          >
+            <SelectTrigger id="template-classification" className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {classifications.map((classification) => (
+                <SelectItem key={classification} value={classification}>
+                  {classificationLabels[classification]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {state.errors?.classification ? <p className="text-sm text-destructive">{state.errors.classification}</p> : null}
+        </div>
+      ) : (
+        // A reusable itinerary item has no "required/recommended/optional"
+        // concept - classification only matters for preparation checklist
+        // items - but the column is required, so a stable default is sent.
+        <input type="hidden" name="classification" value="recommended" />
+      )}
 
       <div className="space-y-2">
         <Label htmlFor="template-location">{t("countryLabel")}</Label>
@@ -249,37 +276,41 @@ export function TemplateForm({ template, onSuccess, cancelSlot, tripId }: Templa
         </div>
       ) : null}
 
-      <div className="space-y-2">
-        <Label htmlFor="template-currency">
-          {t("currencyLabel")} <span className="font-normal text-muted-foreground">{t("optional")}</span>
-        </Label>
-        <Input
-          minLength={3}
-          maxLength={3}
-          id="template-currency"
-          name="currency"
-          defaultValue={template?.currency ?? ""}
-          placeholder="BRL"
-          className="uppercase"
-        />
-        {state.errors?.currency ? <p className="text-sm text-destructive">{state.errors.currency}</p> : null}
-      </div>
+      {itemType !== "itinerary_item" ? (
+        <>
+          <div className="space-y-2">
+            <Label htmlFor="template-currency">
+              {t("currencyLabel")} <span className="font-normal text-muted-foreground">{t("optional")}</span>
+            </Label>
+            <Input
+              minLength={3}
+              maxLength={3}
+              id="template-currency"
+              name="currency"
+              defaultValue={template?.currency ?? ""}
+              placeholder="BRL"
+              className="uppercase"
+            />
+            {state.errors?.currency ? <p className="text-sm text-destructive">{state.errors.currency}</p> : null}
+          </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="template-estimatedAmount">
-          {t("estimatedAmountLabel")} <span className="font-normal text-muted-foreground">{t("optional")}</span>
-        </Label>
-        <Input
-          min="0"
-          step="0.01"
-          type="number"
-          inputMode="decimal"
-          id="template-estimatedAmount"
-          name="estimatedAmount"
-          defaultValue={template?.estimated_amount ?? ""}
-        />
-        {state.errors?.estimatedAmount ? <p className="text-sm text-destructive">{state.errors.estimatedAmount}</p> : null}
-      </div>
+          <div className="space-y-2">
+            <Label htmlFor="template-estimatedAmount">
+              {t("estimatedAmountLabel")} <span className="font-normal text-muted-foreground">{t("optional")}</span>
+            </Label>
+            <Input
+              min="0"
+              step="0.01"
+              type="number"
+              inputMode="decimal"
+              id="template-estimatedAmount"
+              name="estimatedAmount"
+              defaultValue={template?.estimated_amount ?? ""}
+            />
+            {state.errors?.estimatedAmount ? <p className="text-sm text-destructive">{state.errors.estimatedAmount}</p> : null}
+          </div>
+        </>
+      ) : null}
 
       {itemType === "document_request" ? (
         <div className="space-y-2 sm:col-span-2">

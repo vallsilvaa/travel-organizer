@@ -47,10 +47,10 @@ import {
   getContinentLabels,
   getPrepItemActionLabels,
   getPrepItemTypeLabels,
+  resolveActionLabel,
   timelineOffsets,
   type Classification,
   type Continent,
-  type PrepItemAction,
   type PrepItemType,
 } from "@/features/prep-catalog/shared";
 import { localeTag } from "@/i18n/locale";
@@ -109,6 +109,7 @@ type TripDestination = {
 type CatalogTemplate = {
   id: string;
   title: string;
+  action: string | null;
   item_type: PrepItemType;
   category: TaskCategory;
   continent: Continent | null;
@@ -217,7 +218,7 @@ type TripReservation = {
 type TripTask = {
   id: string;
   title: string;
-  action: PrepItemAction | null;
+  action: string | null;
   owner_id: string | null;
   due_date: string | null;
   due_offset_days: number | null;
@@ -396,7 +397,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
         .order("position", { ascending: true }),
       supabase
         .from("itinerary_items")
-        .select("id, item_date, start_time, title, location, notes, period, city")
+        .select("id, item_date, start_time, title, location, notes, period, city, action, template_id")
         .eq("trip_id", trip.id)
         .order("item_date", { ascending: true })
         .order("start_time", { ascending: true, nullsFirst: false }),
@@ -467,6 +468,13 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
   const tripDestinations = (destinations ?? []) as TripDestination[];
   const invitations = invitationResult.data;
   const catalogTemplates = (templatesResult.data ?? []) as CatalogTemplate[];
+  const existingTemplateActions = Array.from(
+    new Set(
+      catalogTemplates
+        .map((template) => template.action)
+        .filter((action): action is string => Boolean(action)),
+    ),
+  );
   const tripParticipants = (participants ?? []) as TripParticipant[];
   const participantNames = new Map<string, string>(
     tripParticipants.map((participant) => [
@@ -504,6 +512,21 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
   const appliedTemplateIds = allTasks
     .map((task) => task.template_id)
     .filter((templateId): templateId is string => Boolean(templateId));
+  const appliedItineraryTemplateIds = (itineraryItems ?? [])
+    .map((item) => item.template_id)
+    .filter((templateId): templateId is string => Boolean(templateId));
+  // Check-in/Check-out are always offered as suggestions even before the
+  // trip has any itinerary action set, plus anything already typed on this
+  // trip's items (#222).
+  const tripActions = Array.from(
+    new Set([
+      t("itinerary.actionPresetCheckIn"),
+      t("itinerary.actionPresetCheckOut"),
+      ...(itineraryItems ?? [])
+        .map((item) => item.action)
+        .filter((action): action is string => Boolean(action)),
+    ]),
+  );
   const filteredTasks = allTasks.filter((task) => {
     const matchesStatus = statusFilter === "all"
       || (statusFilter === "completed" ? Boolean(task.completed_at) : !task.completed_at);
@@ -1281,15 +1304,43 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                     {t("itinerary.description")}
                   </CardDescription>
                 </div>
-                {itineraryItems?.length ? (
-                  <a
-                    href={`/api/trips/${trip.id}/itinerary.ics`}
-                    download
-                    className={buttonVariants({ variant: "outline", size: "sm" })}
-                  >
-                    {t("itinerary.exportIcs")}
-                  </a>
-                ) : null}
+                <div className="flex flex-wrap items-center gap-2">
+                  {!isArchived ? (
+                    <>
+                      <AddTaskFromCatalogModal
+                        templates={catalogTemplates.filter((template) => template.item_type === "itinerary_item")}
+                        tripId={trip.id}
+                        participants={tripParticipants}
+                        itineraryItems={itineraryItemOptions}
+                        taskCategoryLabels={taskCategoryLabels}
+                        prepItemTypeLabels={prepItemTypeLabels}
+                        classificationLabels={classificationLabels}
+                        continentLabels={continentLabels}
+                        appliedTemplateIds={appliedItineraryTemplateIds}
+                        triggerLabel={t("itinerary.addFromCatalog")}
+                        title={t("itinerary.catalogModalTitle")}
+                        description={t("itinerary.catalogModalDescription")}
+                        noTemplatesMessage={t("itinerary.catalogModalNoTemplates")}
+                        toastMessage={t("itinerary.catalogModalToast")}
+                      />
+                      <NewTaskModal
+                        triggerLabel={t("itinerary.newFromCatalog")}
+                        tripId={trip.id}
+                        defaultItemType="itinerary_item"
+                        existingTemplateActions={existingTemplateActions}
+                      />
+                    </>
+                  ) : null}
+                  {itineraryItems?.length ? (
+                    <a
+                      href={`/api/trips/${trip.id}/itinerary.ics`}
+                      download
+                      className={buttonVariants({ variant: "outline", size: "sm" })}
+                    >
+                      {t("itinerary.exportIcs")}
+                    </a>
+                  ) : null}
+                </div>
               </div>
             </CardHeader>
             <CardContent>
@@ -1299,7 +1350,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                     {t("itinerary.addItem")}
                   </summary>
                   <div className="mt-5">
-                    <ItineraryForm tripId={trip.id} />
+                    <ItineraryForm tripId={trip.id} existingActions={tripActions} />
                   </div>
                 </details>
               ) : null}
@@ -1363,7 +1414,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                             <span>{formatDate(item.item_date)} · {item.title}</span>
                             <ItemActionsMenu
                               editLabel={t("itinerary.editItem")}
-                              editForm={<ItineraryForm item={item} tripId={trip.id} />}
+                              editForm={<ItineraryForm item={item} tripId={trip.id} existingActions={tripActions} />}
                               deleteAction={deleteItineraryItem}
                               deleteHiddenFields={{ tripId: trip.id, itemId: item.id }}
                               deleteTitle={t("itinerary.deleteItemTitle")}
@@ -1403,7 +1454,14 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                                     <p className="text-sm font-semibold text-sky-700">
                                       {formatItineraryWhen(item)}
                                     </p>
-                                    <h3 className="mt-2 text-lg font-semibold text-slate-950">{item.title}</h3>
+                                    <h3 className="mt-2 text-lg font-semibold text-slate-950">
+                                      {item.title}
+                                      {item.action ? (
+                                        <span className="ml-2 inline-flex items-center rounded-full border border-sky-200 bg-sky-50 px-2 py-0.5 align-middle text-xs font-semibold text-sky-800">
+                                          {item.action}
+                                        </span>
+                                      ) : null}
+                                    </h3>
                                     {item.location || item.city ? (
                                       <p className="mt-1 text-sm text-slate-600">
                                         {[item.location, item.city].filter(Boolean).join(" · ")}
@@ -1440,7 +1498,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                                   {!isArchived ? (
                                     <ItemActionsMenu
                                       editLabel={t("itinerary.editItem")}
-                                      editForm={<ItineraryForm item={item} tripId={trip.id} />}
+                                      editForm={<ItineraryForm item={item} tripId={trip.id} existingActions={tripActions} />}
                                       deleteAction={deleteItineraryItem}
                                       deleteHiddenFields={{ tripId: trip.id, itemId: item.id }}
                                       deleteTitle={t("itinerary.deleteItemTitle")}
@@ -1876,7 +1934,11 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                       continentLabels={continentLabels}
                       appliedTemplateIds={appliedTemplateIds}
                     />
-                    <NewTaskModal triggerLabel={t("preparation.createTask")} tripId={trip.id} />
+                    <NewTaskModal
+                      triggerLabel={t("preparation.createTask")}
+                      tripId={trip.id}
+                      existingTemplateActions={existingTemplateActions}
+                    />
                   </div>
                 ) : null}
               </div>
@@ -2089,7 +2151,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                                 <div>
                                   <div className="flex flex-wrap items-center gap-2">
                                     <h4 className={`font-semibold ${task.completed_at ? "text-slate-500 line-through" : "text-slate-950"}`}>
-                                      {task.action ? `${prepItemActionLabels[task.action]}: ` : ""}{task.title}
+                                      {resolveActionLabel(task.action, prepItemActionLabels) ? `${resolveActionLabel(task.action, prepItemActionLabels)}: ` : ""}{task.title}
                                     </h4>
                                     <Badge variant="outline">{taskCategoryLabels[task.category]}</Badge>
                                     {isGovernedPrepItem && task.item_type === "document_request" ? (
@@ -2165,6 +2227,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                                         completingLabel={t("preparation.completingPending")}
                                         reopenLabel={t("preparation.reopen")}
                                         reopeningLabel={t("preparation.reopeningPending")}
+                                        existingItineraryActions={tripActions}
                                       />
                                     ) : (
                                       <form action={setTaskCompletion}>
@@ -2206,6 +2269,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                                               itinerary_item_id: task.itinerary_item_id,
                                             }}
                                             tripId={trip.id}
+                                            existingTemplateActions={existingTemplateActions}
                                           />
                                         ) : (
                                           <TaskForm participants={tripParticipants} task={task} tripId={trip.id} />

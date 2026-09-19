@@ -67,6 +67,7 @@ describe("ItineraryForm", () => {
           notes: null,
           period: null,
           city: "Paris",
+          action: null,
         }}
       />,
     );

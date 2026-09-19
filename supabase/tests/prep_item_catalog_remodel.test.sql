@@ -145,8 +145,10 @@ select lives_ok(
   'a governed trip_tasks row no longer requires a continent, only a country'
 );
 
--- #208: the optional "action" prefix (Comprar, Reservar...) on both the
--- template and the applied trip_tasks row.
+-- #208/#222: the optional "action" prefix (Comprar, Reservar...) on both
+-- the template and the applied trip_tasks row - free text since #222, not
+-- a fixed enum, so any non-empty value up to 50 characters is accepted and
+-- only an overlong value is rejected.
 select lives_ok(
   $$
     insert into public.prep_item_templates (
@@ -154,7 +156,7 @@ select lives_ok(
     ) values (
       '94111111-1111-4111-8111-111111111111',
       'Musical tickets',
-      'buy',
+      'Trocar moeda',
       'preparation',
       'experiences',
       'United Kingdom',
@@ -162,7 +164,7 @@ select lives_ok(
       30
     )
   $$,
-  'a valid action value is accepted on a template'
+  'a free-text action value is accepted on a template'
 );
 
 select throws_ok(
@@ -172,7 +174,7 @@ select throws_ok(
     ) values (
       '94111111-1111-4111-8111-111111111111',
       'Musical tickets',
-      'not_a_real_action',
+      repeat('a', 51),
       'preparation',
       'experiences',
       'United Kingdom',
@@ -182,7 +184,7 @@ select throws_ok(
   $$,
   '23514',
   null,
-  'an invalid action value is rejected on a template'
+  'an action value over 50 characters is rejected on a template'
 );
 
 select lives_ok(
@@ -192,7 +194,7 @@ select lives_ok(
     ) values (
       '94aaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
       'Musical tickets',
-      'buy',
+      'Trocar moeda',
       'preparation',
       'experiences',
       'United Kingdom',
@@ -201,7 +203,7 @@ select lives_ok(
       '94111111-1111-4111-8111-111111111111'
     )
   $$,
-  'a valid action value is accepted on an applied trip_tasks row'
+  'a free-text action value is accepted on an applied trip_tasks row'
 );
 
 select throws_ok(
@@ -211,7 +213,7 @@ select throws_ok(
     ) values (
       '94aaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
       'Musical tickets',
-      'not_a_real_action',
+      repeat('a', 51),
       'preparation',
       'experiences',
       'United Kingdom',
@@ -222,7 +224,7 @@ select throws_ok(
   $$,
   '23514',
   null,
-  'an invalid action value is rejected on an applied trip_tasks row'
+  'an action value over 50 characters is rejected on an applied trip_tasks row'
 );
 
 select * from finish();

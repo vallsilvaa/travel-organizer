@@ -3,12 +3,10 @@ import {
   continents,
   isClassification,
   isContinent,
-  isPrepItemAction,
   isPrepItemType,
   taskCategories,
   type Classification,
   type Continent,
-  type PrepItemAction,
   type PrepItemType,
   type TaskCategory,
 } from "./shared";
@@ -38,7 +36,7 @@ export type TemplateFieldErrors = Partial<
 
 export type TemplateInput = {
   title: string;
-  action: PrepItemAction | null;
+  action: string | null;
   itemType: PrepItemType;
   category: TaskCategory;
   continent: Continent | null;
@@ -64,8 +62,7 @@ export function validateTemplateInput(formData: FormData):
   | { success: true; data: TemplateInput }
   | { success: false; errors: TemplateFieldErrors } {
   const title = String(formData.get("title") ?? "").trim();
-  const rawAction = String(formData.get("action") ?? "");
-  const action = rawAction === "none" ? "" : rawAction;
+  const action = optionalValue(formData.get("action"));
   const itemType = String(formData.get("itemType") ?? "");
   const category = String(formData.get("category") ?? "other");
   const rawContinent = String(formData.get("continent") ?? "");
@@ -82,8 +79,8 @@ export function validateTemplateInput(formData: FormData):
   if (!title || title.length > 200) {
     errors.title = "titleRequired";
   }
-  if (action && !isPrepItemAction(action)) {
-    errors.action = "actionInvalid";
+  if (action && action.length > 50) {
+    errors.action = "actionTooLong";
   }
   if (!isPrepItemType(itemType)) {
     errors.itemType = "itemTypeInvalid";
@@ -152,7 +149,7 @@ export function validateTemplateInput(formData: FormData):
         success: true,
         data: {
           title,
-          action: (action || null) as PrepItemAction | null,
+          action,
           itemType: itemType as PrepItemType,
           category: category as TaskCategory,
           continent: (continent || null) as Continent | null,

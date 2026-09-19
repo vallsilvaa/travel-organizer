@@ -291,6 +291,7 @@ export async function convertPrepTaskOnCompletion(
         item_date: itineraryValidation.data.date,
         title: task.title,
         location: itineraryValidation.data.location,
+        action: itineraryValidation.data.action,
         created_by: user.id,
       })
       .select("id")

@@ -15,15 +15,25 @@ import {
 } from "@/components/ui/dialog";
 
 import { TemplateForm } from "./template-form";
+import type { PrepItemType } from "./shared";
 
 type NewTaskModalProps = {
   triggerLabel?: string;
   triggerVariant?: ComponentProps<typeof Button>["variant"];
   triggerSize?: ComponentProps<typeof Button>["size"];
   tripId?: string;
+  defaultItemType?: PrepItemType;
+  existingTemplateActions?: string[];
 };
 
-export function NewTaskModal({ triggerLabel, triggerVariant, triggerSize = "lg", tripId }: NewTaskModalProps) {
+export function NewTaskModal({
+  triggerLabel,
+  triggerVariant,
+  triggerSize = "lg",
+  tripId,
+  defaultItemType,
+  existingTemplateActions,
+}: NewTaskModalProps) {
   const t = useTranslations("templateForm");
   const [open, setOpen] = useState(false);
 
@@ -39,6 +49,8 @@ export function NewTaskModal({ triggerLabel, triggerVariant, triggerSize = "lg",
         </DialogHeader>
         <TemplateForm
           tripId={tripId}
+          defaultItemType={defaultItemType}
+          existingTemplateActions={existingTemplateActions}
           onSuccess={() => setOpen(false)}
           cancelSlot={
             <DialogClose render={<Button type="button" variant="outline" size="lg" />}>

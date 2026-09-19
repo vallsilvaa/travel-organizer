@@ -51,6 +51,7 @@ type TaskCompletionDialogProps = {
   completingLabel: string;
   reopenLabel: string;
   reopeningLabel: string;
+  existingItineraryActions?: string[];
 };
 
 const initialState: ConvertPrepTaskActionState = {};
@@ -70,6 +71,7 @@ export function TaskCompletionDialog({
   completingLabel,
   reopenLabel,
   reopeningLabel,
+  existingItineraryActions,
 }: TaskCompletionDialogProps) {
   const t = useTranslations("taskConversionDialog");
   const tReservationType = useTranslations("categories.reservationType");
@@ -336,12 +338,34 @@ export function TaskCompletionDialog({
             </label>
 
             {addItinerary ? (
-              <div className="space-y-2 rounded-2xl border p-4">
-                <Label htmlFor="conversion-itineraryDate">{t("itineraryDateLabel")}</Label>
-                <Input required id="conversion-itineraryDate" name="date" type="date" />
-                {state.itineraryErrors?.date ? (
-                  <p className="text-sm text-destructive">{state.itineraryErrors.date}</p>
-                ) : null}
+              <div className="space-y-3 rounded-2xl border p-4">
+                <div className="space-y-2">
+                  <Label htmlFor="conversion-itineraryDate">{t("itineraryDateLabel")}</Label>
+                  <Input required id="conversion-itineraryDate" name="date" type="date" />
+                  {state.itineraryErrors?.date ? (
+                    <p className="text-sm text-destructive">{state.itineraryErrors.date}</p>
+                  ) : null}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="conversion-itineraryAction">{t("itineraryActionLabel")}</Label>
+                  <Input
+                    maxLength={50}
+                    id="conversion-itineraryAction"
+                    name="action"
+                    list="conversion-itinerary-action-options"
+                    placeholder={t("itineraryActionPlaceholder")}
+                  />
+                  {existingItineraryActions?.length ? (
+                    <datalist id="conversion-itinerary-action-options">
+                      {existingItineraryActions.map((option) => (
+                        <option key={option} value={option} />
+                      ))}
+                    </datalist>
+                  ) : null}
+                  {state.itineraryErrors?.action ? (
+                    <p className="text-sm text-destructive">{state.itineraryErrors.action}</p>
+                  ) : null}
+                </div>
               </div>
             ) : null}
 

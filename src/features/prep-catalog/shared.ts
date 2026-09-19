@@ -56,6 +56,20 @@ export function isPrepItemAction(value: string): value is PrepItemAction {
   return (prepItemActions as readonly string[]).includes(value);
 }
 
+// The action field used to be a fixed 6-value enum; it's now free text with
+// these as suggested presets (#222). A stored value that matches one of the
+// known preset keys (e.g. legacy "buy") shows its translated label; anything
+// else - free text typed and saved since - is displayed as-is.
+export function resolveActionLabel(
+  action: string | null,
+  labels: Record<PrepItemAction, string>,
+): string | null {
+  if (!action) {
+    return null;
+  }
+  return isPrepItemAction(action) ? labels[action] : action;
+}
+
 export function isClassification(value: string): value is Classification {
   return (classifications as readonly string[]).includes(value);
 }

@@ -289,6 +289,14 @@
       "description": "Keep activities, reservations, and meeting points in chronological order.",
       "exportIcs": "Export .ics",
       "addItem": "Add itinerary item",
+      "addFromCatalog": "Add from catalog",
+      "newFromCatalog": "New catalog item",
+      "catalogModalTitle": "Add an itinerary item from your catalog",
+      "catalogModalDescription": "Pick a saved item from your personal catalog to add to this trip's itinerary.",
+      "catalogModalNoTemplates": "You don't have any saved itinerary items in your catalog yet.",
+      "catalogModalToast": "Itinerary item added from the catalog.",
+      "actionPresetCheckIn": "Check-in",
+      "actionPresetCheckOut": "Check-out",
       "loadError": "Could not load the itinerary. Try refreshing the page.",
       "noTimeSet": "No time set",
       "editItem": "Edit item",
@@ -690,6 +698,8 @@
     "periodLabel": "Time of day",
     "periodNone": "No specific period",
     "cityLabel": "Location",
+    "actionLabel": "Action",
+    "actionPlaceholder": "Check-in, Check-out...",
     "titleLabel": "Title",
     "titlePlaceholder": "Museum visit",
     "locationLabel": "Address",
@@ -707,7 +717,8 @@
       "titleRequired": "Enter a title with up to 200 characters.",
       "locationTooLong": "Location must be up to 200 characters.",
       "notesTooLong": "Notes must be up to 2,000 characters.",
-      "cityTooLong": "City must be up to 200 characters."
+      "cityTooLong": "City must be up to 200 characters.",
+      "actionTooLong": "Action must be up to 50 characters."
     },
     "actionErrors": {
       "identifyTrip": "Could not identify the trip.",
@@ -922,7 +933,7 @@
   },
   "templateForm": {
     "actionLabel": "Action",
-    "actionNone": "No action",
+    "actionPlaceholder": "Buy, book, change currency...",
     "whatLabel": "What",
     "titleLabel": "Title",
     "titlePlaceholder": "Verify passport validity",
@@ -945,7 +956,7 @@
     "toastAdded": "Template added.",
     "errors": {
       "titleRequired": "Enter a title with up to 200 characters.",
-      "actionInvalid": "Choose a valid action.",
+      "actionTooLong": "Action must be up to 50 characters.",
       "itemTypeInvalid": "Choose a valid item type.",
       "categoryInvalid": "Choose a valid category.",
       "continentInvalid": "Choose a valid continent.",
@@ -991,6 +1002,8 @@
     "responsibleSplitPreview": "{amount} per person ({count} responsible)",
     "addItinerary": "Add to itinerary",
     "itineraryDateLabel": "Date",
+    "itineraryActionLabel": "Action",
+    "itineraryActionPlaceholder": "Check-in, Check-out...",
     "skip": "Skip",
     "save": "Save",
     "savePending": "Saving...",
@@ -1003,7 +1016,7 @@
   },
   "prepItemForm": {
     "actionLabel": "Action",
-    "actionNone": "No action",
+    "actionPlaceholder": "Buy, book, change currency...",
     "whatLabel": "What",
     "titleLabel": "Title",
     "itemTypeLabel": "Item type",
@@ -1026,7 +1039,7 @@
     "toastUpdated": "Item updated.",
     "errors": {
       "titleRequired": "Enter a title with up to 200 characters.",
-      "actionInvalid": "Choose a valid action.",
+      "actionTooLong": "Action must be up to 50 characters.",
       "itemTypeInvalid": "Choose a valid item type.",
       "categoryInvalid": "Choose a valid category.",
       "continentInvalid": "Choose a valid continent.",

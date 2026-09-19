@@ -35,13 +35,17 @@ type ItineraryFormProps = {
     notes: string | null;
     period: string | null;
     city: string | null;
+    action: string | null;
   };
   tripId: string;
+  // Free-text suggestions for the "Ação" combobox - values already used on
+  // this trip, plus the always-available Check-in/Check-out presets (#222).
+  existingActions?: string[];
 };
 
 const initialState: ItineraryActionState = {};
 
-export function ItineraryForm({ item, tripId }: ItineraryFormProps) {
+export function ItineraryForm({ item, tripId, existingActions }: ItineraryFormProps) {
   const t = useTranslations("itineraryForm");
   const tCommon = useTranslations("common");
   const tPeriods = useTranslations("categories.itineraryPeriod");
@@ -111,6 +115,27 @@ export function ItineraryForm({ item, tripId }: ItineraryFormProps) {
           </SelectContent>
         </Select>
         {state.errors?.period ? <p className="text-sm text-destructive">{state.errors.period}</p> : null}
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="action">
+          {t("actionLabel")} <span className="font-normal text-muted-foreground">{tCommon("optional")}</span>
+        </Label>
+        <Input
+          maxLength={50}
+          id="action"
+          name="action"
+          list="itinerary-action-options"
+          defaultValue={item?.action ?? ""}
+          placeholder={t("actionPlaceholder")}
+        />
+        {existingActions?.length ? (
+          <datalist id="itinerary-action-options">
+            {existingActions.map((option) => (
+              <option key={option} value={option} />
+            ))}
+          </datalist>
+        ) : null}
+        {state.errors?.action ? <p className="text-sm text-destructive">{state.errors.action}</p> : null}
       </div>
       <div className="space-y-2 sm:col-span-2">
         <Label htmlFor="title">{t("titleLabel")}</Label>
