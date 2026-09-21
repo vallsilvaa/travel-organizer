@@ -53,11 +53,18 @@ function DialogContent({
       <DialogPrimitive.Popup
         data-slot="dialog-content"
         className={cn(
-          "fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 rounded-xl bg-popover p-4 text-sm text-popover-foreground ring-1 ring-foreground/10 duration-100 outline-none sm:max-w-sm data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
+          // In standalone (home-screen app) mode this anchors to the bottom of
+          // the screen instead of centering, and slides up like a native
+          // bottom sheet - see DialogContent's docstring-equivalent comment
+          // in the standalone plan: every Dialog in the app inherits this for
+          // free (delete confirmations, "new item" modals, etc).
+          "fixed top-1/2 left-1/2 z-50 grid max-h-[85vh] w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 overflow-y-auto rounded-xl bg-popover p-4 text-sm text-popover-foreground ring-1 ring-foreground/10 duration-100 outline-none sm:max-w-sm data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
+          "standalone:top-auto standalone:bottom-0 standalone:left-0 standalone:max-w-full standalone:translate-x-0 standalone:translate-y-0 standalone:rounded-t-3xl standalone:rounded-b-none standalone:pb-[calc(env(safe-area-inset-bottom)+1rem)] standalone:data-open:zoom-in-100 standalone:data-open:slide-in-from-bottom standalone:data-closed:zoom-out-100 standalone:data-closed:slide-out-to-bottom",
           className
         )}
         {...props}
       >
+        <div className="mx-auto hidden h-1.5 w-12 shrink-0 rounded-full bg-foreground/15 standalone:block" aria-hidden="true" />
         {children}
         {showCloseButton && (
           <DialogPrimitive.Close

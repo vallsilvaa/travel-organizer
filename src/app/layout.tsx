@@ -52,6 +52,10 @@ export const viewport: Viewport = {
     { media: "(prefers-color-scheme: light)", color: "#2f6f62" },
     { media: "(prefers-color-scheme: dark)", color: "#193a35" },
   ],
+  // Required for env(safe-area-inset-*) to resolve to anything but 0 - without
+  // it, statusBarStyle: "black-translucent" below draws content under the
+  // iOS status bar with no way to pad around it.
+  viewportFit: "cover",
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
@@ -64,7 +68,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col">
+      <body className="min-h-full flex flex-col standalone:pt-[env(safe-area-inset-top)]">
         <NextIntlClientProvider locale={locale} messages={messages}>
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
             {children}

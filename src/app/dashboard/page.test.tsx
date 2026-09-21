@@ -14,6 +14,7 @@ vi.mock("@/lib/supabase/server", () => ({ createClient: mocks.createClient }));
 vi.mock("next/navigation", () => ({
   redirect: mocks.redirect,
   useRouter: () => ({ refresh: vi.fn() }),
+  usePathname: () => "/dashboard",
 }));
 vi.mock("next-intl", async () => {
   const { createTranslator } = await import("@/i18n/test-mocks");

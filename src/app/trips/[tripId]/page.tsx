@@ -56,6 +56,7 @@ import {
 import { localeTag } from "@/i18n/locale";
 import { createClient } from "@/lib/supabase/server";
 import { Badge } from "@/components/ui/badge";
+import { CollapsibleFormPanel } from "@/components/collapsible-form-panel";
 import { ItemActionsMenu } from "@/components/item-actions-menu";
 import { ConfirmDeleteForm } from "@/components/confirm-delete-form";
 import { LanguageSwitcher } from "@/components/language-switcher";
@@ -937,10 +938,13 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
         </ul>
       ) : null}
       {!isArchived ? (
-        <details className="mt-3 border-t border-slate-100 pt-3">
-          <summary className="cursor-pointer text-sm font-semibold text-sky-700 hover:text-sky-800">
-            {t("expenses.addReceipt")}
-          </summary>
+        <CollapsibleFormPanel
+          variant="inline"
+          trigger={t("expenses.addReceipt")}
+          detailsClassName="mt-3 border-t border-slate-100 pt-3"
+          summaryClassName="text-sm font-semibold text-sky-700 hover:text-sky-800"
+          triggerClassName="mt-3 text-sm"
+        >
           <div className="mt-3">
             <AttachmentForm
               tripId={trip.id}
@@ -948,7 +952,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
               compact
             />
           </div>
-        </details>
+        </CollapsibleFormPanel>
       ) : null}
     </li>
   );
@@ -991,7 +995,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
     });
 
   return (
-    <main className="min-h-screen bg-slate-50 px-6 py-12">
+    <main className="min-h-screen bg-slate-50 px-6 py-12 standalone:px-4 standalone:pt-3">
       <div className="mx-auto max-w-4xl space-y-8">
         <Card className="[--card-spacing:--spacing(8)] sm:[--card-spacing:--spacing(10)]">
             {coverImageUrl ? (
@@ -1014,7 +1018,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
               <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">
                 {t("eyebrow")}
               </p>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 standalone:sticky standalone:top-0 standalone:z-40 standalone:rounded-lg standalone:bg-card/95 standalone:px-2 standalone:py-1 standalone:backdrop-blur">
                 <RealtimeStatus tripId={trip.id} />
                 <LanguageSwitcher />
                 <ThemeToggle />
@@ -1103,10 +1107,11 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
 
             {isCreator ? (
               <div className="mt-8 border-t border-slate-200 pt-6">
-                <details className="rounded-2xl bg-slate-50 p-5">
-                  <summary className="cursor-pointer font-semibold text-slate-900">
-                    {t("editTrip")}
-                  </summary>
+                <CollapsibleFormPanel
+                  variant="inline"
+                  trigger={t("editTrip")}
+                  detailsClassName="rounded-2xl bg-slate-50 p-5"
+                >
                   <TripForm
                     trip={{
                       id: trip.id,
@@ -1123,7 +1128,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                       })),
                     }}
                   />
-                </details>
+                </CollapsibleFormPanel>
                 <div className="mt-4 flex justify-end gap-4">
                   <form action={isArchived ? restoreTrip : archiveTrip}>
                     <input type="hidden" name="tripId" value={trip.id} />
@@ -1163,7 +1168,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
               is one line of defense against a longer label (a 5th tab, or a
               future English translation) quietly pushing the bar - and by
               extension the page - wider than the screen. */}
-          <TabsList className="w-full overflow-x-auto sm:w-auto sm:overflow-visible">
+          <TabsList className="w-full overflow-x-auto sm:w-auto sm:overflow-visible standalone:sticky standalone:top-0 standalone:z-30 standalone:w-full standalone:justify-start standalone:rounded-none standalone:border-b standalone:border-slate-200 standalone:bg-slate-50/95 standalone:py-2 standalone:backdrop-blur">
             <TabsTrigger value="overview" className="shrink-0 sm:flex-1 sm:shrink">{t("tabs.overview")}</TabsTrigger>
             <TabsTrigger value="itinerary" className="shrink-0 sm:flex-1 sm:shrink">{t("tabs.itinerary")}</TabsTrigger>
             <TabsTrigger value="reservations" className="shrink-0 sm:flex-1 sm:shrink">{t("tabs.reservations")}</TabsTrigger>
@@ -1249,10 +1254,12 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                   <p className="mt-3 text-sm text-slate-600">{t("overview.guideEmpty")}</p>
                 )}
                 {canEditDestinationGuide && !isArchived ? (
-                  <details className="mt-4 rounded-2xl bg-slate-50 p-5" open={!trip.destination_guide_content}>
-                    <summary className="cursor-pointer font-semibold text-slate-900">
-                      {trip.destination_guide_content ? t("overview.guideEdit") : t("overview.guideAdd")}
-                    </summary>
+                  <CollapsibleFormPanel
+                    variant="inline"
+                    trigger={trip.destination_guide_content ? t("overview.guideEdit") : t("overview.guideAdd")}
+                    defaultOpen={!trip.destination_guide_content}
+                    detailsClassName="mt-4 rounded-2xl bg-slate-50 p-5"
+                  >
                     <div className="mt-5">
                       <DestinationGuideForm
                         tripId={trip.id}
@@ -1263,7 +1270,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                         }}
                       />
                     </div>
-                  </details>
+                  </CollapsibleFormPanel>
                 ) : null}
               </section>
 
@@ -1345,14 +1352,16 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
             </CardHeader>
             <CardContent>
               {!isArchived ? (
-                <details className="mt-5 rounded-2xl bg-sky-50 p-5" open={!itineraryItems?.length}>
-                  <summary className="cursor-pointer font-semibold text-sky-900">
-                    {t("itinerary.addItem")}
-                  </summary>
+                <CollapsibleFormPanel
+                  trigger={t("itinerary.addItem")}
+                  defaultOpen={!itineraryItems?.length}
+                  detailsClassName="mt-5 rounded-2xl bg-sky-50 p-5"
+                  summaryClassName="text-sky-900"
+                >
                   <div className="mt-5">
                     <ItineraryForm tripId={trip.id} existingActions={tripActions} />
                   </div>
-                </details>
+                </CollapsibleFormPanel>
               ) : null}
 
               {tripCities.length ? (
@@ -1544,14 +1553,16 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
             </CardHeader>
             <CardContent>
               {!isArchived ? (
-                <details className="mt-5 rounded-2xl bg-sky-50 p-5" open={!tripReservations.length}>
-                  <summary className="cursor-pointer font-semibold text-sky-900">
-                    {t("itinerary.addReservation")}
-                  </summary>
+                <CollapsibleFormPanel
+                  trigger={t("itinerary.addReservation")}
+                  defaultOpen={!tripReservations.length}
+                  detailsClassName="mt-5 rounded-2xl bg-sky-50 p-5"
+                  summaryClassName="text-sky-900"
+                >
                   <div className="mt-5">
                     <ReservationForm itineraryItems={itineraryItemOptions} participants={tripParticipants} tripId={trip.id} />
                   </div>
-                </details>
+                </CollapsibleFormPanel>
               ) : null}
 
               {reservationsError ? (
@@ -1842,12 +1853,16 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
               ) : null}
 
               {!isArchived ? (
-                <details className="mt-5 rounded-2xl bg-sky-50 p-5" open={!tripExpenses.length}>
-                  <summary className="cursor-pointer font-semibold text-sky-900">{t("expenses.addExpense")}</summary>
+                <CollapsibleFormPanel
+                  trigger={t("expenses.addExpense")}
+                  defaultOpen={!tripExpenses.length}
+                  detailsClassName="mt-5 rounded-2xl bg-sky-50 p-5"
+                  summaryClassName="text-sky-900"
+                >
                   <div className="mt-5">
                     <ExpenseForm participants={tripParticipants} tripId={trip.id} />
                   </div>
-                </details>
+                </CollapsibleFormPanel>
               ) : null}
 
               {expensesError ? (
@@ -2307,10 +2322,12 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
             </CardHeader>
             <CardContent>
               {!isArchived ? (
-                <details className="mt-5 rounded-2xl bg-sky-50 p-5" open={!tripAttachments.length}>
-                  <summary className="cursor-pointer font-semibold text-sky-900">
-                    {t("documents.addAttachment")}
-                  </summary>
+                <CollapsibleFormPanel
+                  trigger={t("documents.addAttachment")}
+                  defaultOpen={!tripAttachments.length}
+                  detailsClassName="mt-5 rounded-2xl bg-sky-50 p-5"
+                  summaryClassName="text-sky-900"
+                >
                   <div className="mt-5">
                     <AttachmentForm
                       tripId={trip.id}
@@ -2320,7 +2337,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                       expenses={tripExpenses.map((expense) => ({ id: expense.id, title: expense.description }))}
                     />
                   </div>
-                </details>
+                </CollapsibleFormPanel>
               ) : null}
 
               {attachmentsError ? (

@@ -20,6 +20,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useStandalone } from "@/lib/use-standalone";
 
 type ItemActionsMenuProps = {
   editForm: ReactNode;
@@ -46,6 +47,7 @@ export function ItemActionsMenu({
   const formId = useId();
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const standalone = useStandalone();
 
   return (
     <>
@@ -57,8 +59,10 @@ export function ItemActionsMenu({
           <span className="sr-only">{t("actionsLabel")}</span>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={() => setEditOpen((open) => !open)}>
-            {editOpen ? t("hideForm") : resolvedEditLabel}
+          <DropdownMenuItem
+            onClick={() => (standalone ? setEditOpen(true) : setEditOpen((open) => !open))}
+          >
+            {!standalone && editOpen ? t("hideForm") : resolvedEditLabel}
           </DropdownMenuItem>
           <DropdownMenuItem variant="destructive" onClick={() => setDeleteOpen(true)}>
             {resolvedDeleteLabel}
@@ -66,7 +70,18 @@ export function ItemActionsMenu({
         </DropdownMenuContent>
       </DropdownMenu>
 
-      {editOpen ? <div className="mt-4 border-t pt-4">{editForm}</div> : null}
+      {!standalone && editOpen ? <div className="mt-4 border-t pt-4">{editForm}</div> : null}
+
+      {standalone ? (
+        <Dialog open={editOpen} onOpenChange={setEditOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{resolvedEditLabel}</DialogTitle>
+            </DialogHeader>
+            {editForm}
+          </DialogContent>
+        </Dialog>
+      ) : null}
 
       <form id={formId} action={deleteAction} className="hidden">
         {Object.entries(deleteHiddenFields).map(([name, value]) => (

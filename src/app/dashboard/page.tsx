@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { signOut } from "@/features/auth/actions";
 import { getAuthMessage } from "@/features/auth/messages";
 import { type Notification } from "@/features/notifications/notification-bell";
+import { AppBottomNav } from "@/components/app-bottom-nav";
 import { DashboardTopBar } from "@/components/dashboard-top-bar";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -49,7 +50,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const displayName = profile?.display_name ?? user.email ?? tCommon("traveler");
 
   return (
-    <main className="min-h-screen bg-slate-50 px-6 py-12">
+    <main className="min-h-screen bg-slate-50 px-6 py-12 standalone:px-4 standalone:pt-3 standalone:pb-24">
       <div className="mx-auto max-w-5xl space-y-8">
         <Card className="[--card-spacing:--spacing(8)]">
           <CardHeader>
@@ -60,7 +61,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
             <CardDescription className="mt-2 text-base">
               {t("welcomeDescription")}
             </CardDescription>
-            <CardAction>
+            <CardAction className="standalone:sticky standalone:top-0 standalone:z-40 standalone:rounded-lg standalone:bg-card/95 standalone:px-2 standalone:py-1 standalone:backdrop-blur">
               <DashboardTopBar
                 isOrganizer={Boolean(profile?.is_organizer)}
                 notifications={(notifications ?? []) as Notification[]}
@@ -96,6 +97,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           </Link>
         </div>
       </div>
+      <AppBottomNav />
     </main>
   );
 }
