@@ -2,6 +2,7 @@
 
 import { useLocale, useTranslations } from "next-intl";
 
+import { CollapsibleFormPanel } from "@/components/collapsible-form-panel";
 import { ConfirmDeleteForm } from "@/components/confirm-delete-form";
 import { localeTag, type Locale } from "@/i18n/locale";
 
@@ -69,8 +70,13 @@ export function CommentThread({
               </div>
               <p className="mt-2 whitespace-pre-wrap leading-6 text-slate-700">{comment.body}</p>
               {comment.author_id === currentUserId ? (
-                <details className="mt-3">
-                  <summary className="cursor-pointer text-xs font-semibold text-sky-700">{t("editLabel")}</summary>
+                <CollapsibleFormPanel
+                  variant="inline"
+                  trigger={t("editLabel")}
+                  detailsClassName="mt-3"
+                  summaryClassName="text-xs font-semibold text-sky-700"
+                  triggerClassName="mt-3 text-xs"
+                >
                   <CommentForm comment={comment} itemId={itemId} itemType={itemType} tripId={tripId} />
                   <div className="mt-2 text-right">
                     <ConfirmDeleteForm
@@ -82,7 +88,7 @@ export function CommentThread({
                       triggerClassName="h-auto p-0 text-xs text-destructive"
                     />
                   </div>
-                </details>
+                </CollapsibleFormPanel>
               ) : null}
             </li>
           ))}

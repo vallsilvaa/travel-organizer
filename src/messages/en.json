@@ -2,7 +2,12 @@
   "common": {
     "appName": "Travel Organizer",
     "traveler": "Traveler",
-    "optional": "(optional)"
+    "optional": "(optional)",
+    "nav": {
+      "home": "Home",
+      "trips": "Trips",
+      "profile": "Profile"
+    }
   },
   "themeToggle": {
     "toggleLabel": "Toggle theme",

@@ -8,6 +8,7 @@ import { type Notification } from "@/features/notifications/notification-bell";
 import { updateCollaborationEmailPreference } from "@/features/notifications/actions";
 import { updateReminderPreference } from "@/features/reminders/actions";
 import { PushToggle } from "@/features/push/push-toggle";
+import { AppBottomNav } from "@/components/app-bottom-nav";
 import { DashboardTopBar } from "@/components/dashboard-top-bar";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { SubmitButton } from "@/components/submit-button";
@@ -70,7 +71,7 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
   ]);
 
   return (
-    <main className="min-h-screen bg-slate-50 px-6 py-12">
+    <main className="min-h-screen bg-slate-50 px-6 py-12 standalone:px-4 standalone:pt-3 standalone:pb-24">
       <div className="mx-auto max-w-3xl space-y-8">
         <Card className="[--card-spacing:--spacing(8)]">
           <CardHeader>
@@ -78,7 +79,7 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
               {t("backToHub")}
             </Link>
             <CardTitle className="mt-2 text-3xl">{t("pageTitle")}</CardTitle>
-            <CardAction>
+            <CardAction className="standalone:sticky standalone:top-0 standalone:z-40 standalone:rounded-lg standalone:bg-card/95 standalone:px-2 standalone:py-1 standalone:backdrop-blur">
               <DashboardTopBar
                 isOrganizer={Boolean(profile?.is_organizer)}
                 notifications={(notifications ?? []) as Notification[]}
@@ -252,6 +253,7 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
           </CardContent>
         </Card>
       </div>
+      <AppBottomNav />
     </main>
   );
 }

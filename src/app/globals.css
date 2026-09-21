@@ -3,6 +3,10 @@
 @import "shadcn/tailwind.css";
 
 @custom-variant dark (&:is(.dark *));
+/* Targets the app when launched from the home screen (iOS/Android "Add to Home
+   Screen"), where display-mode is reported as standalone instead of browser -
+   lets the whole app present itself differently there without any JS. */
+@custom-variant standalone (@media (display-mode: standalone));
 
 /* Design tokens from the product wireframes: petroleum green for primary
    actions/progress, terracotta for critical/error items, ochre for pending

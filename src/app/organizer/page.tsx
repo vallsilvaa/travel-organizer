@@ -133,14 +133,14 @@ export default async function OrganizerPage() {
   );
 
   return (
-    <main className="min-h-screen bg-slate-50 px-6 py-12">
+    <main className="min-h-screen bg-slate-50 px-6 py-12 standalone:px-4 standalone:pt-3">
       <div className="mx-auto max-w-5xl space-y-8">
         <Card className="[--card-spacing:--spacing(8)]">
           <CardHeader>
             <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">{t("eyebrow")}</p>
             <CardTitle className="mt-2 text-3xl">{t("title")}</CardTitle>
             <CardDescription className="mt-2 text-base">{t("description")}</CardDescription>
-            <CardAction className="flex items-center gap-3">
+            <CardAction className="flex items-center gap-3 standalone:sticky standalone:top-0 standalone:z-40 standalone:rounded-lg standalone:bg-card/95 standalone:px-2 standalone:py-1 standalone:backdrop-blur">
               <LanguageSwitcher />
               <ThemeToggle />
               {profile.is_traveler ? (
