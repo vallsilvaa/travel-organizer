@@ -25,6 +25,8 @@ export type TemplateActionState = {
 export type ApplyTemplateActionState = {
   message?: string;
   success?: boolean;
+  appliedCount?: number;
+  duplicateCount?: number;
 };
 
 type SupabaseServerClient = Awaited<ReturnType<typeof createClient>>;
@@ -315,56 +317,66 @@ export async function deleteTemplate(formData: FormData) {
   revalidatePath("/organizer");
 }
 
-export async function applyPrepTemplate(
+export async function applyPrepTemplates(
   _previousState: ApplyTemplateActionState,
   formData: FormData,
 ): Promise<ApplyTemplateActionState> {
   const t = await getTranslations("organizerPanel.applyForm");
   const tripId = String(formData.get("tripId") ?? "");
-  const templateId = String(formData.get("templateId") ?? "");
-  const rawAssignedTo = String(formData.get("assignedTo") ?? "").trim();
-  const assignedTo = rawAssignedTo && rawAssignedTo !== "none" ? rawAssignedTo : null;
-  const rawItineraryItemId = String(formData.get("itineraryItemId") ?? "").trim();
-  const itineraryItemId = rawItineraryItemId && rawItineraryItemId !== "none" ? rawItineraryItemId : null;
-  const rawItemDate = String(formData.get("itemDate") ?? "").trim();
+  const templateIds = formData.getAll("templateIds").map((value) => String(value));
 
-  if (!isValidTemplateId(tripId) || !isValidTemplateId(templateId)) {
+  if (!isValidTemplateId(tripId) || templateIds.length === 0 || !templateIds.every(isValidTemplateId)) {
     return { message: t("identifyError") };
   }
 
   const { supabase, user } = await authenticatedClient();
 
-  const { data: template, error: templateError } = await supabase
+  const { data: templates, error: templatesError } = await supabase
     .from("prep_item_templates")
     .select(
       "id, title, action, item_type, category, continent, country, city, classification, due_offset_days, currency, estimated_amount, document_instructions",
     )
-    .eq("id", templateId)
-    .single();
+    .in("id", templateIds);
 
-  if (templateError || !template) {
+  if (templatesError || !templates?.length) {
     return { message: t("templateNotFound") };
   }
 
-  const applied = await applyTemplateRowToTrip({
-    supabase,
-    userId: user.id,
-    template: template as TemplateRow,
-    tripId,
-    assignedTo,
-    itineraryItemId,
-    rawItemDate,
-  });
+  let appliedCount = 0;
+  let duplicateCount = 0;
+  let tripNotFound = false;
+  let otherFailure = false;
 
-  if (!applied.ok) {
-    const message =
-      applied.reason === "trip_not_found"
-        ? t("tripNotFound")
-        : applied.reason === "duplicate"
-          ? t("alreadyAdded")
-          : t("applyFailed");
-    return { message };
+  for (const template of templates as TemplateRow[]) {
+    const applied = await applyTemplateRowToTrip({
+      supabase,
+      userId: user.id,
+      template,
+      tripId,
+      assignedTo: null,
+      itineraryItemId: null,
+      rawItemDate: "",
+    });
+
+    if (applied.ok) {
+      appliedCount += 1;
+    } else if (applied.reason === "duplicate") {
+      duplicateCount += 1;
+    } else if (applied.reason === "trip_not_found") {
+      tripNotFound = true;
+    } else {
+      otherFailure = true;
+    }
   }
 
-  return { success: true };
+  if (appliedCount === 0) {
+    const message = tripNotFound
+      ? t("tripNotFound")
+      : duplicateCount > 0 && !otherFailure
+        ? t("alreadyAdded")
+        : t("applyFailed");
+    return { message, duplicateCount };
+  }
+
+  return { success: true, appliedCount, duplicateCount };
 }

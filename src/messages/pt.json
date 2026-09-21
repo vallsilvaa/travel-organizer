@@ -444,16 +444,12 @@
         "noResults": "Nenhum modelo encontrado para esta busca.",
         "alreadyAdded": "Já adicionada",
         "noTemplates": "Você ainda não tem modelos no catálogo. Use \"Criar Tarefa\" para criar o primeiro.",
-        "back": "Voltar à busca",
         "cancel": "Cancelar",
-        "confirm": "Adicionar à viagem",
-        "confirmPending": "Adicionando...",
-        "toastApplied": "Tarefa adicionada à viagem.",
-        "assignedToLabel": "Viajante responsável",
-        "assignedToNone": "Sem responsável",
-        "itineraryLinkLabel": "Item do roteiro vinculado",
-        "itineraryLinkNone": "Sem vínculo",
-        "daysBeforeDeparture": "{count} dias antes da partida"
+        "selectedCount": "{count, plural, =0 {Nenhum selecionado} =1 {# selecionado} other {# selecionados}}",
+        "addSelected": "{count, plural, =1 {Adicionar # item} other {Adicionar # itens}}",
+        "addSelectedPending": "Adicionando...",
+        "toastApplied": "{count, plural, =1 {# item adicionado à viagem.} other {# itens adicionados à viagem.}}",
+        "toastPartiallyApplied": "{applied, plural, =1 {# item adicionado} other {# itens adicionados}} - {skipped, plural, =1 {# já estava na viagem} other {# já estavam na viagem}}."
       }
     },
     "documents": {

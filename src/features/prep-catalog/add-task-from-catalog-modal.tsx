@@ -18,15 +18,9 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 
-import { applyPrepTemplate, type ApplyTemplateActionState } from "./actions";
+import { applyPrepTemplates, type ApplyTemplateActionState } from "./actions";
 import type { Classification, Continent, PrepItemType } from "./shared";
 
 type CatalogTemplate = {
@@ -44,9 +38,6 @@ type CatalogTemplate = {
   document_instructions: string | null;
 };
 
-type Participant = { user_id: string; display_name: string; role: string };
-type ItineraryItemOption = { id: string; title: string };
-
 type Labels = {
   taskCategoryLabels: Record<TaskCategory, string>;
   prepItemTypeLabels: Record<PrepItemType, string>;
@@ -57,8 +48,6 @@ type Labels = {
 type AddTaskFromCatalogModalProps = Labels & {
   templates: CatalogTemplate[];
   tripId: string;
-  participants: Participant[];
-  itineraryItems: ItineraryItemOption[];
   appliedTemplateIds: string[];
   // Every one of these defaults to the Preparação-tab copy (the modal's
   // original, only home) - overridable so the exact same component reads
@@ -71,11 +60,11 @@ type AddTaskFromCatalogModalProps = Labels & {
   toastMessage?: string;
 };
 
+const initialState: ApplyTemplateActionState = {};
+
 export function AddTaskFromCatalogModal({
   templates,
   tripId,
-  participants,
-  itineraryItems,
   appliedTemplateIds,
   triggerLabel,
   title,
@@ -89,7 +78,9 @@ export function AddTaskFromCatalogModal({
   const tTrigger = useTranslations("trip.preparation");
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const [selected, setSelected] = useState<CatalogTemplate | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [state, formAction, pending] = useActionState(applyPrepTemplates, initialState);
+  const [lastHandledState, setLastHandledState] = useState(state);
 
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -113,8 +104,40 @@ export function AddTaskFromCatalogModal({
 
   function reset() {
     setQuery("");
-    setSelected(null);
+    setSelectedIds(new Set());
   }
+
+  function toggle(id: string) {
+    setSelectedIds((previous) => {
+      const next = new Set(previous);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }
+
+  if (state !== lastHandledState) {
+    setLastHandledState(state);
+    if (state.success) {
+      setOpen(false);
+      setQuery("");
+      setSelectedIds(new Set());
+    }
+  }
+
+  useEffect(() => {
+    if (state.success) {
+      toast.success(toastMessage ?? t("toastApplied", { count: state.appliedCount ?? 0 }));
+      if (state.duplicateCount) {
+        toast.message(t("toastPartiallyApplied", { applied: state.appliedCount ?? 0, skipped: state.duplicateCount }));
+      }
+    } else if (state.message) {
+      toast.error(state.message);
+    }
+  }, [state, t, toastMessage]);
 
   return (
     <Dialog
@@ -135,45 +158,50 @@ export function AddTaskFromCatalogModal({
           <DialogDescription>{description ?? t("description")}</DialogDescription>
         </DialogHeader>
 
-        {selected ? (
-          <TemplatePreviewAndConfirm
-            template={selected}
-            tripId={tripId}
-            participants={participants}
-            itineraryItems={itineraryItems}
-            toastMessage={toastMessage}
-            {...labels}
-            onBack={() => setSelected(null)}
-            onSuccess={() => setOpen(false)}
-          />
-        ) : (
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="catalog-search">{t("searchLabel")}</Label>
-              <Input
-                id="catalog-search"
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder={t("searchPlaceholder")}
-              />
-            </div>
+        <form action={formAction} className="space-y-4">
+          <input type="hidden" name="tripId" value={tripId} />
+          {Array.from(selectedIds).map((id) => (
+            <input key={id} type="hidden" name="templateIds" value={id} />
+          ))}
 
-            {templates.length === 0 ? (
-              <p className="text-sm text-muted-foreground">{noTemplatesMessage ?? t("noTemplates")}</p>
-            ) : filtered.length === 0 ? (
-              <p className="text-sm text-muted-foreground">{t("noResults")}</p>
-            ) : (
-              <ul className="max-h-80 space-y-2 overflow-y-auto">
-                {filtered.map((template) => {
-                  const alreadyAdded = appliedIds.has(template.id);
-                  return (
-                    <li key={template.id}>
-                      <button
-                        type="button"
+          <div className="space-y-2">
+            <Label htmlFor="catalog-search">{t("searchLabel")}</Label>
+            <Input
+              id="catalog-search"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder={t("searchPlaceholder")}
+            />
+          </div>
+
+          {templates.length === 0 ? (
+            <p className="text-sm text-muted-foreground">{noTemplatesMessage ?? t("noTemplates")}</p>
+          ) : filtered.length === 0 ? (
+            <p className="text-sm text-muted-foreground">{t("noResults")}</p>
+          ) : (
+            <ul className="max-h-80 space-y-2 overflow-y-auto">
+              {filtered.map((template) => {
+                const alreadyAdded = appliedIds.has(template.id);
+                const checked = selectedIds.has(template.id);
+                return (
+                  <li key={template.id}>
+                    <label
+                      className={cn(
+                        "flex w-full items-start gap-3 rounded-2xl border border-slate-200 p-4 text-left transition",
+                        alreadyAdded
+                          ? "cursor-not-allowed opacity-60"
+                          : "cursor-pointer hover:border-sky-300 hover:bg-sky-50",
+                        checked && !alreadyAdded && "border-sky-400 bg-sky-50",
+                      )}
+                    >
+                      <input
+                        type="checkbox"
+                        className="mt-1 size-4 shrink-0 accent-primary"
                         disabled={alreadyAdded}
-                        onClick={() => setSelected(template)}
-                        className="flex w-full flex-col items-start gap-1 rounded-2xl border border-slate-200 p-4 text-left transition hover:border-sky-300 hover:bg-sky-50 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:border-slate-200 disabled:hover:bg-transparent"
-                      >
+                        checked={checked}
+                        onChange={() => toggle(template.id)}
+                      />
+                      <div className="flex flex-col gap-1">
                         <div className="flex flex-wrap items-center gap-2">
                           <span className="font-semibold text-slate-950">{template.title}</span>
                           <Badge variant="outline">{labels.prepItemTypeLabels[template.item_type]}</Badge>
@@ -184,149 +212,25 @@ export function AddTaskFromCatalogModal({
                             .filter(Boolean)
                             .join(" · ")}
                         </span>
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
+                      </div>
+                    </label>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
 
-            <DialogClose render={<Button type="button" variant="outline" />}>{t("cancel")}</DialogClose>
+          <div className="flex items-center justify-between gap-3 border-t border-slate-100 pt-4">
+            <span className="text-sm text-slate-600">{t("selectedCount", { count: selectedIds.size })}</span>
+            <div className="flex items-center gap-3">
+              <DialogClose render={<Button type="button" variant="outline" />}>{t("cancel")}</DialogClose>
+              <Button type="submit" size="lg" disabled={pending || selectedIds.size === 0}>
+                {pending ? t("addSelectedPending") : t("addSelected", { count: selectedIds.size })}
+              </Button>
+            </div>
           </div>
-        )}
+        </form>
       </DialogContent>
     </Dialog>
-  );
-}
-
-type TemplatePreviewAndConfirmProps = Labels & {
-  template: CatalogTemplate;
-  tripId: string;
-  participants: Participant[];
-  itineraryItems: ItineraryItemOption[];
-  toastMessage?: string;
-  onBack: () => void;
-  onSuccess: () => void;
-};
-
-const initialState: ApplyTemplateActionState = {};
-
-function TemplatePreviewAndConfirm({
-  template,
-  tripId,
-  participants,
-  itineraryItems,
-  toastMessage,
-  taskCategoryLabels,
-  prepItemTypeLabels,
-  classificationLabels,
-  continentLabels,
-  onBack,
-  onSuccess,
-}: TemplatePreviewAndConfirmProps) {
-  const t = useTranslations("trip.preparation.catalogModal");
-  const [state, formAction, pending] = useActionState(applyPrepTemplate, initialState);
-
-  useEffect(() => {
-    if (state.success) {
-      toast.success(toastMessage ?? t("toastApplied"));
-      onSuccess();
-    } else if (state.message) {
-      toast.error(state.message);
-    }
-  }, [state, t, toastMessage, onSuccess]);
-
-  return (
-    <div className="space-y-4">
-      <div className="rounded-2xl border border-slate-200 p-4">
-        <div className="flex flex-wrap items-center gap-2">
-          <h3 className="font-semibold text-slate-950">{template.title}</h3>
-          <Badge variant="outline">{prepItemTypeLabels[template.item_type]}</Badge>
-          <Badge variant="outline">{classificationLabels[template.classification]}</Badge>
-        </div>
-        <p className="mt-2 text-sm text-slate-600">
-          {[
-            taskCategoryLabels[template.category],
-            template.continent ? continentLabels[template.continent] : null,
-            template.country,
-            template.city,
-          ]
-            .filter(Boolean)
-            .join(" · ")}
-        </p>
-        {template.due_offset_days ? (
-          <p className="mt-1 text-sm text-slate-600">
-            {t("daysBeforeDeparture", { count: template.due_offset_days })}
-          </p>
-        ) : null}
-        {template.document_instructions ? (
-          <p className="mt-2 text-sm text-slate-600">{template.document_instructions}</p>
-        ) : null}
-      </div>
-
-      <form action={formAction} className="space-y-4">
-        <input type="hidden" name="tripId" value={tripId} />
-        <input type="hidden" name="templateId" value={template.id} />
-
-        {template.item_type !== "itinerary_item" ? (
-          <div className="space-y-2">
-            <Label htmlFor="catalog-assignedTo">{t("assignedToLabel")}</Label>
-            <Select
-              name="assignedTo"
-              defaultValue="none"
-              items={{
-                none: t("assignedToNone"),
-                ...Object.fromEntries(participants.map((p) => [p.user_id, p.display_name])),
-              }}
-            >
-              <SelectTrigger id="catalog-assignedTo" className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">{t("assignedToNone")}</SelectItem>
-                {participants.map((participant) => (
-                  <SelectItem key={participant.user_id} value={participant.user_id}>
-                    {participant.display_name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        ) : null}
-
-        {template.item_type !== "itinerary_item" ? (
-          <div className="space-y-2">
-            <Label htmlFor="catalog-itineraryItemId">{t("itineraryLinkLabel")}</Label>
-            <Select
-              name="itineraryItemId"
-              defaultValue="none"
-              items={{
-                none: t("itineraryLinkNone"),
-                ...Object.fromEntries(itineraryItems.map((item) => [item.id, item.title])),
-              }}
-            >
-              <SelectTrigger id="catalog-itineraryItemId" className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">{t("itineraryLinkNone")}</SelectItem>
-                {itineraryItems.map((item) => (
-                  <SelectItem key={item.id} value={item.id}>{item.title}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        ) : null}
-
-        <div className="flex items-center gap-3">
-          <Button type="submit" disabled={pending} size="lg">
-            {pending ? t("confirmPending") : t("confirm")}
-          </Button>
-          <Button type="button" variant="outline" size="lg" onClick={onBack}>
-            {t("back")}
-          </Button>
-        </div>
-      </form>
-    </div>
   );
 }

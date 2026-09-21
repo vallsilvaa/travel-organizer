@@ -24,7 +24,7 @@ vi.mock("next-intl/server", async () => {
   };
 });
 
-import { applyPrepTemplate, createTemplate, deleteTemplate, updateTemplate } from "./actions";
+import { applyPrepTemplates, createTemplate, deleteTemplate, updateTemplate } from "./actions";
 
 const templateId = "8f3f147b-8684-4ff1-b5c7-6814e4f57f73";
 const tripId = "27823996-ec50-4cc2-8506-a29d07b86f94";
@@ -174,7 +174,7 @@ describe("template CRUD actions", () => {
   });
 });
 
-describe("applyPrepTemplate", () => {
+describe("applyPrepTemplates", () => {
   it("copies the template's fields into a new trip_tasks row with a computed due date", async () => {
     const template = {
       id: templateId,
@@ -190,9 +190,8 @@ describe("applyPrepTemplate", () => {
       estimated_amount: "50.00",
       document_instructions: null,
     };
-    const templateSingle = vi.fn().mockResolvedValue({ data: template, error: null });
-    const templateEq = vi.fn().mockReturnValue({ single: templateSingle });
-    const templateSelect = vi.fn().mockReturnValue({ eq: templateEq });
+    const templatesIn = vi.fn().mockResolvedValue({ data: [template], error: null });
+    const templateSelect = vi.fn().mockReturnValue({ in: templatesIn });
 
     const trip = { id: tripId, start_date: "2027-09-10" };
     const tripSingle = vi.fn().mockResolvedValue({ data: trip, error: null });
@@ -215,11 +214,9 @@ describe("applyPrepTemplate", () => {
 
     const formData = new FormData();
     formData.set("tripId", tripId);
-    formData.set("templateId", templateId);
-    formData.set("assignedTo", "none");
-    formData.set("itineraryItemId", "none");
+    formData.append("templateIds", templateId);
 
-    const result = await applyPrepTemplate({}, formData);
+    const result = await applyPrepTemplates({}, formData);
 
     expect(insert).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -236,6 +233,7 @@ describe("applyPrepTemplate", () => {
       }),
     );
     expect(result.success).toBe(true);
+    expect(result.appliedCount).toBe(1);
     expect(mocks.revalidatePath).toHaveBeenCalledWith(`/trips/${tripId}`);
   });
 
@@ -255,9 +253,8 @@ describe("applyPrepTemplate", () => {
       estimated_amount: null,
       document_instructions: null,
     };
-    const templateSingle = vi.fn().mockResolvedValue({ data: template, error: null });
-    const templateEq = vi.fn().mockReturnValue({ single: templateSingle });
-    const templateSelect = vi.fn().mockReturnValue({ eq: templateEq });
+    const templatesIn = vi.fn().mockResolvedValue({ data: [template], error: null });
+    const templateSelect = vi.fn().mockReturnValue({ in: templatesIn });
 
     const trip = { id: tripId, start_date: "2027-09-10" };
     const tripSingle = vi.fn().mockResolvedValue({ data: trip, error: null });
@@ -280,11 +277,9 @@ describe("applyPrepTemplate", () => {
 
     const formData = new FormData();
     formData.set("tripId", tripId);
-    formData.set("templateId", templateId);
-    formData.set("assignedTo", "none");
-    formData.set("itineraryItemId", "none");
+    formData.append("templateIds", templateId);
 
-    const result = await applyPrepTemplate({}, formData);
+    const result = await applyPrepTemplates({}, formData);
 
     expect(itineraryInsert).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -298,9 +293,79 @@ describe("applyPrepTemplate", () => {
       }),
     );
     expect(result.success).toBe(true);
+    expect(result.appliedCount).toBe(1);
   });
 
-  it("surfaces a friendly message when the template is already active on the trip (#171)", async () => {
+  it("applies every selected template in one call, mixing preparation and itinerary_item types", async () => {
+    const prepTemplateId = "8f3f147b-8684-4ff1-b5c7-6814e4f57f73";
+    const itineraryTemplateId = "94aaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+    const prepTemplate = {
+      id: prepTemplateId,
+      title: "Check passport validity",
+      item_type: "preparation",
+      category: "documents",
+      continent: "europe",
+      country: "Portugal",
+      city: "Lisbon",
+      classification: "required",
+      due_offset_days: 7,
+      currency: "EUR",
+      estimated_amount: "50.00",
+      document_instructions: null,
+    };
+    const itineraryTemplate = {
+      id: itineraryTemplateId,
+      title: "Visit the Colosseum",
+      action: null,
+      item_type: "itinerary_item",
+      category: "experiences",
+      continent: null,
+      country: "Italy",
+      city: "Rome",
+      classification: "recommended",
+      due_offset_days: null,
+      currency: null,
+      estimated_amount: null,
+      document_instructions: null,
+    };
+    const templatesIn = vi.fn().mockResolvedValue({ data: [prepTemplate, itineraryTemplate], error: null });
+    const templateSelect = vi.fn().mockReturnValue({ in: templatesIn });
+
+    const trip = { id: tripId, start_date: "2027-09-10" };
+    const tripSingle = vi.fn().mockResolvedValue({ data: trip, error: null });
+    const tripEq = vi.fn().mockReturnValue({ single: tripSingle });
+    const tripSelect = vi.fn().mockReturnValue({ eq: tripEq });
+
+    const insert = vi.fn().mockReturnValue({
+      select: () => ({ single: async () => ({ data: { id: "new-task-id" }, error: null }) }),
+    });
+    const itineraryInsert = vi.fn().mockReturnValue({
+      select: () => ({ single: async () => ({ data: { id: "new-itinerary-item-id" }, error: null }) }),
+    });
+
+    const from = vi.fn((table: string) => {
+      if (table === "prep_item_templates") return { select: templateSelect };
+      if (table === "trips") return { select: tripSelect };
+      if (table === "trip_tasks") return { insert };
+      if (table === "itinerary_items") return { insert: itineraryInsert };
+      throw new Error(`unexpected table ${table}`);
+    });
+    mocks.createClient.mockResolvedValue({ auth: { getUser: mocks.getUser }, from });
+
+    const formData = new FormData();
+    formData.set("tripId", tripId);
+    formData.append("templateIds", prepTemplateId);
+    formData.append("templateIds", itineraryTemplateId);
+
+    const result = await applyPrepTemplates({}, formData);
+
+    expect(insert).toHaveBeenCalledTimes(1);
+    expect(itineraryInsert).toHaveBeenCalledTimes(1);
+    expect(result.success).toBe(true);
+    expect(result.appliedCount).toBe(2);
+  });
+
+  it("surfaces a friendly message when every selected template is already active on the trip (#171)", async () => {
     const template = {
       id: templateId,
       title: "Check passport validity",
@@ -315,9 +380,8 @@ describe("applyPrepTemplate", () => {
       estimated_amount: "50.00",
       document_instructions: null,
     };
-    const templateSingle = vi.fn().mockResolvedValue({ data: template, error: null });
-    const templateEq = vi.fn().mockReturnValue({ single: templateSingle });
-    const templateSelect = vi.fn().mockReturnValue({ eq: templateEq });
+    const templatesIn = vi.fn().mockResolvedValue({ data: [template], error: null });
+    const templateSelect = vi.fn().mockReturnValue({ in: templatesIn });
 
     const trip = { id: tripId, start_date: "2027-09-10" };
     const tripSingle = vi.fn().mockResolvedValue({ data: trip, error: null });
@@ -340,11 +404,9 @@ describe("applyPrepTemplate", () => {
 
     const formData = new FormData();
     formData.set("tripId", tripId);
-    formData.set("templateId", templateId);
-    formData.set("assignedTo", "none");
-    formData.set("itineraryItemId", "none");
+    formData.append("templateIds", templateId);
 
-    const result = await applyPrepTemplate({}, formData);
+    const result = await applyPrepTemplates({}, formData);
 
     expect(result.success).toBeUndefined();
     expect(result.message).toBeTruthy();
