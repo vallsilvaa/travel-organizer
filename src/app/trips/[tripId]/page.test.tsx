@@ -175,7 +175,7 @@ describe("TripPage", () => {
     expect(screen.getByRole("button", { name: "Criar Tarefa" })).toBeTruthy();
   });
 
-  it("does not show the catalog task actions to a traveler participant who is not the creator (#173)", async () => {
+  it("shows the catalog task actions to a plain traveler participant too, not just organizers", async () => {
     const travelerUserId = "44444444-4444-4444-4444-444444444444";
     mocks.getUser.mockResolvedValue({ data: { user: { id: travelerUserId } } });
     mocks.rpc.mockImplementation((fn: string) =>
@@ -193,8 +193,8 @@ describe("TripPage", () => {
       }),
     );
 
-    expect(screen.queryByRole("button", { name: "Add Tarefa" })).toBeNull();
-    expect(screen.queryByRole("button", { name: "Criar Tarefa" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Add Tarefa" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Criar Tarefa" })).toBeTruthy();
   });
 
   it("does not show the custom-task-add section anymore (#167)", async () => {

@@ -446,10 +446,9 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
             .order("created_at", { ascending: false })
         : Promise.resolve({ data: [] }),
       // Not gated by isCreator: RLS already scopes this to the caller's own
-      // catalog (owner_id = auth.uid()), and organizer-role participants
-      // need their catalog too when adding prep tasks (see isTripOrganizer
-      // below) - a creator-only gate here would leave them with an
-      // "Add from catalog" button that always shows an empty list.
+      // catalog (owner_id = auth.uid()), and every participant can add prep
+      // tasks (not just the organizer) - a creator-only gate here would leave
+      // them with an "Add from catalog" button that always shows an empty list.
       supabase
         .from("prep_item_templates")
         .select(
@@ -1317,8 +1316,6 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                       <AddTaskFromCatalogModal
                         templates={catalogTemplates.filter((template) => template.item_type === "itinerary_item")}
                         tripId={trip.id}
-                        participants={tripParticipants}
-                        itineraryItems={itineraryItemOptions}
                         taskCategoryLabels={taskCategoryLabels}
                         prepItemTypeLabels={prepItemTypeLabels}
                         classificationLabels={classificationLabels}
@@ -1936,13 +1933,11 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                     {t("preparation.description")}
                   </p>
                 </div>
-                {!isArchived && isTripOrganizer ? (
+                {!isArchived ? (
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                     <AddTaskFromCatalogModal
                       templates={catalogTemplates}
                       tripId={trip.id}
-                      participants={tripParticipants}
-                      itineraryItems={itineraryItemOptions}
                       taskCategoryLabels={taskCategoryLabels}
                       prepItemTypeLabels={prepItemTypeLabels}
                       classificationLabels={classificationLabels}

@@ -53,13 +53,15 @@ function renderModal(templates = [passportTemplate, colosseumTemplate], appliedT
     <AddTaskFromCatalogModal
       templates={templates as never}
       tripId="27823996-ec50-4cc2-8506-a29d07b86f94"
-      participants={[{ user_id: "user-1", display_name: "Alice", role: "traveler" }]}
-      itineraryItems={[{ id: "item-1", title: "City walk" }]}
       appliedTemplateIds={appliedTemplateIds}
       {...labels}
     />,
   );
   fireEvent.click(screen.getByRole("button", { name: "Add Tarefa" }));
+}
+
+function checkboxFor(title: string) {
+  return screen.getByText(title).closest("label")!.querySelector("input[type=checkbox]") as HTMLInputElement;
 }
 
 describe("AddTaskFromCatalogModal", () => {
@@ -93,33 +95,33 @@ describe("AddTaskFromCatalogModal", () => {
     expect(screen.getByText(/Nenhum modelo encontrado/)).toBeTruthy();
   });
 
-  it("selecting a template shows a read-only preview with Confirm and Back controls", () => {
+  it("starts with nothing selected and the add button disabled", () => {
     renderModal();
 
-    fireEvent.click(screen.getByText("Check passport validity"));
-
-    expect(screen.getByRole("button", { name: "Adicionar à viagem" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Voltar à busca" })).toBeTruthy();
-    expect(screen.getByText(/180 dias antes da partida/)).toBeTruthy();
+    expect(screen.getByText("Nenhum selecionado")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Adicionar 0 itens" }).hasAttribute("disabled")).toBe(true);
   });
 
-  it("does not show traveler/itinerary link fields for an itinerary_item template", () => {
+  it("selecting multiple templates updates the count and enables the add button with the right label", () => {
     renderModal();
 
-    fireEvent.click(screen.getByText("Visit the Colosseum"));
+    fireEvent.click(checkboxFor("Check passport validity"));
+    fireEvent.click(checkboxFor("Visit the Colosseum"));
 
-    expect(screen.queryByLabelText("Viajante responsável")).toBeNull();
-    expect(screen.queryByLabelText("Item do roteiro vinculado")).toBeNull();
+    expect(screen.getByText("2 selecionados")).toBeTruthy();
+    const addButton = screen.getByRole("button", { name: "Adicionar 2 itens" });
+    expect(addButton.hasAttribute("disabled")).toBe(false);
   });
 
-  it("Back returns from the preview to the search list", () => {
+  it("unchecking a selected template removes it from the count", () => {
     renderModal();
 
-    fireEvent.click(screen.getByText("Check passport validity"));
-    fireEvent.click(screen.getByRole("button", { name: "Voltar à busca" }));
+    const passportCheckbox = checkboxFor("Check passport validity");
+    fireEvent.click(passportCheckbox);
+    expect(screen.getByText("1 selecionado")).toBeTruthy();
 
-    expect(screen.getByLabelText("Buscar")).toBeTruthy();
-    expect(screen.getByText("Visit the Colosseum")).toBeTruthy();
+    fireEvent.click(passportCheckbox);
+    expect(screen.getByText("Nenhum selecionado")).toBeTruthy();
   });
 
   it("Cancel closes the dialog without applying anything", () => {
@@ -130,14 +132,11 @@ describe("AddTaskFromCatalogModal", () => {
     expect(screen.queryByLabelText("Buscar")).toBeNull();
   });
 
-  it("disables an already-applied template and marks it, but leaves the others selectable (#171)", () => {
+  it("disables an already-applied template's checkbox and marks it, but leaves the others selectable (#171)", () => {
     renderModal([passportTemplate, colosseumTemplate], [passportTemplate.id]);
 
-    const passportButton = screen.getByText("Check passport validity").closest("button") as HTMLButtonElement;
-    expect(passportButton.disabled).toBe(true);
+    expect(checkboxFor("Check passport validity").disabled).toBe(true);
     expect(screen.getByText("Já adicionada")).toBeTruthy();
-
-    const colosseumButton = screen.getByText("Visit the Colosseum").closest("button") as HTMLButtonElement;
-    expect(colosseumButton.disabled).toBe(false);
+    expect(checkboxFor("Visit the Colosseum").disabled).toBe(false);
   });
 });
