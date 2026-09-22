@@ -292,7 +292,6 @@
     "itinerary": {
       "title": "Roteiro",
       "description": "Mantenha atividades, reservas e pontos de encontro em ordem cronológica.",
-      "exportIcs": "Exportar .ics",
       "addItem": "Adicionar item ao roteiro",
       "addFromCatalog": "Adicionar do catálogo",
       "catalogModalTitle": "Adicionar item de roteiro do catálogo",
@@ -705,6 +704,7 @@
     "locationLabel": "Endereço",
     "locationPlaceholder": "Endereço ou ponto de encontro",
     "notesLabel": "Notas",
+    "approxDistanceLabel": "Distância aproximada",
     "savePending": "Salvando...",
     "save": "Salvar alterações",
     "add": "Adicionar ao roteiro",
@@ -730,6 +730,17 @@
       "updateFailed": "Não foi possível atualizar este item do roteiro. Tente novamente.",
       "dateOutsideTripRange": "A data deve estar dentro do período da viagem."
     }
+  },
+  "itineraryExportMenu": {
+    "trigger": "Exportar",
+    "pdfOption": "PDF",
+    "icsOption": "Calendário (.ics)",
+    "confirmTitle": "Baixar {fileName}?",
+    "cancel": "Cancelar",
+    "confirmDownload": "Baixar"
+  },
+  "itineraryPdf": {
+    "linkedReservationsLabel": "Reservas vinculadas"
   },
   "reservationForm": {
     "typeLabel": "Tipo",

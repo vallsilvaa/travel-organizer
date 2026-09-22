@@ -292,7 +292,6 @@
     "itinerary": {
       "title": "Itinerary",
       "description": "Keep activities, reservations, and meeting points in chronological order.",
-      "exportIcs": "Export .ics",
       "addItem": "Add itinerary item",
       "addFromCatalog": "Add from catalog",
       "catalogModalTitle": "Add an itinerary item from your catalog",
@@ -705,6 +704,7 @@
     "locationLabel": "Address",
     "locationPlaceholder": "Address or meeting point",
     "notesLabel": "Notes",
+    "approxDistanceLabel": "Approximate distance",
     "savePending": "Saving...",
     "save": "Save changes",
     "add": "Add to itinerary",
@@ -730,6 +730,17 @@
       "updateFailed": "Could not update this itinerary item. Please try again.",
       "dateOutsideTripRange": "The date must be within the trip's date range."
     }
+  },
+  "itineraryExportMenu": {
+    "trigger": "Export",
+    "pdfOption": "PDF",
+    "icsOption": "Calendar (.ics)",
+    "confirmTitle": "Download {fileName}?",
+    "cancel": "Cancel",
+    "confirmDownload": "Download"
+  },
+  "itineraryPdf": {
+    "linkedReservationsLabel": "Linked reservations"
   },
   "reservationForm": {
     "typeLabel": "Type",
