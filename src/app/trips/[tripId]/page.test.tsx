@@ -864,7 +864,7 @@ describe("TripPage", () => {
       }));
 
       // trip.start_date is 2026-09-01, a Tuesday.
-      expect(screen.getByText("Dia 1 · terça-feira, 1 de setembro de 2026")).toBeTruthy();
+      expect(screen.getByText("Terça-feira, 1 de setembro de 2026 (Dia 1)")).toBeTruthy();
     });
   });
 

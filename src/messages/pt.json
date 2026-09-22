@@ -314,7 +314,7 @@
       "periodFilterLabel": "Período do dia",
       "periodFilterAll": "Todos os períodos",
       "applyFilters": "Aplicar filtros",
-      "dayHeading": "Dia {day} · {weekday}, {date}",
+      "dayHeading": "{weekday}, {date} (Dia {day})",
       "dayTabLabel": "Dia {day}",
       "emptyDay": "Nenhuma atividade planejada para este dia.",
       "outOfRangeTitle": "Itens fora do período da viagem",

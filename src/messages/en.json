@@ -314,7 +314,7 @@
       "periodFilterLabel": "Time of day",
       "periodFilterAll": "All periods",
       "applyFilters": "Apply filters",
-      "dayHeading": "Day {day} · {weekday}, {date}",
+      "dayHeading": "{weekday}, {date} (Day {day})",
       "dayTabLabel": "Day {day}",
       "emptyDay": "No activities planned for this day.",
       "outOfRangeTitle": "Items outside the trip's dates",
