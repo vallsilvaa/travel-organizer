@@ -38,6 +38,7 @@ type LinkedTask = { id: string; title: string; completed_at: string | null };
 
 type ItineraryTabProps = {
   tripId: string;
+  tripTitle: string;
   isArchived: boolean;
   currentUserId: string;
   itineraryItems: ItineraryItem[];
@@ -66,6 +67,7 @@ type ItineraryTabProps = {
 
 export function ItineraryTab({
   tripId,
+  tripTitle,
   isArchived,
   currentUserId,
   itineraryItems,
@@ -106,6 +108,7 @@ export function ItineraryTab({
     <Card className="[--card-spacing:--spacing(6)]">
       <ItineraryHeader
         tripId={tripId}
+        tripTitle={tripTitle}
         isArchived={isArchived}
         hasItems={hasItems}
         itineraryTemplates={catalogTemplates.filter((template) => template.item_type === "itinerary_item")}

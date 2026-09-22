@@ -1246,6 +1246,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
           <TabsContent value="itinerary">
           <ItineraryTab
             tripId={trip.id}
+            tripTitle={trip.title}
             isArchived={isArchived}
             currentUserId={user.id}
             itineraryItems={itineraryItems ?? []}

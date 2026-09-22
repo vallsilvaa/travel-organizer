@@ -3,8 +3,9 @@ import type { getTranslations } from "next-intl/server";
 import type { Classification, Continent, PrepItemType } from "@/features/prep-catalog/shared";
 import { AddTaskFromCatalogModal } from "@/features/prep-catalog/add-task-from-catalog-modal";
 import type { TaskCategory } from "@/features/tasks/templates";
-import { buttonVariants } from "@/components/ui/button";
 import { CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+
+import { ItineraryExportMenu } from "./export-menu";
 
 type Translator = Awaited<ReturnType<typeof getTranslations<"trip">>>;
 
@@ -25,6 +26,7 @@ export type CatalogTemplate = {
 
 type ItineraryHeaderProps = {
   tripId: string;
+  tripTitle: string;
   isArchived: boolean;
   hasItems: boolean;
   itineraryTemplates: CatalogTemplate[];
@@ -38,6 +40,7 @@ type ItineraryHeaderProps = {
 
 export function ItineraryHeader({
   tripId,
+  tripTitle,
   isArchived,
   hasItems,
   itineraryTemplates,
@@ -80,15 +83,7 @@ export function ItineraryHeader({
               toastMessage={t("itinerary.catalogModalToast")}
             />
           ) : null}
-          {hasItems ? (
-            <a
-              href={`/api/trips/${tripId}/itinerary.ics`}
-              download
-              className={buttonVariants({ variant: "outline", size: "sm" })}
-            >
-              {t("itinerary.exportIcs")}
-            </a>
-          ) : null}
+          {hasItems ? <ItineraryExportMenu tripId={tripId} tripTitle={tripTitle} /> : null}
         </div>
       </div>
     </CardHeader>
