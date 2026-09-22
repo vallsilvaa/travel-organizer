@@ -1,7 +1,7 @@
 "use client";
 
 import { EllipsisIcon } from "lucide-react";
-import { useId, useState, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
@@ -30,6 +30,17 @@ type ItemActionsMenuProps = {
   deleteTitle: string;
   deleteDescription: string;
   deleteLabel?: string;
+  // Opt-in (R07): a read-only "Ver" action, rendered inline like the edit
+  // panel below. Omitted by every caller except the itinerary card today, so
+  // the other tabs' menus keep their exact current Editar/Excluir shape.
+  viewLabel?: string;
+  viewContent?: ReactNode;
+  // Opt-in (R07): pass a value that changes once a save actually lands (e.g.
+  // the item's updated_at, which only moves after updateItineraryItem's
+  // revalidatePath re-renders this card with fresh data) to auto-collapse
+  // the edit/view panels instead of requiring the manual "Ocultar formulário"
+  // click every other caller still needs. undefined = today's behavior.
+  collapseOnChangeOf?: string;
 };
 
 export function ItemActionsMenu({
@@ -40,14 +51,39 @@ export function ItemActionsMenu({
   deleteTitle,
   deleteDescription,
   deleteLabel,
+  viewLabel,
+  viewContent,
+  collapseOnChangeOf,
 }: ItemActionsMenuProps) {
   const t = useTranslations("itemActionsMenu");
   const resolvedEditLabel = editLabel ?? t("editDefault");
+  const resolvedViewLabel = viewLabel ?? t("viewDefault");
   const resolvedDeleteLabel = deleteLabel ?? t("deleteDefault");
   const formId = useId();
   const [editOpen, setEditOpen] = useState(false);
+  const [viewOpen, setViewOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const standalone = useStandalone();
+  const collapseTrackerRef = useRef(collapseOnChangeOf);
+
+  useEffect(() => {
+    if (collapseOnChangeOf === undefined || collapseTrackerRef.current === collapseOnChangeOf) {
+      return;
+    }
+    collapseTrackerRef.current = collapseOnChangeOf;
+    setEditOpen(false);
+    setViewOpen(false);
+  }, [collapseOnChangeOf]);
+
+  function toggleView() {
+    setEditOpen(false);
+    setViewOpen((open) => !open);
+  }
+
+  function toggleEdit() {
+    setViewOpen(false);
+    setEditOpen((open) => (standalone ? true : !open));
+  }
 
   return (
     <>
@@ -59,9 +95,12 @@ export function ItemActionsMenu({
           <span className="sr-only">{t("actionsLabel")}</span>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem
-            onClick={() => (standalone ? setEditOpen(true) : setEditOpen((open) => !open))}
-          >
+          {viewContent ? (
+            <DropdownMenuItem onClick={toggleView}>
+              {viewOpen ? t("hideView") : resolvedViewLabel}
+            </DropdownMenuItem>
+          ) : null}
+          <DropdownMenuItem onClick={toggleEdit}>
             {!standalone && editOpen ? t("hideForm") : resolvedEditLabel}
           </DropdownMenuItem>
           <DropdownMenuItem variant="destructive" onClick={() => setDeleteOpen(true)}>
@@ -69,6 +108,8 @@ export function ItemActionsMenu({
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+
+      {viewContent && viewOpen ? <div className="mt-4 border-t pt-4">{viewContent}</div> : null}
 
       {!standalone && editOpen ? <div className="mt-4 border-t pt-4">{editForm}</div> : null}
 

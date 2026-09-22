@@ -66,7 +66,12 @@ type ItineraryTabProps = {
   t: Translator;
   formatDate: (value: string) => string;
   formatWeekday: (value: string) => string;
-  formatItineraryWhen: (item: { start_time: string | null; period: string | null }) => string;
+  formatItineraryWhen: (item: {
+    item_date: string;
+    start_time: string | null;
+    end_time: string | null;
+    period: string | null;
+  }) => string;
 };
 
 export function ItineraryTab({
