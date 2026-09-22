@@ -1312,28 +1312,26 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                   {!isArchived ? (
-                    <>
-                      <AddTaskFromCatalogModal
-                        templates={catalogTemplates.filter((template) => template.item_type === "itinerary_item")}
-                        tripId={trip.id}
-                        taskCategoryLabels={taskCategoryLabels}
-                        prepItemTypeLabels={prepItemTypeLabels}
-                        classificationLabels={classificationLabels}
-                        continentLabels={continentLabels}
-                        appliedTemplateIds={appliedItineraryTemplateIds}
-                        triggerLabel={t("itinerary.addFromCatalog")}
-                        title={t("itinerary.catalogModalTitle")}
-                        description={t("itinerary.catalogModalDescription")}
-                        noTemplatesMessage={t("itinerary.catalogModalNoTemplates")}
-                        toastMessage={t("itinerary.catalogModalToast")}
-                      />
-                      <NewTaskModal
-                        triggerLabel={t("itinerary.newFromCatalog")}
-                        tripId={trip.id}
-                        defaultItemType="itinerary_item"
-                        existingTemplateActions={existingTemplateActions}
-                      />
-                    </>
+                    // Only "reuse from catalog" lives here - a saved template has no
+                    // time/period/address/notes to give a new item, so a "create new
+                    // catalog item" entry point here would always cap a brand-new
+                    // itinerary item at those 4 fields. Adding one with full detail
+                    // (not tied to any reusable template) is the "Adicionar item ao
+                    // roteiro" panel below, via the full ItineraryForm.
+                    <AddTaskFromCatalogModal
+                      templates={catalogTemplates.filter((template) => template.item_type === "itinerary_item")}
+                      tripId={trip.id}
+                      taskCategoryLabels={taskCategoryLabels}
+                      prepItemTypeLabels={prepItemTypeLabels}
+                      classificationLabels={classificationLabels}
+                      continentLabels={continentLabels}
+                      appliedTemplateIds={appliedItineraryTemplateIds}
+                      triggerLabel={t("itinerary.addFromCatalog")}
+                      title={t("itinerary.catalogModalTitle")}
+                      description={t("itinerary.catalogModalDescription")}
+                      noTemplatesMessage={t("itinerary.catalogModalNoTemplates")}
+                      toastMessage={t("itinerary.catalogModalToast")}
+                    />
                   ) : null}
                   {itineraryItems?.length ? (
                     <a

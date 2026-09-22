@@ -150,7 +150,14 @@ export function validateReservationInput(formData: FormData):
   // single required payer, "to_pay" is now a valid status with no payer at
   // all (nobody has paid yet), and either status accepts more than one
   // responsible person, split equally.
-  const hasAnyPaymentField = Boolean(rawPaidAmount || currency || rawPaymentStatus || responsibleIds.length);
+  //
+  // paymentStatus itself is deliberately left out of this signal: the form
+  // renders it as a radio group that always has one option selected
+  // (defaults to "paid"), so it can't express "the user never touched
+  // payment info" the way a blank amount/currency/responsible-list can -
+  // treating its ever-present value as a signal made the amount effectively
+  // required on every reservation, contradicting its "optional" label.
+  const hasAnyPaymentField = Boolean(rawPaidAmount || currency || responsibleIds.length);
   let paidAmount: string | null = null;
   if (rawPaidAmount) {
     if (!amountPattern.test(rawPaidAmount) || Number(rawPaidAmount) <= 0) {
@@ -168,15 +175,18 @@ export function validateReservationInput(formData: FormData):
     errors.currency = "currencyRequiredWithPaymentInfo";
   }
 
+  // Discarded (left null) rather than persisted when there's no other
+  // payment info - the radio's default selection doesn't mean anything
+  // without an amount attached to it.
   let paymentStatus: ReservationPaymentStatus | null = null;
-  if (rawPaymentStatus) {
-    if (!isReservationPaymentStatus(rawPaymentStatus)) {
+  if (hasAnyPaymentField) {
+    if (!rawPaymentStatus) {
+      errors.paymentStatus = "paymentStatusRequiredWithPaymentInfo";
+    } else if (!isReservationPaymentStatus(rawPaymentStatus)) {
       errors.paymentStatus = "paymentStatusInvalid";
     } else {
       paymentStatus = rawPaymentStatus;
     }
-  } else if (hasAnyPaymentField) {
-    errors.paymentStatus = "paymentStatusRequiredWithPaymentInfo";
   }
 
   const invalidResponsibleId = responsibleIds.find((id) => !uuidPattern.test(id));

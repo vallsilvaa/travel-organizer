@@ -295,7 +295,6 @@
       "exportIcs": "Export .ics",
       "addItem": "Add itinerary item",
       "addFromCatalog": "Add from catalog",
-      "newFromCatalog": "New catalog item",
       "catalogModalTitle": "Add an itinerary item from your catalog",
       "catalogModalDescription": "Pick a saved item from your personal catalog to add to this trip's itinerary.",
       "catalogModalNoTemplates": "You don't have any saved itinerary items in your catalog yet.",

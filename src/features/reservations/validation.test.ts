@@ -144,6 +144,27 @@ describe("validateReservationInput", () => {
     }
   });
 
+  it("saves with no cost info even though the paymentStatus radio always submits a value", () => {
+    // The form's payment-status control is a radio group, not a select with a
+    // blank option - it always has something checked (defaults to "paid"),
+    // so a reservation with no amount/currency/responsible people still
+    // submits paymentStatus="paid". That alone must not force the amount to
+    // become required - the field is labeled optional and has to actually
+    // behave that way.
+    const formData = validForm();
+    formData.set("paymentStatus", "paid");
+
+    const result = validateReservationInput(formData);
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.paidAmount).toBeNull();
+      expect(result.data.currency).toBeNull();
+      expect(result.data.paymentStatus).toBeNull();
+      expect(result.data.responsibleIds).toEqual([]);
+    }
+  });
+
   it("normalizes paid amount, currency, payment status, and responsible people together (#171, #205)", () => {
     const formData = validForm();
     formData.set("paidAmount", "199.9");

@@ -295,7 +295,6 @@
       "exportIcs": "Exportar .ics",
       "addItem": "Adicionar item ao roteiro",
       "addFromCatalog": "Adicionar do catálogo",
-      "newFromCatalog": "Novo item do catálogo",
       "catalogModalTitle": "Adicionar item de roteiro do catálogo",
       "catalogModalDescription": "Escolha um item salvo no seu catálogo pessoal para adicionar ao roteiro desta viagem.",
       "catalogModalNoTemplates": "Você ainda não tem itens de roteiro salvos no catálogo.",
