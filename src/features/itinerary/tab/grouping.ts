@@ -50,6 +50,43 @@ export function tripCitiesFromItems<T extends Pick<ItineraryGroupingItem, "city"
   ).sort((a, b) => a.localeCompare(b));
 }
 
+export type TripDestinationForFilter = {
+  city: string | null;
+  granularity: "city" | "country";
+};
+
+/** The city filter's option list (R09, D5): cities the trip actually has as
+ * a destination, plus - for a country-only destination - cities already
+ * used by itinerary items. itinerary_items has no country column to join
+ * a country-only destination against (only a free-text `city`, see
+ * validation.ts), so this can't attribute an item's city to one specific
+ * country-only destination when a trip has more than one; instead, once the
+ * trip has *any* country-only destination, any item city not already among
+ * the explicit city destinations is treated as belonging to it. A trip made
+ * only of city destinations never surfaces an item city outside that list. */
+export function tripCitiesForFilter<T extends Pick<ItineraryGroupingItem, "city">>(
+  destinations: TripDestinationForFilter[],
+  items: T[],
+): string[] {
+  const cityDestinations = destinations
+    .filter((destination): destination is TripDestinationForFilter & { city: string } =>
+      destination.granularity === "city" && Boolean(destination.city),
+    )
+    .map((destination) => destination.city);
+  const hasCountryOnlyDestination = destinations.some((destination) => destination.granularity === "country");
+  const knownCities = new Set(cityDestinations.map((city) => city.trim().toLowerCase()));
+
+  const itemCitiesFromCountryDestinations = hasCountryOnlyDestination
+    ? items
+        .map((item) => item.city)
+        .filter((city): city is string => city !== null && !knownCities.has(city.trim().toLowerCase()))
+    : [];
+
+  return Array.from(new Set([...cityDestinations, ...itemCitiesFromCountryDestinations])).sort((a, b) =>
+    a.localeCompare(b),
+  );
+}
+
 export function filterItineraryItems<T extends Pick<ItineraryGroupingItem, "city" | "period">>(
   items: T[],
   filters: { city: string; period: string },

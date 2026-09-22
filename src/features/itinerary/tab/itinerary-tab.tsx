@@ -18,7 +18,9 @@ import {
   groupItineraryItemsByDay,
   outOfRangeItineraryItems,
   sortItineraryItems,
-  tripCitiesFromItems,
+  tripCitiesForFilter,
+  type ItineraryDayGroup,
+  type TripDestinationForFilter,
 } from "./grouping";
 import { ItineraryHeader, type CatalogTemplate } from "./itinerary-header";
 import { ItineraryItemCard, type ItineraryItem } from "./item-card";
@@ -55,6 +57,7 @@ type ItineraryTabProps = {
   classificationLabels: Record<Classification, string>;
   continentLabels: Record<Continent, string>;
   itineraryPeriodLabels: Record<ItineraryPeriod, string>;
+  tripDestinations: TripDestinationForFilter[];
   cityFilter: string;
   itineraryPeriodFilter: ItineraryPeriod | "all";
   tripStartDate: string;
@@ -84,6 +87,7 @@ export function ItineraryTab({
   classificationLabels,
   continentLabels,
   itineraryPeriodLabels,
+  tripDestinations,
   cityFilter,
   itineraryPeriodFilter,
   tripStartDate,
@@ -95,7 +99,7 @@ export function ItineraryTab({
 }: ItineraryTabProps) {
   const hasItems = itineraryItems.length > 0;
   const sortedItineraryItems = sortItineraryItems(itineraryItems);
-  const tripCities = tripCitiesFromItems(sortedItineraryItems);
+  const tripCities = tripCitiesForFilter(tripDestinations, sortedItineraryItems);
   const filteredItineraryItems = filterItineraryItems(sortedItineraryItems, {
     city: cityFilter,
     period: itineraryPeriodFilter,
@@ -103,6 +107,48 @@ export function ItineraryTab({
   const itineraryDayGroups = groupItineraryItemsByDay(filteredItineraryItems, tripStartDate, tripLastDay);
   const defaultDay = defaultItineraryDay(itineraryDayGroups);
   const outOfRangeItems = outOfRangeItineraryItems(filteredItineraryItems, tripStartDate, tripLastDay);
+  // A filter active means the day-tab navigation (one day at a time) gives
+  // way to a single chronological list across the whole trip (R09) - days
+  // with nothing left after filtering are skipped instead of showing an
+  // "empty day" placeholder for every day the filter ruled out.
+  const hasActiveFilters = cityFilter !== "all" || itineraryPeriodFilter !== "all";
+  const nonEmptyDayGroups = itineraryDayGroups.filter((group) => group.items.length > 0);
+
+  function renderDaySection(group: ItineraryDayGroup<ItineraryItem>) {
+    return (
+      <section key={group.date}>
+        <h3 className="text-sm font-semibold uppercase tracking-[0.12em] text-slate-500">
+          {t("itinerary.dayHeading", {
+            day: group.dayNumber,
+            weekday: capitalize(formatWeekday(group.date)),
+            date: formatDate(group.date),
+          })}
+        </h3>
+        {group.items.length ? (
+          <ol className="mt-3 space-y-4">
+            {group.items.map((item) => (
+              <ItineraryItemCard
+                key={item.id}
+                item={item}
+                tripId={tripId}
+                isArchived={isArchived}
+                existingActions={tripActions}
+                whenLabel={formatItineraryWhen(item)}
+                linkedReservations={reservationsByItineraryItemId.get(item.id) ?? []}
+                linkedTasks={tasksByItineraryItemId.get(item.id) ?? []}
+                comments={commentsFor("itinerary", item.id)}
+                currentUserId={currentUserId}
+                participantNames={participantNames}
+                t={t}
+              />
+            ))}
+          </ol>
+        ) : (
+          <p className="mt-3 text-sm text-slate-500">{t("itinerary.emptyDay")}</p>
+        )}
+      </section>
+    );
+  }
 
   return (
     <Card className="[--card-spacing:--spacing(6)]">
@@ -138,7 +184,12 @@ export function ItineraryTab({
           cityFilter={cityFilter}
           periodFilter={itineraryPeriodFilter}
           periodLabels={itineraryPeriodLabels}
-          t={t}
+          cityFilterLabel={t("itinerary.cityFilterLabel")}
+          cityFilterAllLabel={t("itinerary.cityFilterAll")}
+          periodFilterLabel={t("itinerary.periodFilterLabel")}
+          periodFilterAllLabel={t("itinerary.periodFilterAll")}
+          applyFiltersLabel={t("itinerary.applyFilters")}
+          clearFiltersLabel={t("itinerary.clearFilters")}
         />
 
         {itineraryError ? (
@@ -168,46 +219,18 @@ export function ItineraryTab({
                 </ul>
               </div>
             ) : null}
-            <DayTabs
-              defaultValue={defaultDay}
-              days={itineraryDayGroups.map((group) => ({
-                date: group.date,
-                label: t("itinerary.dayTabLabel", { day: group.dayNumber }),
-                content: (
-                  <section>
-                    <h3 className="text-sm font-semibold uppercase tracking-[0.12em] text-slate-500">
-                      {t("itinerary.dayHeading", {
-                        day: group.dayNumber,
-                        weekday: capitalize(formatWeekday(group.date)),
-                        date: formatDate(group.date),
-                      })}
-                    </h3>
-                    {group.items.length ? (
-                      <ol className="mt-3 space-y-4">
-                        {group.items.map((item) => (
-                          <ItineraryItemCard
-                            key={item.id}
-                            item={item}
-                            tripId={tripId}
-                            isArchived={isArchived}
-                            existingActions={tripActions}
-                            whenLabel={formatItineraryWhen(item)}
-                            linkedReservations={reservationsByItineraryItemId.get(item.id) ?? []}
-                            linkedTasks={tasksByItineraryItemId.get(item.id) ?? []}
-                            comments={commentsFor("itinerary", item.id)}
-                            currentUserId={currentUserId}
-                            participantNames={participantNames}
-                            t={t}
-                          />
-                        ))}
-                      </ol>
-                    ) : (
-                      <p className="mt-3 text-sm text-slate-500">{t("itinerary.emptyDay")}</p>
-                    )}
-                  </section>
-                ),
-              }))}
-            />
+            {hasActiveFilters ? (
+              <div className="mt-6 space-y-6">{nonEmptyDayGroups.map((group) => renderDaySection(group))}</div>
+            ) : (
+              <DayTabs
+                defaultValue={defaultDay}
+                days={itineraryDayGroups.map((group) => ({
+                  date: group.date,
+                  label: t("itinerary.dayTabLabel", { day: group.dayNumber }),
+                  content: renderDaySection(group),
+                }))}
+              />
+            )}
           </>
         ) : (
           <p className="mt-5 rounded-2xl border border-dashed border-slate-300 p-6 text-sm text-slate-600">

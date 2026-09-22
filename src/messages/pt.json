@@ -313,6 +313,7 @@
       "periodFilterLabel": "Período do dia",
       "periodFilterAll": "Todos os períodos",
       "applyFilters": "Aplicar filtros",
+      "clearFilters": "Limpar filtros",
       "dayHeading": "{weekday}, {date} (Dia {day})",
       "dayTabLabel": "Dia {day}",
       "emptyDay": "Nenhuma atividade planejada para este dia.",
