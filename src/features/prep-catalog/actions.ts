@@ -113,9 +113,12 @@ export async function applyTemplateRowToTrip({
       .single();
 
     if (itineraryError) {
-      // Same rationale as the trip_tasks branch below: the partial unique
-      // index on (trip_id, template_id) is what actually prevents applying
-      // the same catalog item twice on this trip.
+      // #229 (D3): unlike the trip_tasks branch below, there is no longer a
+      // per-trip uniqueness constraint here - the same itinerary template
+      // can be applied to the same trip on multiple days on purpose. This
+      // still maps 23505 to "duplicate" in case some other future unique
+      // constraint on itinerary_items fires, but in practice this branch
+      // should only ever see "insert_failed" today.
       return { ok: false, reason: itineraryError.code === "23505" ? "duplicate" : "insert_failed" };
     }
 

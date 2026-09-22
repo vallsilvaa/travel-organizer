@@ -55,11 +55,13 @@ function validForm() {
   formData.set("itemId", itemId);
   formData.set("date", "2026-10-12");
   formData.set("time", "09:30");
+  formData.set("endTime", "10:30");
   formData.set("title", "Museum visit");
   formData.set("location", "Central Museum");
   formData.set("notes", "Bring the tickets");
   formData.set("period", "morning");
   formData.set("city", "Lisbon");
+  formData.set("approxDistance", "2 km");
   return formData;
 }
 
@@ -103,12 +105,14 @@ describe("itinerary actions", () => {
       trip_id: tripId,
       item_date: "2026-10-12",
       start_time: "09:30",
+      end_time: "10:30",
       title: "Museum visit",
       location: "Central Museum",
       notes: "Bring the tickets",
       period: "morning",
       city: "Lisbon",
       action: null,
+      approx_distance: "2 km",
       created_by: "user-123",
     });
     expect(result.success).toBe(true);
@@ -155,7 +159,12 @@ describe("itinerary actions", () => {
     const result = await updateItineraryItem({}, validForm());
 
     expect(mocks.update).toHaveBeenCalledWith(
-      expect.objectContaining({ title: "Museum visit", item_date: "2026-10-12" }),
+      expect.objectContaining({
+        title: "Museum visit",
+        item_date: "2026-10-12",
+        end_time: "10:30",
+        approx_distance: "2 km",
+      }),
     );
     expect(mocks.eq).toHaveBeenNthCalledWith(1, "id", itemId);
     expect(mocks.eq).toHaveBeenNthCalledWith(2, "trip_id", tripId);

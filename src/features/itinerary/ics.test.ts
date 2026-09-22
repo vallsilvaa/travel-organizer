@@ -41,6 +41,72 @@ describe("buildItineraryIcs", () => {
     expect(ics).toContain("URL:https://travel.example.com/trips/trip-1");
   });
 
+  it("uses the item's own end_time as DTEND when present, instead of the one-hour default", () => {
+    const ics = buildItineraryIcs({
+      tripDestination: "Lisbon",
+      tripTimezone: "Europe/Lisbon",
+      tripUrl: "https://travel.example.com/trips/trip-1",
+      items: [
+        {
+          id: "item-end-time",
+          item_date: "2026-09-12",
+          start_time: "14:30:00",
+          end_time: "16:00:00",
+          title: "Guided tour",
+          location: null,
+          notes: null,
+        },
+      ],
+    });
+
+    expect(ics).toContain("DTSTART;TZID=Europe/Lisbon:20260912T143000");
+    expect(ics).toContain("DTEND;TZID=Europe/Lisbon:20260912T160000");
+  });
+
+  it("rolls an explicit end_time into the next day when it is at or before the start time", () => {
+    const ics = buildItineraryIcs({
+      tripDestination: "Lisbon",
+      tripTimezone: "Europe/Lisbon",
+      tripUrl: "https://travel.example.com/trips/trip-1",
+      items: [
+        {
+          id: "item-end-time-rollover",
+          item_date: "2026-09-12",
+          start_time: "23:00:00",
+          end_time: "00:30:00",
+          title: "Night out",
+          location: null,
+          notes: null,
+        },
+      ],
+    });
+
+    expect(ics).toContain("DTSTART;TZID=Europe/Lisbon:20260912T230000");
+    expect(ics).toContain("DTEND;TZID=Europe/Lisbon:20260913T003000");
+  });
+
+  it("falls back to the one-hour default duration when end_time is absent", () => {
+    const ics = buildItineraryIcs({
+      tripDestination: "Lisbon",
+      tripTimezone: "Europe/Lisbon",
+      tripUrl: "https://travel.example.com/trips/trip-1",
+      items: [
+        {
+          id: "item-no-end-time",
+          item_date: "2026-09-12",
+          start_time: "14:30:00",
+          end_time: null,
+          title: "Museum visit",
+          location: null,
+          notes: null,
+        },
+      ],
+    });
+
+    expect(ics).toContain("DTSTART;TZID=Europe/Lisbon:20260912T143000");
+    expect(ics).toContain("DTEND;TZID=Europe/Lisbon:20260912T153000");
+  });
+
   it("rolls a timed event's end into the next day when it starts near midnight", () => {
     const ics = buildItineraryIcs({
       tripDestination: "Lisbon",

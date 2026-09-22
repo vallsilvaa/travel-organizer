@@ -48,9 +48,12 @@ select lives_ok(
   'applying an itinerary_item template to a trip succeeds the first time, action included'
 );
 
--- Applying the same template to the same trip a second time is rejected at
--- the database level, mirroring trip_tasks_trip_template_id_unique.
-select throws_ok(
+-- #229 (D3): applying the same template to the same trip a second time now
+-- succeeds - itinerary_items_trip_template_id_unique was removed so the
+-- same reusable itinerary template can be used on multiple days of the
+-- same trip (duplicate *templates* are prevented at the catalog level
+-- instead, see itinerary_end_time_distance_review.test.sql).
+select lives_ok(
   $$
     insert into public.itinerary_items (
       trip_id, item_date, title, city, template_id, created_by
@@ -63,9 +66,7 @@ select throws_ok(
       '98111111-1111-4111-8111-111111111111'
     )
   $$,
-  '23505',
-  null,
-  'the same itinerary template cannot be applied twice to the same trip'
+  'the same itinerary template can now be applied twice to the same trip (#229)'
 );
 
 -- The same template can still be applied to a *different* trip.

@@ -89,12 +89,14 @@ export async function createItineraryItem(
       trip_id: tripId,
       item_date: validation.data.date,
       start_time: validation.data.time,
+      end_time: validation.data.endTime,
       title: validation.data.title,
       location: validation.data.location,
       notes: validation.data.notes,
       period: validation.data.period,
       city: validation.data.city,
       action: validation.data.action,
+      approx_distance: validation.data.approxDistance,
       created_by: user.id,
     })
     .select("id")
@@ -151,12 +153,14 @@ export async function updateItineraryItem(
     .update({
       item_date: validation.data.date,
       start_time: validation.data.time,
+      end_time: validation.data.endTime,
       title: validation.data.title,
       location: validation.data.location,
       notes: validation.data.notes,
       period: validation.data.period,
       city: validation.data.city,
       action: validation.data.action,
+      approx_distance: validation.data.approxDistance,
       updated_at: new Date().toISOString(),
     })
     .eq("id", itemId)

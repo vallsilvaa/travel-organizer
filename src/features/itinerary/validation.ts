@@ -17,18 +17,23 @@ export function isItineraryPeriod(value: string): value is ItineraryPeriod {
 }
 
 export type ItineraryFieldErrors = Partial<
-  Record<"date" | "time" | "title" | "location" | "notes" | "period" | "city" | "action", string>
+  Record<
+    "date" | "time" | "endTime" | "title" | "location" | "notes" | "period" | "city" | "action" | "approxDistance",
+    string
+  >
 >;
 
 export type ItineraryInput = {
   date: string;
   time: string | null;
+  endTime: string | null;
   title: string;
   location: string | null;
   notes: string | null;
   period: ItineraryPeriod | null;
   city: string | null;
   action: string | null;
+  approxDistance: string | null;
 };
 
 function optionalValue(value: FormDataEntryValue | null) {
@@ -45,6 +50,7 @@ export function validateItineraryInput(formData: FormData):
   | { success: false; errors: ItineraryFieldErrors } {
   const date = String(formData.get("date") ?? "").trim();
   const time = optionalValue(formData.get("time"));
+  const endTime = optionalValue(formData.get("endTime"));
   const title = String(formData.get("title") ?? "").trim();
   const location = optionalValue(formData.get("location"));
   const notes = optionalValue(formData.get("notes"));
@@ -56,6 +62,7 @@ export function validateItineraryInput(formData: FormData):
   // whichever of the two actually has something is the city the visitor meant.
   const city = optionalValue(formData.get("city")) ?? optionalValue(formData.get("country"));
   const action = optionalValue(formData.get("action"));
+  const approxDistance = optionalValue(formData.get("approxDistance"));
   const rawPeriodField = optionalValue(formData.get("period"));
   const rawPeriod = rawPeriodField === "none" ? null : rawPeriodField;
   const errors: ItineraryFieldErrors = {};
@@ -65,6 +72,13 @@ export function validateItineraryInput(formData: FormData):
   }
   if (time && !timePattern.test(time)) {
     errors.time = "timeInvalid";
+  }
+  // Mirrors the DB check (end_time is null or start_time is not null):
+  // an end time only makes sense once there's a start time to end after.
+  if (endTime && !timePattern.test(endTime)) {
+    errors.endTime = "endTimeInvalid";
+  } else if (endTime && !time) {
+    errors.endTime = "endTimeRequiresStartTime";
   }
   if (!title || title.length > 200) {
     errors.title = "titleRequired";
@@ -81,6 +95,9 @@ export function validateItineraryInput(formData: FormData):
   if (action && action.length > 50) {
     errors.action = "actionTooLong";
   }
+  if (approxDistance && approxDistance.length > 100) {
+    errors.approxDistance = "approxDistanceTooLong";
+  }
   if (rawPeriod && !isItineraryPeriod(rawPeriod)) {
     errors.period = "periodInvalid";
   }
@@ -88,5 +105,8 @@ export function validateItineraryInput(formData: FormData):
 
   return Object.keys(errors).length
     ? { success: false, errors }
-    : { success: true, data: { date, time, title, location, notes, period, city, action } };
+    : {
+        success: true,
+        data: { date, time, endTime, title, location, notes, period, city, action, approxDistance },
+      };
 }
