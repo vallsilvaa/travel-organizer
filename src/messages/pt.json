@@ -698,10 +698,11 @@
     "periodLabel": "Período do dia",
     "periodNone": "Nenhum período específico",
     "cityLabel": "Local",
-    "actionLabel": "Ação",
-    "actionPlaceholder": "Check-in, Check-out...",
+    "activityLabel": "Atividade",
+    "activityPlaceholder": "Check-in, Visitar, Passeio por...",
     "titleLabel": "Título",
-    "titlePlaceholder": "Visita ao museu",
+    "titlePlaceholder": "Hostel X",
+    "previewLabel": "Prévia do título:",
     "locationLabel": "Endereço",
     "locationPlaceholder": "Endereço ou ponto de encontro",
     "notesLabel": "Notas",
@@ -721,7 +722,6 @@
       "locationTooLong": "O local deve ter até 200 caracteres.",
       "notesTooLong": "As notas devem ter até 2.000 caracteres.",
       "cityTooLong": "A cidade deve ter até 200 caracteres.",
-      "actionTooLong": "A ação deve ter até 50 caracteres.",
       "approxDistanceTooLong": "A distância aproximada deve ter até 100 caracteres."
     },
     "actionErrors": {
@@ -950,9 +950,16 @@
     "placeholder": "Digite uma cidade...",
     "noMatchFallback": "Nenhuma cidade encontrada - o texto digitado será salvo como país."
   },
+  "activityCombobox": {
+    "empty": "Nenhuma sugestão encontrada.",
+    "addOption": "Adicionar “{value}”"
+  },
   "templateForm": {
     "actionLabel": "Ação",
     "actionPlaceholder": "Comprar, reservar, trocar moeda...",
+    "activityLabel": "Atividade",
+    "activityPlaceholder": "Check-in, Visitar, Passeio por...",
+    "activityPreviewLabel": "Prévia do título:",
     "whatLabel": "O quê",
     "titleLabel": "Título",
     "titlePlaceholder": "Verificar a validade do passaporte",
@@ -1021,7 +1028,7 @@
     "responsibleSplitPreview": "{amount} por pessoa ({count} responsáveis)",
     "addItinerary": "Adicionar ao roteiro",
     "itineraryDateLabel": "Data",
-    "itineraryActionLabel": "Ação",
+    "itineraryActionLabel": "Atividade",
     "itineraryActionPlaceholder": "Check-in, Check-out...",
     "skip": "Pular",
     "save": "Salvar",

@@ -45,7 +45,7 @@ type ItineraryTabProps = {
   currentUserId: string;
   itineraryItems: ItineraryItem[];
   itineraryError: boolean;
-  tripActions: string[];
+  activitySuggestions: string[];
   reservationsByItineraryItemId: Map<string, LinkedReservation[]>;
   tasksByItineraryItemId: Map<string, LinkedTask[]>;
   commentsFor: (itemType: "itinerary" | "task", itemId: string) => ItemComment[];
@@ -76,7 +76,7 @@ export function ItineraryTab({
   currentUserId,
   itineraryItems,
   itineraryError,
-  tripActions,
+  activitySuggestions,
   reservationsByItineraryItemId,
   tasksByItineraryItemId,
   commentsFor,
@@ -134,7 +134,7 @@ export function ItineraryTab({
                 item={item}
                 tripId={tripId}
                 isArchived={isArchived}
-                existingActions={tripActions}
+                activitySuggestions={activitySuggestions}
                 whenLabel={formatItineraryWhen(item)}
                 linkedReservations={reservationsByItineraryItemId.get(item.id) ?? []}
                 linkedTasks={tasksByItineraryItemId.get(item.id) ?? []}
@@ -176,7 +176,7 @@ export function ItineraryTab({
             summaryClassName="text-sky-900"
           >
             <div className="mt-5">
-              <ItineraryForm tripId={tripId} existingActions={tripActions} />
+              <ItineraryForm tripId={tripId} activitySuggestions={activitySuggestions} />
             </div>
           </CollapsibleFormPanel>
         ) : null}
@@ -210,7 +210,7 @@ export function ItineraryTab({
                       <span>{formatDate(item.item_date)} · {item.title}</span>
                       <ItemActionsMenu
                         editLabel={t("itinerary.editItem")}
-                        editForm={<ItineraryForm item={item} tripId={tripId} existingActions={tripActions} />}
+                        editForm={<ItineraryForm item={item} tripId={tripId} activitySuggestions={activitySuggestions} />}
                         deleteAction={deleteItineraryItem}
                         deleteHiddenFields={{ tripId, itemId: item.id }}
                         deleteTitle={t("itinerary.deleteItemTitle")}

@@ -7,6 +7,7 @@ import { TaskCompletionDialog } from "./task-completion-dialog";
 
 vi.mock("next-intl", () => ({
   useTranslations: (namespace?: string) => createTranslator(namespace),
+  useLocale: () => "pt",
 }));
 
 const mocks = vi.hoisted(() => ({

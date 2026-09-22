@@ -95,7 +95,6 @@ export async function createItineraryItem(
       notes: validation.data.notes,
       period: validation.data.period,
       city: validation.data.city,
-      action: validation.data.action,
       approx_distance: validation.data.approxDistance,
       created_by: user.id,
     })
@@ -159,7 +158,6 @@ export async function updateItineraryItem(
       notes: validation.data.notes,
       period: validation.data.period,
       city: validation.data.city,
-      action: validation.data.action,
       approx_distance: validation.data.approxDistance,
       updated_at: new Date().toISOString(),
     })

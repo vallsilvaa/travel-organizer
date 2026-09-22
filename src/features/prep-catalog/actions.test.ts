@@ -287,11 +287,11 @@ describe("applyPrepTemplates", () => {
         item_date: "2027-09-10",
         title: "Visit the Colosseum",
         city: "Rome",
-        action: null,
         template_id: templateId,
         created_by: userId,
       }),
     );
+    expect(itineraryInsert.mock.calls[0][0]).not.toHaveProperty("action");
     expect(result.success).toBe(true);
     expect(result.appliedCount).toBe(1);
   });

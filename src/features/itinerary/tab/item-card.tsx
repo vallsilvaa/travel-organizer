@@ -17,7 +17,6 @@ export type ItineraryItem = {
   notes: string | null;
   period: string | null;
   city: string | null;
-  action: string | null;
   template_id: string | null;
 };
 
@@ -28,7 +27,7 @@ type ItineraryItemCardProps = {
   item: ItineraryItem;
   tripId: string;
   isArchived: boolean;
-  existingActions: string[];
+  activitySuggestions: string[];
   whenLabel: string;
   linkedReservations: LinkedReservation[];
   linkedTasks: LinkedTask[];
@@ -42,7 +41,7 @@ export function ItineraryItemCard({
   item,
   tripId,
   isArchived,
-  existingActions,
+  activitySuggestions,
   whenLabel,
   linkedReservations,
   linkedTasks,
@@ -56,14 +55,7 @@ export function ItineraryItemCard({
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <p className="text-sm font-semibold text-sky-700">{whenLabel}</p>
-          <h3 className="mt-2 text-lg font-semibold text-slate-950">
-            {item.title}
-            {item.action ? (
-              <span className="ml-2 inline-flex items-center rounded-full border border-sky-200 bg-sky-50 px-2 py-0.5 align-middle text-xs font-semibold text-sky-800">
-                {item.action}
-              </span>
-            ) : null}
-          </h3>
+          <h3 className="mt-2 text-lg font-semibold text-slate-950">{item.title}</h3>
           {item.location || item.city ? (
             <p className="mt-1 text-sm text-slate-600">
               {[item.location, item.city].filter(Boolean).join(" · ")}
@@ -100,7 +92,7 @@ export function ItineraryItemCard({
         {!isArchived ? (
           <ItemActionsMenu
             editLabel={t("itinerary.editItem")}
-            editForm={<ItineraryForm item={item} tripId={tripId} existingActions={existingActions} />}
+            editForm={<ItineraryForm item={item} tripId={tripId} activitySuggestions={activitySuggestions} />}
             deleteAction={deleteItineraryItem}
             deleteHiddenFields={{ tripId, itemId: item.id }}
             deleteTitle={t("itinerary.deleteItemTitle")}

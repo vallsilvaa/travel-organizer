@@ -111,7 +111,6 @@ describe("itinerary actions", () => {
       notes: "Bring the tickets",
       period: "morning",
       city: "Lisbon",
-      action: null,
       approx_distance: "2 km",
       created_by: "user-123",
     });

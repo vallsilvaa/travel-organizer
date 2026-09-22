@@ -19,6 +19,7 @@ import {
   validatePrepItemInput,
   type PrepItemFieldErrors,
 } from "./prep-item-validation";
+import { combineActivityTitle } from "@/features/itinerary/activity-verbs";
 import { validateItineraryInput, type ItineraryFieldErrors } from "@/features/itinerary/validation";
 import { validateReservationInput, type ReservationFieldErrors } from "@/features/reservations/validation";
 
@@ -284,14 +285,20 @@ export async function convertPrepTaskOnCompletion(
       return { itineraryErrors: { date: tItinerary("actionErrors.dateOutsideTripRange") } };
     }
 
+    // The task's own title is fixed (not user-editable here) - the
+    // "Atividade" combobox just prefixes it, same join as ItineraryForm
+    // (#230/R03). Clamped to the itinerary_items title check constraint
+    // rather than surfacing a dedicated field error for this rare overflow.
+    const activity = String(formData.get("activity") ?? "");
+    const combinedTitle = combineActivityTitle(activity, task.title).slice(0, 200);
+
     const { data: createdItem, error: itineraryError } = await supabase
       .from("itinerary_items")
       .insert({
         trip_id: tripId,
         item_date: itineraryValidation.data.date,
-        title: task.title,
+        title: combinedTitle,
         location: itineraryValidation.data.location,
-        action: itineraryValidation.data.action,
         created_by: user.id,
       })
       .select("id")
@@ -310,7 +317,7 @@ export async function convertPrepTaskOnCompletion(
         entityType: "itinerary_item",
         entityId: createdItem.id,
         action: "created",
-        itemLabel: task.title,
+        itemLabel: combinedTitle,
         tab: "itinerary",
       }),
     );

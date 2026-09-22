@@ -7,6 +7,7 @@ import { NewTaskModal } from "./new-task-modal";
 
 vi.mock("next-intl", () => ({
   useTranslations: (namespace?: string) => createTranslator(namespace),
+  useLocale: () => "pt",
 }));
 
 afterEach(cleanup);

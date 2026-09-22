@@ -1251,7 +1251,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
             currentUserId={user.id}
             itineraryItems={itineraryItems ?? []}
             itineraryError={Boolean(itineraryError)}
-            tripActions={tripActions}
+            activitySuggestions={tripActions}
             reservationsByItineraryItemId={reservationsByItineraryItemId}
             tasksByItineraryItemId={tasksByItineraryItemId}
             commentsFor={commentsFor}
@@ -1973,7 +1973,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
                                         completingLabel={t("preparation.completingPending")}
                                         reopenLabel={t("preparation.reopen")}
                                         reopeningLabel={t("preparation.reopeningPending")}
-                                        existingItineraryActions={tripActions}
+                                        activitySuggestions={tripActions}
                                       />
                                     ) : (
                                       <form action={setTaskCompletion}>
