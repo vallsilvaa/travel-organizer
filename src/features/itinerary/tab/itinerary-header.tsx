@@ -2,6 +2,7 @@ import type { getTranslations } from "next-intl/server";
 
 import type { Classification, Continent, PrepItemType } from "@/features/prep-catalog/shared";
 import { AddTaskFromCatalogModal } from "@/features/prep-catalog/add-task-from-catalog-modal";
+import { NewItineraryItemModal } from "@/features/itinerary/new-item-modal";
 import type { TaskCategory } from "@/features/tasks/templates";
 import { CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -31,6 +32,7 @@ type ItineraryHeaderProps = {
   hasItems: boolean;
   itineraryTemplates: CatalogTemplate[];
   appliedTemplateIds: string[];
+  activitySuggestions: string[];
   taskCategoryLabels: Record<TaskCategory, string>;
   prepItemTypeLabels: Record<PrepItemType, string>;
   classificationLabels: Record<Classification, string>;
@@ -45,6 +47,7 @@ export function ItineraryHeader({
   hasItems,
   itineraryTemplates,
   appliedTemplateIds,
+  activitySuggestions,
   taskCategoryLabels,
   prepItemTypeLabels,
   classificationLabels,
@@ -62,12 +65,18 @@ export function ItineraryHeader({
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {!isArchived ? (
-            // Only "reuse from catalog" lives here - a saved template has no
-            // time/period/address/notes to give a new item, so a "create new
-            // catalog item" entry point here would always cap a brand-new
-            // itinerary item at those 4 fields. Adding one with full detail
-            // (not tied to any reusable template) is the "Adicionar item ao
-            // roteiro" panel below, via the full ItineraryForm.
+            // Full detail (time/period/address/notes, not capped to what a
+            // saved template carries) - this is the only "add" entry point
+            // now (#231/R04 replaces the old inline CollapsibleFormPanel
+            // with an always-a-modal flow); "reuse from catalog" is the
+            // narrower, template-only complement next to it.
+            <NewItineraryItemModal
+              tripId={tripId}
+              activitySuggestions={activitySuggestions}
+              triggerLabel={t("itinerary.addItem")}
+            />
+          ) : null}
+          {!isArchived ? (
             <AddTaskFromCatalogModal
               templates={itineraryTemplates}
               tripId={tripId}

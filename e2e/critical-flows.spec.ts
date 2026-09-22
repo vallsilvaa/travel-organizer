@@ -106,15 +106,17 @@ test("traveler completes the critical collaborative planning journey", async ({
 
   await test.step("create an itinerary item and comment", async () => {
     await page.getByRole("tab", { name: "Roteiro" }).click();
-    const form = page
-      .locator("details")
-      .filter({ hasText: "Adicionar item ao roteiro" });
+    // #231/R04: "Adicionar item ao roteiro" was an inline <details> panel;
+    // it's now the "Novo item de roteiro" modal (Dialog in both browser and
+    // PWA-standalone mode).
+    await page.getByRole("button", { name: "Novo item de roteiro" }).click();
+    const form = page.getByRole("dialog");
 
     await form.getByLabel("Data").fill("2027-05-11");
-    await form.getByLabel("Horário").fill("10:30");
+    await form.getByLabel("Horário", { exact: true }).fill("10:30");
     await form.getByLabel("Título").fill(itineraryTitle);
     await form.getByLabel("Endereço").fill("Centro");
-    await form.getByRole("button", { name: "Adicionar ao roteiro" }).click();
+    await form.getByRole("button", { name: "Salvar", exact: true }).click();
 
     const item = page.locator("li").filter({
       has: page.getByRole("heading", { name: itineraryTitle }),

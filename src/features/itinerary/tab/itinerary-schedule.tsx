@@ -2,6 +2,7 @@
 
 import { useRef, useState, type ReactNode } from "react";
 
+import { useActiveDayContext } from "./active-day-context";
 import { ItineraryCalendar } from "./calendar";
 import { DayTabs } from "./day-tabs";
 
@@ -32,7 +33,14 @@ export function ItinerarySchedule({
   days,
   datesWithItems,
 }: ItineraryScheduleProps) {
-  const [activeDay, setActiveDay] = useState(defaultDay);
+  // Shared with the "Novo item de roteiro" modal via context when one is
+  // wrapped around this tree (itinerary-tab.tsx, #231/R04); falls back to
+  // local state so tests (itinerary-schedule.test.tsx) can render this
+  // standalone, with no provider.
+  const shared = useActiveDayContext();
+  const [localActiveDay, setLocalActiveDay] = useState(defaultDay);
+  const activeDay = shared?.activeDay ?? localActiveDay;
+  const setActiveDay = shared?.setActiveDay ?? setLocalActiveDay;
   const tabsSectionRef = useRef<HTMLDivElement>(null);
 
   function handleCalendarSelect(date: string) {
