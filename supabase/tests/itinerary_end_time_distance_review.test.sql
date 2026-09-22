@@ -156,7 +156,12 @@ select lives_ok(
   'the same title with a different address is a distinct template'
 );
 
--- A different owner is never blocked by another owner's template.
+-- A different owner is never blocked by another owner's template - insert
+-- as Diego, not Carla, or RLS's own owner_id = auth.uid() check would
+-- reject it before the dedupe index is even reached.
+set local request.jwt.claim.sub = '99222222-2222-4222-8222-222222222222';
+set local request.jwt.claims = '{"sub":"99222222-2222-4222-8222-222222222222","email":"diego@example.com","role":"authenticated"}';
+
 select lives_ok(
   $$
     insert into public.prep_item_templates (
@@ -174,6 +179,10 @@ select lives_ok(
   $$,
   'a different owner can save the same title and address'
 );
+
+-- Back to Carla for the remaining tests.
+set local request.jwt.claim.sub = '99111111-1111-4111-8111-111111111111';
+set local request.jwt.claims = '{"sub":"99111111-1111-4111-8111-111111111111","email":"carla@example.com","role":"authenticated"}';
 
 -- A non-itinerary template type is never restricted by this index.
 select lives_ok(
