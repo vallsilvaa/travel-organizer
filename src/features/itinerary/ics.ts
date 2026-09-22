@@ -2,6 +2,7 @@ export type IcsItineraryItem = {
   id: string;
   item_date: string;
   start_time: string | null;
+  end_time?: string | null;
   title: string;
   location: string | null;
   notes: string | null;
@@ -54,12 +55,27 @@ function addOneDayCompact(isoDate: string) {
   return `${date.getUTCFullYear()}${pad(date.getUTCMonth() + 1)}${pad(date.getUTCDate())}`;
 }
 
-function timedEventBounds(itemDate: string, startTime: string) {
+function timedEventBounds(itemDate: string, startTime: string, endTime?: string | null) {
   const [hourText, minuteText] = startTime.split(":");
   const hour = Number(hourText);
   const minute = Number(minuteText);
 
   const startStamp = `${compactDate(itemDate)}T${pad(hour)}${pad(minute)}00`;
+
+  if (endTime) {
+    const [endHourText, endMinuteText] = endTime.split(":");
+    const endHour = Number(endHourText);
+    const endMinute = Number(endMinuteText);
+    // end_time is a plain `time` column with no date of its own, so an end
+    // clock-time at or before the start clock-time (e.g. 23:00 -> 00:30)
+    // is treated as rolling into the next day, same as the one-hour
+    // default below.
+    const rolledOver = endHour * 60 + endMinute <= hour * 60 + minute;
+    const endDateCompact = rolledOver ? addOneDayCompact(itemDate) : compactDate(itemDate);
+    const endStamp = `${endDateCompact}T${pad(endHour)}${pad(endMinute)}00`;
+
+    return { startStamp, endStamp };
+  }
 
   const totalEndMinutes = hour * 60 + minute + 60;
   const rolledOver = totalEndMinutes >= 24 * 60;
@@ -90,7 +106,7 @@ export function buildItineraryIcs(input: {
     lines.push(`DTSTAMP:${dateStampUtcNow()}`);
 
     if (item.start_time) {
-      const { startStamp, endStamp } = timedEventBounds(item.item_date, item.start_time);
+      const { startStamp, endStamp } = timedEventBounds(item.item_date, item.start_time, item.end_time);
       // Named TZID instead of a floating time: every mainstream calendar
       // app (Google, Apple, Outlook) resolves well-known IANA identifiers
       // without requiring an embedded VTIMEZONE block.

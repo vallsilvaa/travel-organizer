@@ -713,12 +713,15 @@
     "errors": {
       "dateInvalid": "Enter a valid date.",
       "timeInvalid": "Enter a valid time.",
+      "endTimeInvalid": "Enter a valid end time.",
+      "endTimeRequiresStartTime": "Enter the start time before setting an end time.",
       "periodInvalid": "Select a valid time of day.",
       "titleRequired": "Enter a title with up to 200 characters.",
       "locationTooLong": "Location must be up to 200 characters.",
       "notesTooLong": "Notes must be up to 2,000 characters.",
       "cityTooLong": "City must be up to 200 characters.",
-      "actionTooLong": "Action must be up to 50 characters."
+      "actionTooLong": "Action must be up to 50 characters.",
+      "approxDistanceTooLong": "Approximate distance must be up to 100 characters."
     },
     "actionErrors": {
       "identifyTrip": "Could not identify the trip.",

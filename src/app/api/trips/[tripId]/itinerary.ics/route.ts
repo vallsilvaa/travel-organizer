@@ -37,7 +37,7 @@ export async function GET(
 
   const { data: items, error: itemsError } = await supabase
     .from("itinerary_items")
-    .select("id, item_date, start_time, title, location, notes, period")
+    .select("id, item_date, start_time, end_time, title, location, notes, period")
     .eq("trip_id", tripId)
     .order("item_date", { ascending: true })
     .order("start_time", { ascending: true, nullsFirst: false });

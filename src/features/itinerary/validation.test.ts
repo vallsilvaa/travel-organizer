@@ -6,12 +6,14 @@ function validForm() {
   const formData = new FormData();
   formData.set("date", "2026-10-12");
   formData.set("time", "09:30");
+  formData.set("endTime", "10:30");
   formData.set("title", "Museum visit");
   formData.set("location", "Central Museum");
   formData.set("notes", "Bring the tickets");
   formData.set("period", "morning");
   formData.set("city", "Lisbon");
   formData.set("action", "Check-in");
+  formData.set("approxDistance", "2 km");
   return formData;
 }
 
@@ -22,12 +24,14 @@ describe("validateItineraryInput", () => {
       data: {
         date: "2026-10-12",
         time: "09:30",
+        endTime: "10:30",
         title: "Museum visit",
         location: "Central Museum",
         notes: "Bring the tickets",
         period: "morning",
         city: "Lisbon",
         action: "Check-in",
+        approxDistance: "2 km",
       },
     });
   });
@@ -35,22 +39,76 @@ describe("validateItineraryInput", () => {
   it("allows optional fields to be empty", () => {
     const formData = validForm();
     formData.set("time", "");
+    formData.set("endTime", "");
     formData.set("location", "");
     formData.set("notes", "");
     formData.set("period", "");
     formData.set("city", "");
     formData.set("action", "");
+    formData.set("approxDistance", "");
 
     const result = validateItineraryInput(formData);
 
     expect(result.success).toBe(true);
     if (result.success) {
       expect(result.data.time).toBeNull();
+      expect(result.data.endTime).toBeNull();
       expect(result.data.location).toBeNull();
       expect(result.data.notes).toBeNull();
       expect(result.data.period).toBeNull();
       expect(result.data.city).toBeNull();
       expect(result.data.action).toBeNull();
+      expect(result.data.approxDistance).toBeNull();
+    }
+  });
+
+  it("accepts an end time when a start time is present", () => {
+    const formData = validForm();
+    formData.set("time", "09:00");
+    formData.set("endTime", "09:45");
+
+    const result = validateItineraryInput(formData);
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.endTime).toBe("09:45");
+    }
+  });
+
+  it("rejects an end time when there is no start time", () => {
+    const formData = validForm();
+    formData.set("time", "");
+    formData.set("endTime", "10:30");
+
+    const result = validateItineraryInput(formData);
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.errors.endTime).toBe("endTimeRequiresStartTime");
+    }
+  });
+
+  it("rejects a malformed end time", () => {
+    const formData = validForm();
+    formData.set("endTime", "25:99");
+
+    const result = validateItineraryInput(formData);
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.errors.endTime).toBe("endTimeInvalid");
+    }
+  });
+
+  it("rejects an approximate distance that is too long", () => {
+    const formData = validForm();
+    formData.set("approxDistance", "A".repeat(101));
+
+    const result = validateItineraryInput(formData);
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.errors.approxDistance).toBe("approxDistanceTooLong");
     }
   });
 
