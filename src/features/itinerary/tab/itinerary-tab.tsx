@@ -10,7 +10,6 @@ import { ItemActionsMenu } from "@/components/item-actions-menu";
 import { CollapsibleFormPanel } from "@/components/collapsible-form-panel";
 import { Card, CardContent } from "@/components/ui/card";
 
-import { DayTabs } from "./day-tabs";
 import { ItineraryFilters } from "./filters";
 import {
   defaultItineraryDay,
@@ -24,6 +23,7 @@ import {
 } from "./grouping";
 import { ItineraryHeader, type CatalogTemplate } from "./itinerary-header";
 import { ItineraryItemCard, type ItineraryItem } from "./item-card";
+import { ItinerarySchedule } from "./itinerary-schedule";
 
 type Translator = Awaited<ReturnType<typeof getTranslations<"trip">>>;
 type ItineraryPeriod = (typeof itineraryPeriods)[number];
@@ -62,6 +62,7 @@ type ItineraryTabProps = {
   itineraryPeriodFilter: ItineraryPeriod | "all";
   tripStartDate: string;
   tripLastDay: string;
+  today: string;
   t: Translator;
   formatDate: (value: string) => string;
   formatWeekday: (value: string) => string;
@@ -92,6 +93,7 @@ export function ItineraryTab({
   itineraryPeriodFilter,
   tripStartDate,
   tripLastDay,
+  today,
   t,
   formatDate,
   formatWeekday,
@@ -222,8 +224,12 @@ export function ItineraryTab({
             {hasActiveFilters ? (
               <div className="mt-6 space-y-6">{nonEmptyDayGroups.map((group) => renderDaySection(group))}</div>
             ) : (
-              <DayTabs
-                defaultValue={defaultDay}
+              <ItinerarySchedule
+                tripStartDate={tripStartDate}
+                tripLastDay={tripLastDay}
+                today={today}
+                defaultDay={defaultDay ?? tripStartDate}
+                datesWithItems={itineraryDayGroups.filter((group) => group.items.length > 0).map((group) => group.date)}
                 days={itineraryDayGroups.map((group) => ({
                   date: group.date,
                   label: t("itinerary.dayTabLabel", { day: group.dayNumber }),
