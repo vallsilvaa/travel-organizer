@@ -19,8 +19,8 @@ import {
 } from "@/features/invitations/actions";
 import { InviteForm } from "@/features/invitations/invite-form";
 import { getInvitationRoleLabels } from "@/features/invitations/validation";
-import { deleteItineraryItem } from "@/features/itinerary/actions";
-import { ItineraryForm } from "@/features/itinerary/itinerary-form";
+import { buildTripActions } from "@/features/itinerary/tab/grouping";
+import { ItineraryTab } from "@/features/itinerary/tab/itinerary-tab";
 import { getItineraryPeriodLabels, itineraryPeriods } from "@/features/itinerary/validation";
 import { removeParticipant } from "@/features/participants/actions";
 import { RealtimeStatus } from "@/features/realtime/realtime-status";
@@ -83,7 +83,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { addDays, daysUntil, todayInTimeZone } from "@/lib/timezone";
+import { daysUntil, todayInTimeZone } from "@/lib/timezone";
 import { tripStatus } from "@/lib/trip-status";
 
 type TripPageProps = {
@@ -296,10 +296,6 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
   const formatDate = (value: string) => format.dateTime(new Date(`${value}T00:00:00Z`), "long");
   const formatWeekday = (value: string) => format.dateTime(new Date(`${value}T00:00:00Z`), "weekday");
   const formatTime = (value: string | null) => (value ? value.slice(0, 5) : t("itinerary.noTimeSet"));
-  const itineraryPeriodRank = (period: string | null) => {
-    const index = period ? itineraryPeriods.indexOf(period as (typeof itineraryPeriods)[number]) : -1;
-    return index === -1 ? itineraryPeriods.length : index;
-  };
   const formatItineraryWhen = (item: { start_time: string | null; period: string | null }) => {
     if (item.start_time) {
       return formatTime(item.start_time);
@@ -517,16 +513,12 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
     .filter((templateId): templateId is string => Boolean(templateId));
   // Check-in/Check-out are always offered as suggestions even before the
   // trip has any itinerary action set, plus anything already typed on this
-  // trip's items (#222).
-  const tripActions = Array.from(
-    new Set([
-      t("itinerary.actionPresetCheckIn"),
-      t("itinerary.actionPresetCheckOut"),
-      ...(itineraryItems ?? [])
-        .map((item) => item.action)
-        .filter((action): action is string => Boolean(action)),
-    ]),
-  );
+  // trip's items (#222). Shared with the preparation tab's own itinerary
+  // action suggestions below, not just the itinerary tab.
+  const tripActions = buildTripActions(itineraryItems ?? [], [
+    t("itinerary.actionPresetCheckIn"),
+    t("itinerary.actionPresetCheckOut"),
+  ]);
   const filteredTasks = allTasks.filter((task) => {
     const matchesStatus = statusFilter === "all"
       || (statusFilter === "completed" ? Boolean(task.completed_at) : !task.completed_at);
@@ -585,55 +577,6 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
     downloadUrl: signedUrlsByPath.get(attachment.storage_path) ?? null,
   }));
   const itineraryTitles = new Map((itineraryItems ?? []).map((item) => [item.id, item.title]));
-  const sortedItineraryItems = [...(itineraryItems ?? [])].sort((a, b) => {
-    if (a.item_date !== b.item_date) {
-      return a.item_date < b.item_date ? -1 : 1;
-    }
-    if (Boolean(a.start_time) !== Boolean(b.start_time)) {
-      return a.start_time ? -1 : 1;
-    }
-    if (a.start_time && b.start_time) {
-      return a.start_time < b.start_time ? -1 : a.start_time > b.start_time ? 1 : 0;
-    }
-    return itineraryPeriodRank(a.period) - itineraryPeriodRank(b.period);
-  });
-  const tripCities = Array.from(
-    new Set(sortedItineraryItems.map((item) => item.city).filter((city): city is string => Boolean(city))),
-  ).sort((a, b) => a.localeCompare(b));
-  const filteredItineraryItems = sortedItineraryItems.filter((item) => {
-    const matchesCity = cityFilter === "all" || item.city === cityFilter;
-    const matchesPeriod = itineraryPeriodFilter === "all" || item.period === itineraryPeriodFilter;
-    return matchesCity && matchesPeriod;
-  });
-  // A trip without an end_date only has a single valid day, its
-  // start_date (#171) - same rule the server-side date-range check uses.
-  const tripLastDay = trip.end_date ?? trip.start_date;
-  const tripDayDates: string[] = [];
-  for (let cursor = trip.start_date; cursor <= tripLastDay; cursor = addDays(cursor, 1)) {
-    tripDayDates.push(cursor);
-  }
-  const itemsByDate = new Map<string, typeof filteredItineraryItems>();
-  for (const item of filteredItineraryItems) {
-    const list = itemsByDate.get(item.item_date) ?? [];
-    list.push(item);
-    itemsByDate.set(item.item_date, list);
-  }
-  const itineraryDayGroups = tripDayDates.map((date, index) => ({
-    date,
-    dayNumber: index + 1,
-    items: itemsByDate.get(date) ?? [],
-  }));
-  // Land on the first day that actually has something planned rather than
-  // an empty Day 1, so the day-tab navigation doesn't default to a blank tab.
-  const defaultItineraryDay = itineraryDayGroups.find((group) => group.items.length)?.date
-    ?? itineraryDayGroups[0]?.date;
-  // Shortening/moving the trip's dates after items already exist must
-  // surface those items for correction, never silently drop or move them
-  // (#171) - so anything outside the *current* range is shown separately
-  // rather than folded into (or hidden from) the day-by-day timeline above.
-  const outOfRangeItineraryItems = filteredItineraryItems.filter(
-    (item) => item.item_date < trip.start_date || item.item_date > tripLastDay,
-  );
   const taskTitles = new Map((tasks ?? []).map((task) => [task.id, task.title]));
   const tasksByItineraryItemId = new Map<string, { id: string; title: string; completed_at: string | null }[]>();
   for (const task of (tasks ?? []) as TripTask[]) {
@@ -1301,241 +1244,33 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
           </TabsContent>
 
           <TabsContent value="itinerary">
-          <Card className="[--card-spacing:--spacing(6)]">
-            <CardHeader>
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <CardTitle className="text-2xl">{t("itinerary.title")}</CardTitle>
-                  <CardDescription>
-                    {t("itinerary.description")}
-                  </CardDescription>
-                </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  {!isArchived ? (
-                    // Only "reuse from catalog" lives here - a saved template has no
-                    // time/period/address/notes to give a new item, so a "create new
-                    // catalog item" entry point here would always cap a brand-new
-                    // itinerary item at those 4 fields. Adding one with full detail
-                    // (not tied to any reusable template) is the "Adicionar item ao
-                    // roteiro" panel below, via the full ItineraryForm.
-                    <AddTaskFromCatalogModal
-                      templates={catalogTemplates.filter((template) => template.item_type === "itinerary_item")}
-                      tripId={trip.id}
-                      taskCategoryLabels={taskCategoryLabels}
-                      prepItemTypeLabels={prepItemTypeLabels}
-                      classificationLabels={classificationLabels}
-                      continentLabels={continentLabels}
-                      appliedTemplateIds={appliedItineraryTemplateIds}
-                      triggerLabel={t("itinerary.addFromCatalog")}
-                      title={t("itinerary.catalogModalTitle")}
-                      description={t("itinerary.catalogModalDescription")}
-                      noTemplatesMessage={t("itinerary.catalogModalNoTemplates")}
-                      toastMessage={t("itinerary.catalogModalToast")}
-                    />
-                  ) : null}
-                  {itineraryItems?.length ? (
-                    <a
-                      href={`/api/trips/${trip.id}/itinerary.ics`}
-                      download
-                      className={buttonVariants({ variant: "outline", size: "sm" })}
-                    >
-                      {t("itinerary.exportIcs")}
-                    </a>
-                  ) : null}
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {!isArchived ? (
-                <CollapsibleFormPanel
-                  trigger={t("itinerary.addItem")}
-                  defaultOpen={!itineraryItems?.length}
-                  detailsClassName="mt-5 rounded-2xl bg-sky-50 p-5"
-                  summaryClassName="text-sky-900"
-                >
-                  <div className="mt-5">
-                    <ItineraryForm tripId={trip.id} existingActions={tripActions} />
-                  </div>
-                </CollapsibleFormPanel>
-              ) : null}
-
-              {tripCities.length ? (
-                <form className="mt-6 grid gap-3 rounded-2xl bg-slate-50 p-4 sm:grid-cols-3">
-                  <input type="hidden" name="tab" value="itinerary" />
-                  <div className="space-y-1.5">
-                    <Label htmlFor="itinerary-city-filter" className="text-slate-700">{t("itinerary.cityFilterLabel")}</Label>
-                    <Select
-                      name="city"
-                      defaultValue={cityFilter}
-                      items={{ all: t("itinerary.cityFilterAll"), ...Object.fromEntries(tripCities.map((city) => [city, city])) }}
-                    >
-                      <SelectTrigger id="itinerary-city-filter" className="w-full bg-white">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">{t("itinerary.cityFilterAll")}</SelectItem>
-                        {tripCities.map((city) => (
-                          <SelectItem key={city} value={city}>{city}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="itinerary-period-filter" className="text-slate-700">{t("itinerary.periodFilterLabel")}</Label>
-                    <Select
-                      name="period"
-                      defaultValue={itineraryPeriodFilter}
-                      items={{ all: t("itinerary.periodFilterAll"), ...itineraryPeriodLabels }}
-                    >
-                      <SelectTrigger id="itinerary-period-filter" className="w-full bg-white">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">{t("itinerary.periodFilterAll")}</SelectItem>
-                        {itineraryPeriods.map((period) => (
-                          <SelectItem key={period} value={period}>{itineraryPeriodLabels[period]}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <Button type="submit" variant="outline" className="sm:col-span-3 sm:justify-self-start">{t("itinerary.applyFilters")}</Button>
-                </form>
-              ) : null}
-
-              {itineraryError ? (
-                <p role="alert" className="mt-5 rounded-xl bg-red-50 p-4 text-sm text-red-800">
-                  {t("itinerary.loadError")}
-                </p>
-              ) : filteredItineraryItems.length ? (
-                <>
-                  {outOfRangeItineraryItems.length ? (
-                    <div className="mt-6 rounded-2xl border border-amber-300 bg-amber-50 p-5">
-                      <h3 className="font-semibold text-amber-900">{t("itinerary.outOfRangeTitle")}</h3>
-                      <p className="mt-1 text-sm text-amber-800">{t("itinerary.outOfRangeDescription")}</p>
-                      <ul className="mt-3 space-y-2">
-                        {outOfRangeItineraryItems.map((item) => (
-                          <li key={item.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-white p-3 text-sm">
-                            <span>{formatDate(item.item_date)} · {item.title}</span>
-                            <ItemActionsMenu
-                              editLabel={t("itinerary.editItem")}
-                              editForm={<ItineraryForm item={item} tripId={trip.id} existingActions={tripActions} />}
-                              deleteAction={deleteItineraryItem}
-                              deleteHiddenFields={{ tripId: trip.id, itemId: item.id }}
-                              deleteTitle={t("itinerary.deleteItemTitle")}
-                              deleteDescription={t("itinerary.deleteItemDescription", { title: item.title })}
-                            />
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  ) : null}
-                  <Tabs defaultValue={defaultItineraryDay} className="mt-6">
-                    <div className="overflow-x-auto pb-1">
-                      <TabsList className="h-8 w-max">
-                        {itineraryDayGroups.map((group) => (
-                          <TabsTrigger key={group.date} value={group.date}>
-                            {t("itinerary.dayTabLabel", { day: group.dayNumber })}
-                          </TabsTrigger>
-                        ))}
-                      </TabsList>
-                    </div>
-                    {itineraryDayGroups.map((group) => (
-                      <TabsContent key={group.date} value={group.date} keepMounted className="mt-4">
-                      <section>
-                        <h3 className="text-sm font-semibold uppercase tracking-[0.12em] text-slate-500">
-                          {t("itinerary.dayHeading", {
-                            day: group.dayNumber,
-                            weekday: formatWeekday(group.date),
-                            date: formatDate(group.date),
-                          })}
-                        </h3>
-                        {group.items.length ? (
-                          <ol className="mt-3 space-y-4">
-                            {group.items.map((item) => (
-                              <li id={`itinerary-${item.id}`} key={item.id} className="rounded-2xl border border-slate-200 p-5">
-                                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                                  <div>
-                                    <p className="text-sm font-semibold text-sky-700">
-                                      {formatItineraryWhen(item)}
-                                    </p>
-                                    <h3 className="mt-2 text-lg font-semibold text-slate-950">
-                                      {item.title}
-                                      {item.action ? (
-                                        <span className="ml-2 inline-flex items-center rounded-full border border-sky-200 bg-sky-50 px-2 py-0.5 align-middle text-xs font-semibold text-sky-800">
-                                          {item.action}
-                                        </span>
-                                      ) : null}
-                                    </h3>
-                                    {item.location || item.city ? (
-                                      <p className="mt-1 text-sm text-slate-600">
-                                        {[item.location, item.city].filter(Boolean).join(" · ")}
-                                      </p>
-                                    ) : null}
-                                    {item.notes ? <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-slate-600">{item.notes}</p> : null}
-                                    {(reservationsByItineraryItemId.get(item.id) ?? []).length ? (
-                                      <div className="mt-3 flex flex-wrap gap-2">
-                                        {(reservationsByItineraryItemId.get(item.id) ?? []).map((reservation) => (
-                                          <Link
-                                            key={reservation.id}
-                                            href={`/trips/${trip.id}?tab=reservations#reservation-${reservation.id}`}
-                                            className="inline-flex items-center gap-1 rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-800 hover:bg-sky-100"
-                                          >
-                                            {t("itinerary.linkedReservation", { title: reservation.title })}
-                                          </Link>
-                                        ))}
-                                      </div>
-                                    ) : null}
-                                    {(tasksByItineraryItemId.get(item.id) ?? []).length ? (
-                                      <div className="mt-3 flex flex-wrap gap-2">
-                                        {(tasksByItineraryItemId.get(item.id) ?? []).map((task) => (
-                                          <Link
-                                            key={task.id}
-                                            href={`/trips/${trip.id}?tab=preparation#task-${task.id}`}
-                                            className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-semibold ${task.completed_at ? "border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-100" : "border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100"}`}
-                                          >
-                                            {t("itinerary.linkedTask", { title: task.title })}
-                                          </Link>
-                                        ))}
-                                      </div>
-                                    ) : null}
-                                  </div>
-                                  {!isArchived ? (
-                                    <ItemActionsMenu
-                                      editLabel={t("itinerary.editItem")}
-                                      editForm={<ItineraryForm item={item} tripId={trip.id} existingActions={tripActions} />}
-                                      deleteAction={deleteItineraryItem}
-                                      deleteHiddenFields={{ tripId: trip.id, itemId: item.id }}
-                                      deleteTitle={t("itinerary.deleteItemTitle")}
-                                      deleteDescription={t("itinerary.deleteItemDescription", { title: item.title })}
-                                    />
-                                  ) : null}
-                                </div>
-                                <CommentThread
-                                  comments={commentsFor("itinerary", item.id)}
-                                  currentUserId={user.id}
-                                  itemId={item.id}
-                                  itemType="itinerary"
-                                  participantNames={participantNames}
-                                  tripId={trip.id}
-                                />
-                              </li>
-                            ))}
-                          </ol>
-                        ) : (
-                          <p className="mt-3 text-sm text-slate-500">{t("itinerary.emptyDay")}</p>
-                        )}
-                      </section>
-                      </TabsContent>
-                    ))}
-                  </Tabs>
-                </>
-              ) : (
-                <p className="mt-5 rounded-2xl border border-dashed border-slate-300 p-6 text-sm text-slate-600">
-                  {itineraryItems?.length ? t("itinerary.noneMatchFilters") : t("itinerary.empty")}
-                </p>
-              )}
-            </CardContent>
-          </Card>
+          <ItineraryTab
+            tripId={trip.id}
+            isArchived={isArchived}
+            currentUserId={user.id}
+            itineraryItems={itineraryItems ?? []}
+            itineraryError={Boolean(itineraryError)}
+            tripActions={tripActions}
+            reservationsByItineraryItemId={reservationsByItineraryItemId}
+            tasksByItineraryItemId={tasksByItineraryItemId}
+            commentsFor={commentsFor}
+            participantNames={participantNames}
+            catalogTemplates={catalogTemplates}
+            appliedItineraryTemplateIds={appliedItineraryTemplateIds}
+            taskCategoryLabels={taskCategoryLabels}
+            prepItemTypeLabels={prepItemTypeLabels}
+            classificationLabels={classificationLabels}
+            continentLabels={continentLabels}
+            itineraryPeriodLabels={itineraryPeriodLabels}
+            cityFilter={cityFilter}
+            itineraryPeriodFilter={itineraryPeriodFilter}
+            tripStartDate={trip.start_date}
+            tripLastDay={trip.end_date ?? trip.start_date}
+            t={t}
+            formatDate={formatDate}
+            formatWeekday={formatWeekday}
+            formatItineraryWhen={formatItineraryWhen}
+          />
           </TabsContent>
 
           <TabsContent value="reservations">
