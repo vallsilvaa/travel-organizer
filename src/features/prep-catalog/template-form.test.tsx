@@ -7,6 +7,7 @@ import { TemplateForm } from "./template-form";
 
 vi.mock("next-intl", () => ({
   useTranslations: (namespace?: string) => createTranslator(namespace),
+  useLocale: () => "pt",
 }));
 
 afterEach(cleanup);

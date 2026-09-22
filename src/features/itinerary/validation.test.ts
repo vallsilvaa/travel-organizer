@@ -12,7 +12,6 @@ function validForm() {
   formData.set("notes", "Bring the tickets");
   formData.set("period", "morning");
   formData.set("city", "Lisbon");
-  formData.set("action", "Check-in");
   formData.set("approxDistance", "2 km");
   return formData;
 }
@@ -30,7 +29,6 @@ describe("validateItineraryInput", () => {
         notes: "Bring the tickets",
         period: "morning",
         city: "Lisbon",
-        action: "Check-in",
         approxDistance: "2 km",
       },
     });
@@ -44,7 +42,6 @@ describe("validateItineraryInput", () => {
     formData.set("notes", "");
     formData.set("period", "");
     formData.set("city", "");
-    formData.set("action", "");
     formData.set("approxDistance", "");
 
     const result = validateItineraryInput(formData);
@@ -57,7 +54,6 @@ describe("validateItineraryInput", () => {
       expect(result.data.notes).toBeNull();
       expect(result.data.period).toBeNull();
       expect(result.data.city).toBeNull();
-      expect(result.data.action).toBeNull();
       expect(result.data.approxDistance).toBeNull();
     }
   });
@@ -121,18 +117,6 @@ describe("validateItineraryInput", () => {
     expect(result.success).toBe(false);
     if (!result.success) {
       expect(result.errors.city).toBe("cityTooLong");
-    }
-  });
-
-  it("rejects an action that is too long", () => {
-    const formData = validForm();
-    formData.set("action", "A".repeat(51));
-
-    const result = validateItineraryInput(formData);
-
-    expect(result.success).toBe(false);
-    if (!result.success) {
-      expect(result.errors.action).toBe("actionTooLong");
     }
   });
 

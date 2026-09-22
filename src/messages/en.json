@@ -698,10 +698,11 @@
     "periodLabel": "Time of day",
     "periodNone": "No specific period",
     "cityLabel": "Location",
-    "actionLabel": "Action",
-    "actionPlaceholder": "Check-in, Check-out...",
+    "activityLabel": "Activity",
+    "activityPlaceholder": "Check-in, Visit, Walk around...",
     "titleLabel": "Title",
-    "titlePlaceholder": "Museum visit",
+    "titlePlaceholder": "Hostel X",
+    "previewLabel": "Title preview:",
     "locationLabel": "Address",
     "locationPlaceholder": "Address or meeting point",
     "notesLabel": "Notes",
@@ -721,7 +722,6 @@
       "locationTooLong": "Location must be up to 200 characters.",
       "notesTooLong": "Notes must be up to 2,000 characters.",
       "cityTooLong": "City must be up to 200 characters.",
-      "actionTooLong": "Action must be up to 50 characters.",
       "approxDistanceTooLong": "Approximate distance must be up to 100 characters."
     },
     "actionErrors": {
@@ -946,9 +946,16 @@
     "placeholder": "Type a city...",
     "noMatchFallback": "No matching city - the typed text will be saved as the country."
   },
+  "activityCombobox": {
+    "empty": "No suggestions found.",
+    "addOption": "Add \"{value}\""
+  },
   "templateForm": {
     "actionLabel": "Action",
     "actionPlaceholder": "Buy, book, change currency...",
+    "activityLabel": "Activity",
+    "activityPlaceholder": "Check-in, Visit, Walk around...",
+    "activityPreviewLabel": "Title preview:",
     "whatLabel": "What",
     "titleLabel": "Title",
     "titlePlaceholder": "Verify passport validity",
@@ -1017,7 +1024,7 @@
     "responsibleSplitPreview": "{amount} per person ({count} responsible)",
     "addItinerary": "Add to itinerary",
     "itineraryDateLabel": "Date",
-    "itineraryActionLabel": "Action",
+    "itineraryActionLabel": "Activity",
     "itineraryActionPlaceholder": "Check-in, Check-out...",
     "skip": "Skip",
     "save": "Save",

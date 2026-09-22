@@ -1,7 +1,7 @@
 "use client";
 
-import { useActionState, useEffect, useState, type ReactNode } from "react";
-import { useTranslations } from "next-intl";
+import { useActionState, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+
+import { ActivityCombobox } from "@/features/itinerary/activity-combobox";
+import { combineActivityTitle, getActivityVerbs } from "@/features/itinerary/activity-verbs";
 
 import { CityAutocomplete } from "./city-autocomplete";
 import { createTemplate, updateTemplate, type TemplateActionState } from "./actions";
@@ -72,6 +75,7 @@ export function TemplateForm({ template, onSuccess, cancelSlot, tripId, defaultI
   const tPrepItemAction = useTranslations("categories.prepItemAction");
   const tClassification = useTranslations("categories.classification");
   const tCategory = useTranslations("categories.task");
+  const locale = useLocale();
   const prepItemTypeLabels = getPrepItemTypeLabels(tPrepItemType);
   const prepItemActionLabels = getPrepItemActionLabels(tPrepItemAction);
   const classificationLabels = getClassificationLabels(tClassification);
@@ -100,6 +104,17 @@ export function TemplateForm({ template, onSuccess, cancelSlot, tripId, defaultI
       ...(existingTemplateActions ?? []),
     ]),
   );
+  // "Atividade" for a reusable itinerary item template is the same concept
+  // (and combobox) as ItineraryForm's, not the buy/book/etc prep action
+  // above - this branch feeds itinerary_items.title directly, action stops
+  // being written for this item_type (#230/R03, mirrors the R02 backfill).
+  const activityOptions = useMemo(
+    () => Array.from(new Set([...getActivityVerbs(locale), ...(existingTemplateActions ?? [])])),
+    [locale, existingTemplateActions],
+  );
+  const [activity, setActivity] = useState("");
+  const [info, setInfo] = useState("");
+  const combinedTitle = combineActivityTitle(activity, info);
 
   useEffect(() => {
     if (state.success && state.message) {
@@ -118,38 +133,93 @@ export function TemplateForm({ template, onSuccess, cancelSlot, tripId, defaultI
       {template ? <input type="hidden" name="templateId" value={template.id} /> : null}
       {!template && tripId ? <input type="hidden" name="tripId" value={tripId} /> : null}
 
-      <div className="space-y-2">
-        <Label htmlFor="template-action">
-          {t("actionLabel")} <span className="font-normal text-muted-foreground">{t("optional")}</span>
-        </Label>
-        <Input
-          maxLength={50}
-          id="template-action"
-          name="action"
-          list="template-action-options"
-          defaultValue={resolveActionLabel(template?.action ?? null, prepItemActionLabels) ?? ""}
-          placeholder={t("actionPlaceholder")}
-        />
-        <datalist id="template-action-options">
-          {actionSuggestions.map((option) => (
-            <option key={option} value={option} />
-          ))}
-        </datalist>
-        {state.errors?.action ? <p className="text-sm text-destructive">{state.errors.action}</p> : null}
-      </div>
+      {itemType === "itinerary_item" ? (
+        template ? (
+          // Editing shows the saved (already unified) title as one plain
+          // field, same as ItineraryForm - it's never split back into
+          // activity + info parts (#230/R03/D10).
+          <div className="space-y-2 sm:col-span-2">
+            <Label htmlFor="template-title">{t("whatLabel")}</Label>
+            <Input
+              required
+              maxLength={200}
+              id="template-title"
+              name="title"
+              defaultValue={template.title}
+              placeholder={t("titlePlaceholder")}
+            />
+            {state.errors?.title ? <p className="text-sm text-destructive">{state.errors.title}</p> : null}
+          </div>
+        ) : (
+          <>
+            <div className="space-y-2">
+              <Label htmlFor="template-activity">
+                {t("activityLabel")} <span className="font-normal text-muted-foreground">{t("optional")}</span>
+              </Label>
+              <ActivityCombobox
+                id="template-activity"
+                value={activity}
+                onValueChange={setActivity}
+                suggestions={activityOptions}
+                placeholder={t("activityPlaceholder")}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="template-title">{t("whatLabel")}</Label>
+              <Input
+                required
+                maxLength={200}
+                id="template-title"
+                value={info}
+                onChange={(event) => setInfo(event.target.value)}
+                placeholder={t("titlePlaceholder")}
+              />
+              {state.errors?.title ? <p className="text-sm text-destructive">{state.errors.title}</p> : null}
+            </div>
+            <input type="hidden" name="title" value={combinedTitle} />
+            {combinedTitle ? (
+              <p className="text-sm text-muted-foreground sm:col-span-2">
+                {t("activityPreviewLabel")} <span className="font-medium text-foreground">{combinedTitle}</span>
+              </p>
+            ) : null}
+          </>
+        )
+      ) : (
+        <>
+          <div className="space-y-2">
+            <Label htmlFor="template-action">
+              {t("actionLabel")} <span className="font-normal text-muted-foreground">{t("optional")}</span>
+            </Label>
+            <Input
+              maxLength={50}
+              id="template-action"
+              name="action"
+              list="template-action-options"
+              defaultValue={resolveActionLabel(template?.action ?? null, prepItemActionLabels) ?? ""}
+              placeholder={t("actionPlaceholder")}
+            />
+            <datalist id="template-action-options">
+              {actionSuggestions.map((option) => (
+                <option key={option} value={option} />
+              ))}
+            </datalist>
+            {state.errors?.action ? <p className="text-sm text-destructive">{state.errors.action}</p> : null}
+          </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="template-title">{t("whatLabel")}</Label>
-        <Input
-          required
-          maxLength={200}
-          id="template-title"
-          name="title"
-          defaultValue={template?.title}
-          placeholder={t("titlePlaceholder")}
-        />
-        {state.errors?.title ? <p className="text-sm text-destructive">{state.errors.title}</p> : null}
-      </div>
+          <div className="space-y-2">
+            <Label htmlFor="template-title">{t("whatLabel")}</Label>
+            <Input
+              required
+              maxLength={200}
+              id="template-title"
+              name="title"
+              defaultValue={template?.title}
+              placeholder={t("titlePlaceholder")}
+            />
+            {state.errors?.title ? <p className="text-sm text-destructive">{state.errors.title}</p> : null}
+          </div>
+        </>
+      )}
 
       <div className="space-y-2">
         <Label htmlFor="template-itemType">{t("itemTypeLabel")}</Label>

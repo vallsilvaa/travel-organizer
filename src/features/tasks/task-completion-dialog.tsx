@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useMemo, useState, useTransition } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ActivityCombobox } from "@/features/itinerary/activity-combobox";
+import { getActivityVerbs } from "@/features/itinerary/activity-verbs";
 import { getReservationTypeLabels, reservationTypes, type ReservationType } from "@/features/reservations/validation";
 import type { TaskCategory } from "./templates";
 
@@ -51,7 +53,7 @@ type TaskCompletionDialogProps = {
   completingLabel: string;
   reopenLabel: string;
   reopeningLabel: string;
-  existingItineraryActions?: string[];
+  activitySuggestions?: string[];
 };
 
 const initialState: ConvertPrepTaskActionState = {};
@@ -71,16 +73,22 @@ export function TaskCompletionDialog({
   completingLabel,
   reopenLabel,
   reopeningLabel,
-  existingItineraryActions,
+  activitySuggestions,
 }: TaskCompletionDialogProps) {
   const t = useTranslations("taskConversionDialog");
   const tReservationType = useTranslations("categories.reservationType");
+  const locale = useLocale();
   const reservationTypeLabels = getReservationTypeLabels(tReservationType);
+  const activityOptions = useMemo(
+    () => Array.from(new Set([...getActivityVerbs(locale), ...(activitySuggestions ?? [])])),
+    [locale, activitySuggestions],
+  );
   const [isTogglePending, startToggleTransition] = useTransition();
   const [open, setOpen] = useState(false);
 
   const [addReservation, setAddReservation] = useState(false);
   const [addItinerary, setAddItinerary] = useState(false);
+  const [activity, setActivity] = useState("");
   const [reservationPaymentStatus, setReservationPaymentStatus] = useState<"paid" | "to_pay">(
     paidAmount ? "paid" : "to_pay",
   );
@@ -348,23 +356,14 @@ export function TaskCompletionDialog({
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="conversion-itineraryAction">{t("itineraryActionLabel")}</Label>
-                  <Input
-                    maxLength={50}
+                  <input type="hidden" name="activity" value={activity} />
+                  <ActivityCombobox
                     id="conversion-itineraryAction"
-                    name="action"
-                    list="conversion-itinerary-action-options"
+                    value={activity}
+                    onValueChange={setActivity}
+                    suggestions={activityOptions}
                     placeholder={t("itineraryActionPlaceholder")}
                   />
-                  {existingItineraryActions?.length ? (
-                    <datalist id="conversion-itinerary-action-options">
-                      {existingItineraryActions.map((option) => (
-                        <option key={option} value={option} />
-                      ))}
-                    </datalist>
-                  ) : null}
-                  {state.itineraryErrors?.action ? (
-                    <p className="text-sm text-destructive">{state.itineraryErrors.action}</p>
-                  ) : null}
                 </div>
               </div>
             ) : null}

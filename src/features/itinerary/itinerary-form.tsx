@@ -1,7 +1,7 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useActionState, useEffect, useMemo, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,8 @@ import { Textarea } from "@/components/ui/textarea";
 
 import { CityAutocomplete } from "@/features/prep-catalog/city-autocomplete";
 
+import { ActivityCombobox } from "./activity-combobox";
+import { combineActivityTitle, getActivityVerbs } from "./activity-verbs";
 import {
   createItineraryItem,
   updateItineraryItem,
@@ -35,30 +37,41 @@ type ItineraryFormProps = {
     notes: string | null;
     period: string | null;
     city: string | null;
-    action: string | null;
   };
   tripId: string;
-  // Free-text suggestions for the "Ação" combobox - values already used on
-  // this trip, plus the always-available Check-in/Check-out presets (#222).
-  existingActions?: string[];
+  // Free-text suggestions for the "Atividade" combobox - activities already
+  // used on this trip's items, on top of the ~40 built-in verbs (#230/R03).
+  activitySuggestions?: string[];
 };
 
 const initialState: ItineraryActionState = {};
 
-export function ItineraryForm({ item, tripId, existingActions }: ItineraryFormProps) {
+export function ItineraryForm({ item, tripId, activitySuggestions }: ItineraryFormProps) {
   const t = useTranslations("itineraryForm");
   const tCommon = useTranslations("common");
   const tPeriods = useTranslations("categories.itineraryPeriod");
+  const locale = useLocale();
   const periodLabels = getItineraryPeriodLabels(tPeriods);
+  const activityOptions = useMemo(
+    () => Array.from(new Set([...getActivityVerbs(locale), ...(activitySuggestions ?? [])])),
+    [locale, activitySuggestions],
+  );
   const action = item ? updateItineraryItem : createItineraryItem;
   const [state, formAction, pending] = useActionState(action, initialState);
   const [formKey, setFormKey] = useState(0);
   const [lastHandledState, setLastHandledState] = useState(state);
+  // Only meaningful for new items (#230/R03/D10) - editing shows the saved
+  // title as one plain field rather than trying to split it back apart.
+  const [activity, setActivity] = useState("");
+  const [info, setInfo] = useState("");
+  const combinedTitle = combineActivityTitle(activity, info);
 
   if (state !== lastHandledState) {
     setLastHandledState(state);
     if (state.success && !item) {
       setFormKey((key) => key + 1);
+      setActivity("");
+      setInfo("");
     }
   }
 
@@ -116,39 +129,53 @@ export function ItineraryForm({ item, tripId, existingActions }: ItineraryFormPr
         </Select>
         {state.errors?.period ? <p className="text-sm text-destructive">{state.errors.period}</p> : null}
       </div>
-      <div className="space-y-2">
-        <Label htmlFor="action">
-          {t("actionLabel")} <span className="font-normal text-muted-foreground">{tCommon("optional")}</span>
-        </Label>
-        <Input
-          maxLength={50}
-          id="action"
-          name="action"
-          list="itinerary-action-options"
-          defaultValue={item?.action ?? ""}
-          placeholder={t("actionPlaceholder")}
-        />
-        {existingActions?.length ? (
-          <datalist id="itinerary-action-options">
-            {existingActions.map((option) => (
-              <option key={option} value={option} />
-            ))}
-          </datalist>
-        ) : null}
-        {state.errors?.action ? <p className="text-sm text-destructive">{state.errors.action}</p> : null}
-      </div>
-      <div className="space-y-2 sm:col-span-2">
-        <Label htmlFor="title">{t("titleLabel")}</Label>
-        <Input
-          required
-          maxLength={200}
-          id="title"
-          name="title"
-          defaultValue={item?.title}
-          placeholder={t("titlePlaceholder")}
-        />
-        {state.errors?.title ? <p className="text-sm text-destructive">{state.errors.title}</p> : null}
-      </div>
+      {item ? (
+        <div className="space-y-2 sm:col-span-2">
+          <Label htmlFor="title">{t("titleLabel")}</Label>
+          <Input
+            required
+            maxLength={200}
+            id="title"
+            name="title"
+            defaultValue={item.title}
+            placeholder={t("titlePlaceholder")}
+          />
+          {state.errors?.title ? <p className="text-sm text-destructive">{state.errors.title}</p> : null}
+        </div>
+      ) : (
+        <>
+          <div className="space-y-2">
+            <Label htmlFor="activity">
+              {t("activityLabel")} <span className="font-normal text-muted-foreground">{tCommon("optional")}</span>
+            </Label>
+            <ActivityCombobox
+              id="activity"
+              value={activity}
+              onValueChange={setActivity}
+              suggestions={activityOptions}
+              placeholder={t("activityPlaceholder")}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="title-info">{t("titleLabel")}</Label>
+            <Input
+              required
+              maxLength={200}
+              id="title-info"
+              value={info}
+              onChange={(event) => setInfo(event.target.value)}
+              placeholder={t("titlePlaceholder")}
+            />
+            {state.errors?.title ? <p className="text-sm text-destructive">{state.errors.title}</p> : null}
+          </div>
+          <input type="hidden" name="title" value={combinedTitle} />
+          {combinedTitle ? (
+            <p className="text-sm text-muted-foreground sm:col-span-2">
+              {t("previewLabel")} <span className="font-medium text-foreground">{combinedTitle}</span>
+            </p>
+          ) : null}
+        </>
+      )}
       <div className="space-y-2 sm:col-span-2">
         <Label htmlFor="location">
           {t("locationLabel")} <span className="font-normal text-muted-foreground">{tCommon("optional")}</span>

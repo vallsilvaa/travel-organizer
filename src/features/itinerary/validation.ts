@@ -18,7 +18,7 @@ export function isItineraryPeriod(value: string): value is ItineraryPeriod {
 
 export type ItineraryFieldErrors = Partial<
   Record<
-    "date" | "time" | "endTime" | "title" | "location" | "notes" | "period" | "city" | "action" | "approxDistance",
+    "date" | "time" | "endTime" | "title" | "location" | "notes" | "period" | "city" | "approxDistance",
     string
   >
 >;
@@ -32,7 +32,6 @@ export type ItineraryInput = {
   notes: string | null;
   period: ItineraryPeriod | null;
   city: string | null;
-  action: string | null;
   approxDistance: string | null;
 };
 
@@ -61,7 +60,6 @@ export function validateItineraryInput(formData: FormData):
   // meaningful field). itinerary_items has no country concept at all, so
   // whichever of the two actually has something is the city the visitor meant.
   const city = optionalValue(formData.get("city")) ?? optionalValue(formData.get("country"));
-  const action = optionalValue(formData.get("action"));
   const approxDistance = optionalValue(formData.get("approxDistance"));
   const rawPeriodField = optionalValue(formData.get("period"));
   const rawPeriod = rawPeriodField === "none" ? null : rawPeriodField;
@@ -92,9 +90,6 @@ export function validateItineraryInput(formData: FormData):
   if (city && city.length > 200) {
     errors.city = "cityTooLong";
   }
-  if (action && action.length > 50) {
-    errors.action = "actionTooLong";
-  }
   if (approxDistance && approxDistance.length > 100) {
     errors.approxDistance = "approxDistanceTooLong";
   }
@@ -107,6 +102,6 @@ export function validateItineraryInput(formData: FormData):
     ? { success: false, errors }
     : {
         success: true,
-        data: { date, time, endTime, title, location, notes, period, city, action, approxDistance },
+        data: { date, time, endTime, title, location, notes, period, city, approxDistance },
       };
 }

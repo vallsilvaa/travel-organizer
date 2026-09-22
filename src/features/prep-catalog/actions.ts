@@ -103,9 +103,11 @@ export async function applyTemplateRowToTrip({
       .insert({
         trip_id: tripId,
         item_date: itemDate,
+        // template.action isn't copied here on purpose (#230/R03): itinerary
+        // templates no longer carry a separate action, its text already
+        // lives combined into template.title (see TemplateForm).
         title: template.title,
         city: template.city,
-        action: template.action,
         template_id: template.id,
         created_by: userId,
       })
