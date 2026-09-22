@@ -26,6 +26,13 @@ import { ItineraryItemCard, type ItineraryItem } from "./item-card";
 type Translator = Awaited<ReturnType<typeof getTranslations<"trip">>>;
 type ItineraryPeriod = (typeof itineraryPeriods)[number];
 
+// Intl's `weekday: "long"` formats pt-BR weekday names lowercase ("terça-feira"),
+// unlike en-US ("Tuesday") - the day heading always wants it capitalized, so this
+// normalizes both instead of hand-rolling per-locale casing rules.
+function capitalize(value: string): string {
+  return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
 type LinkedReservation = { id: string; title: string };
 type LinkedTask = { id: string; title: string; completed_at: string | null };
 
@@ -168,7 +175,7 @@ export function ItineraryTab({
                     <h3 className="text-sm font-semibold uppercase tracking-[0.12em] text-slate-500">
                       {t("itinerary.dayHeading", {
                         day: group.dayNumber,
-                        weekday: formatWeekday(group.date),
+                        weekday: capitalize(formatWeekday(group.date)),
                         date: formatDate(group.date),
                       })}
                     </h3>
