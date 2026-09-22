@@ -292,7 +292,7 @@
     "itinerary": {
       "title": "Roteiro",
       "description": "Mantenha atividades, reservas e pontos de encontro em ordem cronológica.",
-      "addItem": "Adicionar item ao roteiro",
+      "addItem": "Novo item de roteiro",
       "addFromCatalog": "Adicionar do catálogo",
       "catalogModalTitle": "Adicionar item de roteiro do catálogo",
       "catalogModalDescription": "Escolha um item salvo no seu catálogo pessoal para adicionar ao roteiro desta viagem.",
@@ -711,11 +711,18 @@
     "locationPlaceholder": "Endereço ou ponto de encontro",
     "notesLabel": "Notas",
     "approxDistanceLabel": "Distância aproximada",
+    "endTimeLabel": "Horário de término",
     "savePending": "Salvando...",
     "save": "Salvar alterações",
     "add": "Adicionar ao roteiro",
+    "newItemTrigger": "Novo item de roteiro",
+    "saveNew": "Salvar",
+    "saveAsTemplateOnly": "Salvar só como modelo",
+    "cancel": "Cancelar",
+    "draftRestored": "Rascunho restaurado",
     "toastUpdated": "Item do roteiro atualizado.",
     "toastAdded": "Item do roteiro adicionado.",
+    "toastTemplateSaved": "Modelo salvo no seu catálogo pessoal.",
     "errors": {
       "dateInvalid": "Informe uma data válida.",
       "timeInvalid": "Informe um horário válido.",
@@ -733,7 +740,8 @@
       "identifyItem": "Não foi possível identificar o item do roteiro.",
       "addFailed": "Não foi possível adicionar este item ao roteiro. Verifique seu acesso à viagem e tente novamente.",
       "updateFailed": "Não foi possível atualizar este item do roteiro. Tente novamente.",
-      "dateOutsideTripRange": "A data deve estar dentro do período da viagem."
+      "dateOutsideTripRange": "A data deve estar dentro do período da viagem.",
+      "templateSaveFailed": "Não foi possível salvar o modelo reutilizável. Tente novamente."
     }
   },
   "itineraryCalendar": {

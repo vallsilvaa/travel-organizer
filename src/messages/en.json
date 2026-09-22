@@ -292,7 +292,7 @@
     "itinerary": {
       "title": "Itinerary",
       "description": "Keep activities, reservations, and meeting points in chronological order.",
-      "addItem": "Add itinerary item",
+      "addItem": "New itinerary item",
       "addFromCatalog": "Add from catalog",
       "catalogModalTitle": "Add an itinerary item from your catalog",
       "catalogModalDescription": "Pick a saved item from your personal catalog to add to this trip's itinerary.",
@@ -711,11 +711,18 @@
     "locationPlaceholder": "Address or meeting point",
     "notesLabel": "Notes",
     "approxDistanceLabel": "Approximate distance",
+    "endTimeLabel": "End time",
     "savePending": "Saving...",
     "save": "Save changes",
     "add": "Add to itinerary",
+    "newItemTrigger": "New itinerary item",
+    "saveNew": "Save",
+    "saveAsTemplateOnly": "Save as template only",
+    "cancel": "Cancel",
+    "draftRestored": "Draft restored",
     "toastUpdated": "Itinerary item updated.",
     "toastAdded": "Itinerary item added.",
+    "toastTemplateSaved": "Template saved to your personal catalog.",
     "errors": {
       "dateInvalid": "Enter a valid date.",
       "timeInvalid": "Enter a valid time.",
@@ -733,7 +740,8 @@
       "identifyItem": "Could not identify the itinerary item.",
       "addFailed": "Could not add this itinerary item. Check your access to the trip and try again.",
       "updateFailed": "Could not update this itinerary item. Please try again.",
-      "dateOutsideTripRange": "The date must be within the trip's date range."
+      "dateOutsideTripRange": "The date must be within the trip's date range.",
+      "templateSaveFailed": "Could not save the reusable template. Please try again."
     }
   },
   "itineraryCalendar": {

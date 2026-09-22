@@ -20,6 +20,17 @@ export type ItineraryActionState = {
   success?: boolean;
 };
 
+export type NewItineraryItemActionState = {
+  errors?: ItineraryFieldErrors;
+  message?: string;
+  success?: boolean;
+  // Only set on a "full" save (item + template) - drives switching the
+  // active day-tab to the day the new item landed on (#231/R04). Absent on
+  // a "Salvar só como modelo" success, since no item (and so no day) was
+  // created.
+  createdDate?: string;
+};
+
 async function authenticatedClient() {
   const supabase = await createClient();
   const {
@@ -56,6 +67,199 @@ async function validateDateWithinTrip(
   }
 
   return null;
+}
+
+type TemplateFields = {
+  title: string;
+  location: string | null;
+  city: string | null;
+  country: string | null;
+  continent: string | null;
+};
+
+// #231 (R04): "Salvar" and "Salvar só como modelo" both upsert a reusable
+// itinerary_item template instead of ever creating a duplicate - the unique
+// index added in 20260920000000 is (owner_id, lower(trim(title)),
+// coalesce(lower(trim(location)), '')), scoped to item_type =
+// 'itinerary_item'. PostgREST's upsert only takes plain column names for
+// `on_conflict`, not the expression index above, so this does the
+// select-then-insert-or-reuse by hand instead - title/location can contain
+// `%`/`_` (LIKE wildcards), so matching is done in JS against every one of
+// this owner's itinerary_item templates rather than via `.ilike()`.
+async function findExistingItineraryTemplate(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  ownerId: string,
+  title: string,
+  location: string | null,
+): Promise<{ id: string } | null> {
+  const normalizedTitle = title.trim().toLowerCase();
+  const normalizedLocation = (location ?? "").trim().toLowerCase();
+
+  const { data: candidates } = await supabase
+    .from("prep_item_templates")
+    .select("id, title, location")
+    .eq("owner_id", ownerId)
+    .eq("item_type", "itinerary_item");
+
+  const existing = candidates?.find(
+    (candidate) =>
+      candidate.title.trim().toLowerCase() === normalizedTitle &&
+      (candidate.location ?? "").trim().toLowerCase() === normalizedLocation,
+  );
+  return existing ? { id: existing.id } : null;
+}
+
+async function upsertItineraryTemplate(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  ownerId: string,
+  fields: TemplateFields,
+): Promise<{ id: string } | null> {
+  const existing = await findExistingItineraryTemplate(supabase, ownerId, fields.title, fields.location);
+  if (existing) {
+    return existing;
+  }
+
+  const { data: created, error } = await supabase
+    .from("prep_item_templates")
+    .insert({
+      owner_id: ownerId,
+      title: fields.title,
+      item_type: "itinerary_item",
+      // Neither concept applies to a reusable itinerary item - both columns
+      // are required by the table, so a stable default is sent, mirroring
+      // TemplateForm's own hidden fields for this same item_type.
+      category: "other",
+      classification: "recommended",
+      location: fields.location,
+      city: fields.city,
+      country: fields.country,
+      continent: fields.continent,
+    })
+    .select("id")
+    .single();
+
+  if (error) {
+    // Lost a race against a concurrent save of the exact same template -
+    // the unique index is the source of truth, so reuse whatever the other
+    // insert just created instead of failing this save.
+    if (error.code === "23505") {
+      const raced = await findExistingItineraryTemplate(supabase, ownerId, fields.title, fields.location);
+      if (raced) {
+        return raced;
+      }
+    }
+    return null;
+  }
+
+  return created ? { id: created.id } : null;
+}
+
+export async function saveNewItineraryItem(
+  _previousState: NewItineraryItemActionState,
+  formData: FormData,
+): Promise<NewItineraryItemActionState> {
+  const t = await getTranslations("itineraryForm");
+  const tripId = String(formData.get("tripId") ?? "");
+  const mode = String(formData.get("mode") ?? "full");
+  const templateOnly = mode === "templateOnly";
+
+  if (!isValidItineraryId(tripId)) {
+    return { message: t("actionErrors.identifyTrip") };
+  }
+
+  const validation = validateItineraryInput(formData, { requireDate: !templateOnly });
+  if (!validation.success) {
+    return { errors: translateFieldErrors(t, validation.errors) };
+  }
+
+  const { supabase, user } = await authenticatedClient();
+
+  // CityAutocomplete's `city` hidden field only fills in when a real
+  // suggestion was picked (see validation.ts's own city/country fallback
+  // comment) - only then does `country` hold an actual country name worth
+  // keeping on the template. When nothing was picked, `country` just holds
+  // whatever free text the visitor typed (validation.ts already treats it
+  // as the city itself in that case), so storing it again as the
+  // template's country would be redundant, not a real country.
+  const hasCitySelection = Boolean(String(formData.get("city") ?? "").trim());
+  const templateCountry = hasCitySelection ? String(formData.get("country") ?? "").trim() || null : null;
+  const templateContinent = hasCitySelection ? String(formData.get("continent") ?? "").trim() || null : null;
+
+  if (templateOnly) {
+    const template = await upsertItineraryTemplate(supabase, user.id, {
+      title: validation.data.title,
+      location: validation.data.location,
+      city: validation.data.city,
+      country: templateCountry,
+      continent: templateContinent,
+    });
+
+    if (!template) {
+      return { message: t("actionErrors.templateSaveFailed") };
+    }
+
+    revalidatePath("/organizer");
+    return { success: true };
+  }
+
+  const dateError = await validateDateWithinTrip(supabase, tripId, validation.data.date);
+  if (dateError === "identifyTrip") {
+    return { message: t("actionErrors.identifyTrip") };
+  }
+  if (dateError === "dateOutsideTripRange") {
+    return { errors: { date: t("actionErrors.dateOutsideTripRange") } };
+  }
+
+  const template = await upsertItineraryTemplate(supabase, user.id, {
+    title: validation.data.title,
+    location: validation.data.location,
+    city: validation.data.city,
+    country: templateCountry,
+    continent: templateContinent,
+  });
+
+  if (!template) {
+    return { message: t("actionErrors.templateSaveFailed") };
+  }
+
+  const { data: created, error } = await supabase
+    .from("itinerary_items")
+    .insert({
+      trip_id: tripId,
+      item_date: validation.data.date,
+      start_time: validation.data.time,
+      end_time: validation.data.endTime,
+      title: validation.data.title,
+      location: validation.data.location,
+      notes: validation.data.notes,
+      period: validation.data.period,
+      city: validation.data.city,
+      approx_distance: validation.data.approxDistance,
+      template_id: template.id,
+      created_by: user.id,
+    })
+    .select("id")
+    .single();
+
+  if (error) {
+    return { message: t("actionErrors.addFailed") };
+  }
+
+  revalidatePath("/organizer");
+  revalidatePath(`/trips/${tripId}`);
+  after(() =>
+    notifyTripCollaborators({
+      supabase,
+      tripId,
+      actorId: user.id,
+      entityType: "itinerary_item",
+      entityId: created.id,
+      action: "created",
+      itemLabel: validation.data.title,
+      tab: "itinerary",
+    }),
+  );
+  return { success: true, createdDate: validation.data.date };
 }
 
 export async function createItineraryItem(

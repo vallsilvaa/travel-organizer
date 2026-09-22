@@ -44,9 +44,16 @@ export function isValidItineraryId(value: string) {
   return uuidPattern.test(value);
 }
 
-export function validateItineraryInput(formData: FormData):
+export function validateItineraryInput(
+  formData: FormData,
+  options: { requireDate?: boolean } = {},
+):
   | { success: true; data: ItineraryInput }
   | { success: false; errors: ItineraryFieldErrors } {
+  // "Salvar só como modelo" (R04/D7) reuses this same validator with the
+  // date made optional - only the reusable template gets saved, so there's
+  // no itinerary day for the date to belong to.
+  const requireDate = options.requireDate ?? true;
   const date = String(formData.get("date") ?? "").trim();
   const time = optionalValue(formData.get("time"));
   const endTime = optionalValue(formData.get("endTime"));
@@ -65,7 +72,11 @@ export function validateItineraryInput(formData: FormData):
   const rawPeriod = rawPeriodField === "none" ? null : rawPeriodField;
   const errors: ItineraryFieldErrors = {};
 
-  if (!datePattern.test(date) || Number.isNaN(Date.parse(`${date}T00:00:00Z`))) {
+  if (date) {
+    if (!datePattern.test(date) || Number.isNaN(Date.parse(`${date}T00:00:00Z`))) {
+      errors.date = "dateInvalid";
+    }
+  } else if (requireDate) {
     errors.date = "dateInvalid";
   }
   if (time && !timePattern.test(time)) {

@@ -176,6 +176,42 @@ describe("validateItineraryInput", () => {
     }
   });
 
+  it("requires a date by default even when the caller doesn't set one", () => {
+    const formData = validForm();
+    formData.set("date", "");
+
+    const result = validateItineraryInput(formData);
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.errors.date).toBe("dateInvalid");
+    }
+  });
+
+  it("allows an empty date when requireDate is false (R04/D7, 'Salvar só como modelo')", () => {
+    const formData = validForm();
+    formData.set("date", "");
+
+    const result = validateItineraryInput(formData, { requireDate: false });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.date).toBe("");
+    }
+  });
+
+  it("still validates the date format when requireDate is false but a date was provided", () => {
+    const formData = validForm();
+    formData.set("date", "not-a-date");
+
+    const result = validateItineraryInput(formData, { requireDate: false });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.errors.date).toBe("dateInvalid");
+    }
+  });
+
   it("rejects an invalid period", () => {
     const formData = validForm();
     formData.set("period", "midnight");
