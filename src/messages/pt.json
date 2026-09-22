@@ -732,6 +732,10 @@
       "dateOutsideTripRange": "A data deve estar dentro do período da viagem."
     }
   },
+  "itineraryCalendar": {
+    "previousMonth": "Mês anterior",
+    "nextMonth": "Próximo mês"
+  },
   "itineraryExportMenu": {
     "trigger": "Exportar",
     "pdfOption": "PDF",

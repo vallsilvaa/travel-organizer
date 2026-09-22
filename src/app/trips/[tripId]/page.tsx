@@ -1268,6 +1268,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
             itineraryPeriodFilter={itineraryPeriodFilter}
             tripStartDate={trip.start_date}
             tripLastDay={trip.end_date ?? trip.start_date}
+            today={today}
             t={t}
             formatDate={formatDate}
             formatWeekday={formatWeekday}
