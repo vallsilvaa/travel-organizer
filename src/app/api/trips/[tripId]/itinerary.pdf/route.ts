@@ -9,6 +9,13 @@ import { getItineraryPeriodLabels, isItineraryPeriod } from "@/features/itinerar
 import { isValidTripId } from "@/features/trips/validation";
 import { createClient } from "@/lib/supabase/server";
 
+// Mirrors itinerary-tab.tsx's capitalize() (#243/R08): Intl's `weekday: "long"`
+// formats pt-BR weekday names lowercase ("terça-feira"), so the day heading
+// capitalizes it explicitly to match the UI's day-tab heading exactly.
+function capitalize(value: string): string {
+  return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ tripId: string }> },
@@ -82,7 +89,7 @@ export async function GET(
   const days: ItineraryPdfDay[] = dayGroups.map((group) => ({
     heading: t("itinerary.dayHeading", {
       day: group.dayNumber,
-      weekday: formatWeekday(group.date),
+      weekday: capitalize(formatWeekday(group.date)),
       date: formatDate(group.date),
     }),
     items: group.items.map((item) => ({
