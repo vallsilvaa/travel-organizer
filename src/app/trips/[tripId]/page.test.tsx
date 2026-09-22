@@ -1170,6 +1170,11 @@ describe("TripPage", () => {
         searchParams: Promise.resolve({ tab: "itinerary" }),
       }));
 
+      // R07: linked reservations moved behind the item card's "Ver" action -
+      // no longer shown on the collapsed card by default.
+      fireEvent.click(screen.getByRole("button", { name: "Ações do item" }));
+      fireEvent.click(screen.getByText("Ver item"));
+
       const link = screen.getByRole("link", { name: /Reserva vinculada: Taxi ao museu/ });
       expect(link.getAttribute("href")).toBe(`/trips/${tripId}?tab=reservations#reservation-${reservation.id}`);
     });

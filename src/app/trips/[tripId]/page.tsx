@@ -296,14 +296,29 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
   const formatDate = (value: string) => format.dateTime(new Date(`${value}T00:00:00Z`), "long");
   const formatWeekday = (value: string) => format.dateTime(new Date(`${value}T00:00:00Z`), "weekday");
   const formatTime = (value: string | null) => (value ? value.slice(0, 5) : t("itinerary.noTimeSet"));
-  const formatItineraryWhen = (item: { start_time: string | null; period: string | null }) => {
+  // R07: the card's date/time line is "date · time (start–end) · period" -
+  // start_time and end_time are already known-valid HH:mm:ss (DB check
+  // constraint), so slicing to HH:mm is enough without reusing formatTime's
+  // "no time set" fallback mid-range.
+  const formatItineraryWhen = (item: {
+    item_date: string;
+    start_time: string | null;
+    end_time: string | null;
+    period: string | null;
+  }) => {
+    const parts = [formatDate(item.item_date)];
     if (item.start_time) {
-      return formatTime(item.start_time);
+      const timeRange = item.end_time
+        ? `${item.start_time.slice(0, 5)}–${item.end_time.slice(0, 5)}`
+        : item.start_time.slice(0, 5);
+      parts.push(timeRange);
+    } else if (!item.period) {
+      parts.push(t("itinerary.noTimeSet"));
     }
     if (item.period && itineraryPeriodLabels[item.period as (typeof itineraryPeriods)[number]]) {
-      return itineraryPeriodLabels[item.period as (typeof itineraryPeriods)[number]];
+      parts.push(itineraryPeriodLabels[item.period as (typeof itineraryPeriods)[number]]);
     }
-    return t("itinerary.noTimeSet");
+    return parts.join(" · ");
   };
   const formatReservationWhen = (reservation: {
     start_date: string;
@@ -394,7 +409,9 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
         .order("position", { ascending: true }),
       supabase
         .from("itinerary_items")
-        .select("id, item_date, start_time, title, location, notes, period, city, action, template_id")
+        .select(
+          "id, item_date, start_time, end_time, title, location, notes, period, city, action, template_id, approx_distance, needs_review, updated_at",
+        )
         .eq("trip_id", trip.id)
         .order("item_date", { ascending: true })
         .order("start_time", { ascending: true, nullsFirst: false }),
