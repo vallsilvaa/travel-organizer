@@ -7,8 +7,10 @@ import {
   groupItineraryItemsByDay,
   outOfRangeItineraryItems,
   sortItineraryItems,
+  tripCitiesForFilter,
   tripCitiesFromItems,
   type ItineraryGroupingItem,
+  type TripDestinationForFilter,
 } from "./grouping";
 
 function item(overrides: Partial<ItineraryGroupingItem> & { id: string }): ItineraryGroupingItem & { id: string } {
@@ -86,6 +88,44 @@ describe("tripCitiesFromItems", () => {
     ];
 
     expect(tripCitiesFromItems(items)).toEqual(["Lisboa", "Porto"]);
+  });
+});
+
+describe("tripCitiesForFilter", () => {
+  function destination(overrides: Partial<TripDestinationForFilter>): TripDestinationForFilter {
+    return { city: null, granularity: "city", ...overrides };
+  }
+
+  it("lists cities from city destinations, ignoring items entirely", () => {
+    const destinations = [destination({ city: "Lisboa" }), destination({ city: "Porto" })];
+    const items = [item({ id: "1", city: "Faro" })];
+
+    expect(tripCitiesForFilter(destinations, items)).toEqual(["Lisboa", "Porto"]);
+  });
+
+  it("never surfaces an item city that isn't a trip destination when there's no country-only destination", () => {
+    const destinations = [destination({ city: "Lisboa" })];
+    const items = [item({ id: "1", city: "Faro" })];
+
+    expect(tripCitiesForFilter(destinations, items)).toEqual(["Lisboa"]);
+  });
+
+  it("adds item cities not already covered when a country-only destination exists (D5)", () => {
+    const destinations = [destination({ city: null, granularity: "country" })];
+    const items = [item({ id: "1", city: "Kyoto" }), item({ id: "2", city: "Osaka" }), item({ id: "3", city: null })];
+
+    expect(tripCitiesForFilter(destinations, items)).toEqual(["Kyoto", "Osaka"]);
+  });
+
+  it("does not duplicate a city already listed as an explicit destination", () => {
+    const destinations = [destination({ city: "Lisboa" }), destination({ city: null, granularity: "country" })];
+    const items = [item({ id: "1", city: "lisboa" }), item({ id: "2", city: "Porto" })];
+
+    expect(tripCitiesForFilter(destinations, items)).toEqual(["Lisboa", "Porto"]);
+  });
+
+  it("returns an empty list when the trip has no destinations", () => {
+    expect(tripCitiesForFilter([], [item({ id: "1", city: "Faro" })])).toEqual([]);
   });
 });
 

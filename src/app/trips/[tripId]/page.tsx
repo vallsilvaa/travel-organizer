@@ -1262,6 +1262,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
             classificationLabels={classificationLabels}
             continentLabels={continentLabels}
             itineraryPeriodLabels={itineraryPeriodLabels}
+            tripDestinations={tripDestinations}
             cityFilter={cityFilter}
             itineraryPeriodFilter={itineraryPeriodFilter}
             tripStartDate={trip.start_date}

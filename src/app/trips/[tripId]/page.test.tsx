@@ -29,7 +29,9 @@ vi.mock("next-intl/server", async () => {
   };
 });
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ refresh: vi.fn() }),
+  useRouter: () => ({ refresh: vi.fn(), push: vi.fn() }),
+  usePathname: () => "/trips/test-trip",
+  useSearchParams: () => new URLSearchParams(),
 }));
 
 import TripPage from "./page";
