@@ -14,6 +14,16 @@ const taskTitle = `Seguro E2E ${runId}`;
 const expenseDescription = `Jantar E2E ${runId}`;
 const commentBody = `Reserva confirmada E2E ${runId}`;
 
+// R12 (#239): a dedicated trip/user for the Roteiro v2 rewrite (R01-R11)
+// instead of folding this into the journey above - it needs its own city
+// destination (selected from the bundled dataset, not free text) so the R09
+// whole-trip filter has something real to filter by.
+const itineraryEmail = `itinerary-${runId}@example.com`;
+const itineraryTripTitle = `Viagem Roteiro E2E ${runId}`;
+const itemOneTitle = `Museu Roteiro E2E ${runId}`;
+const itemTwoTitle = `Segundo Museu Roteiro E2E ${runId}`;
+const draftTitle = `Rascunho Roteiro E2E ${runId}`;
+
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
@@ -64,7 +74,10 @@ test.beforeAll(async () => {
 test.afterAll(async () => {
   const { data } = await admin.auth.admin.listUsers();
   const testUsers = data.users.filter(
-    (user) => user.email === creatorEmail || user.email === organizerEmail,
+    (user) =>
+      user.email === creatorEmail ||
+      user.email === organizerEmail ||
+      user.email === itineraryEmail,
   );
 
   for (const user of testUsers) {
@@ -200,4 +213,191 @@ test("traveler completes the critical collaborative planning journey", async ({
 
   await signOut(page);
   expect(organizer?.email).toBe(organizerEmail);
+});
+
+test("traveler exercises the Roteiro v2 rewrite end to end", async ({ page }) => {
+  await test.step("sign up and create a trip with a real city destination", async () => {
+    await page.goto("/auth/sign-up");
+    await page.getByLabel("Nome").fill("Roteiro E2E");
+    await page.getByLabel("E-mail").fill(itineraryEmail);
+    await page.getByLabel("Senha", { exact: true }).fill(password);
+    await page.getByLabel("Confirmar senha").fill(password);
+    await page.getByRole("button", { name: "Criar conta" }).click();
+    await expect(page).toHaveURL(/\/dashboard$/);
+
+    await page.getByRole("link", { name: /viagens/i }).click();
+    await expect(page).toHaveURL(/\/trips$/);
+    await page.getByRole("button", { name: "Nova viagem" }).click();
+
+    await page.getByLabel("Título").fill(itineraryTripTitle);
+    // Typing without picking a suggestion falls back to a country-only
+    // destination (destination-autocomplete.tsx) - picking the real "Lisbon,
+    // Portugal" row instead gives the trip a city-granularity destination,
+    // which is what makes it show up in the R09 city filter on its own.
+    await page.getByLabel(/Destino 1/).fill("Lisb");
+    await page.getByRole("button", { name: "Lisbon, Portugal", exact: true }).click();
+    await page.getByLabel("Data de início").fill("2027-08-01");
+    await page.getByLabel(/Data de término/).fill("2027-08-10");
+    await page.getByRole("button", { name: "Criar viagem" }).click();
+
+    await expect(page).toHaveURL(/\/trips\/[0-9a-f-]+$/);
+    await page.getByRole("tab", { name: "Roteiro" }).click();
+  });
+
+  await test.step("create an item via the modal: activity + title combined, with an end time", async () => {
+    await page.getByRole("button", { name: "Novo item de roteiro" }).click();
+    const form = page.getByRole("dialog");
+
+    await form.getByLabel("Atividade").fill("Visitar");
+    await form.getByLabel("Título").fill(itemOneTitle);
+    await form.getByLabel("Data").fill("2027-08-02");
+    await form.getByLabel("Horário", { exact: true }).fill("09:00");
+    await form.getByLabel("Horário de término").fill("11:00");
+    await form.getByLabel("Endereço").fill("Rua Um");
+    await form.getByLabel("Local").fill("Lisb");
+    await form.getByRole("button", { name: "Lisbon, Portugal", exact: true }).click();
+    await form.getByRole("button", { name: "Salvar", exact: true }).click();
+
+    const item = page.locator("li").filter({
+      has: page.getByRole("heading", { name: `Visitar ${itemOneTitle}` }),
+    });
+    await expect(item).toBeVisible();
+    await expect(item.getByText("09:00–11:00")).toBeVisible();
+  });
+
+  await test.step("create a second item (reused/filtered on later)", async () => {
+    await page.getByRole("button", { name: "Novo item de roteiro" }).click();
+    const form = page.getByRole("dialog");
+
+    await form.getByLabel("Título").fill(itemTwoTitle);
+    await form.getByLabel("Data").fill("2027-08-04");
+    await form.getByLabel("Endereço").fill("Rua Dois");
+    await form.getByLabel("Local").fill("Lisb");
+    await form.getByRole("button", { name: "Lisbon, Portugal", exact: true }).click();
+    await form.getByRole("button", { name: "Salvar", exact: true }).click();
+
+    // #231/R04: a successful "full" save switches the active day-tab to
+    // wherever the new item landed, so it's visible without clicking Dia 4.
+    await expect(page.getByRole("heading", { name: itemTwoTitle })).toBeVisible();
+  });
+
+  await test.step("draft persists when the modal is closed by clicking outside, and restores on reopen", async () => {
+    await page.getByRole("button", { name: "Novo item de roteiro" }).click();
+    let form = page.getByRole("dialog");
+    await form.getByLabel("Título").fill(draftTitle);
+
+    // The overlay covers the whole viewport (dialog.tsx) - clicking a corner
+    // of it, away from the centered dialog content, is a real "click outside".
+    await page.locator('[data-slot="dialog-overlay"]').click({ position: { x: 5, y: 5 } });
+    await expect(form).toBeHidden();
+
+    await page.getByRole("button", { name: "Novo item de roteiro" }).click();
+    form = page.getByRole("dialog");
+    await expect(form.getByText("Rascunho restaurado")).toBeVisible();
+    await expect(form.getByLabel("Título")).toHaveValue(draftTitle);
+
+    await form.getByRole("button", { name: "Cancelar" }).click();
+    await expect(form).toBeHidden();
+  });
+
+  await test.step("clicking a day in the calendar activates that day's tab", async () => {
+    const targetDate = "2027-08-04";
+    // Mirrors calendar.tsx's own fullDateFormatter (pt -> pt-BR, UTC) so this
+    // doesn't hardcode a locale-formatted string that could drift.
+    const label = new Intl.DateTimeFormat("pt-BR", {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+      timeZone: "UTC",
+    }).format(new Date(`${targetDate}T00:00:00Z`));
+
+    await page.getByRole("tab", { name: "Dia 2" }).click();
+    await expect(page.getByRole("tab", { name: "Dia 2" })).toHaveAttribute("aria-selected", "true");
+
+    await page.getByRole("button", { name: label }).click();
+    await expect(page.getByRole("tab", { name: "Dia 4" })).toHaveAttribute("aria-selected", "true");
+    await expect(page.getByRole("heading", { name: itemTwoTitle })).toBeVisible();
+  });
+
+  await test.step("add an existing item to the roteiro from the catalog (single select)", async () => {
+    await page.getByRole("button", { name: "Adicionar do catálogo" }).click();
+    const searchDialog = page.getByRole("dialog");
+    await searchDialog.getByRole("button", { name: itemTwoTitle }).click();
+
+    const form = page.getByRole("dialog");
+    await expect(form.getByLabel("Título")).toHaveValue(itemTwoTitle);
+    await form.getByLabel("Data").fill("2027-08-05");
+    await form.getByRole("button", { name: "Salvar", exact: true }).click();
+
+    await expect(page.getByRole("tab", { name: "Dia 5" })).toHaveAttribute("aria-selected", "true");
+    await expect(page.getByRole("heading", { name: itemTwoTitle })).toBeVisible();
+  });
+
+  await test.step("add multiple existing items at once, each with its own date - flagged for review", async () => {
+    await page.getByRole("button", { name: "Adicionar do catálogo" }).click();
+    const searchDialog = page.getByRole("dialog");
+
+    await searchDialog.getByRole("checkbox", { name: `Selecionar Visitar ${itemOneTitle}` }).check();
+    await searchDialog.getByRole("checkbox", { name: `Selecionar ${itemTwoTitle}` }).check();
+    await searchDialog.getByRole("button", { name: "Continuar" }).click();
+
+    const dateForm = page.getByRole("dialog");
+    await dateForm.getByLabel(`Data de Visitar ${itemOneTitle}`).fill("2027-08-06");
+    await dateForm.getByLabel(`Data de ${itemTwoTitle}`).fill("2027-08-07");
+    await dateForm.getByRole("button", { name: "Adicionar 2 itens" }).click();
+    await expect(dateForm).toBeHidden();
+
+    // D8 (#229/#233): a batch-added item is flagged needs_review until its
+    // next edit - the "Revisar" badge/style is item-card.tsx's own rendering
+    // of that flag, not something this test sets directly.
+    await page.getByRole("tab", { name: "Dia 6" }).click();
+    const reviewItem = page.locator("li").filter({
+      has: page.getByRole("heading", { name: `Visitar ${itemOneTitle}` }),
+    });
+    await expect(reviewItem).toBeVisible();
+    await expect(reviewItem.getByText("Revisar")).toBeVisible();
+  });
+
+  await test.step("the whole-trip filter flattens matching items across days into one list", async () => {
+    await page.getByRole("combobox", { name: "Cidade" }).click();
+    await page.getByRole("option", { name: "Lisbon", exact: true }).click();
+
+    await expect(page.getByRole("heading", { name: /\(Dia 2\)/ })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /\(Dia 4\)/ })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /\(Dia 6\)/ })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /\(Dia 7\)/ })).toBeVisible();
+
+    await page.getByRole("link", { name: "Limpar filtros" }).click();
+  });
+
+  await test.step("export the roteiro as .ics and, with confirmation, as a PDF", async () => {
+    await page.getByRole("button", { name: "Exportar" }).click();
+    const [icsDownload, icsResponse] = await Promise.all([
+      page.waitForEvent("download"),
+      page.waitForResponse((response) => response.url().includes("/itinerary.ics")),
+      page.getByRole("menuitem", { name: "Calendário (.ics)" }).click(),
+    ]);
+    expect(icsResponse.status()).toBe(200);
+    expect(icsDownload.suggestedFilename()).toMatch(/\.ics$/);
+
+    await page.getByRole("button", { name: "Exportar" }).click();
+    await page.getByRole("menuitem", { name: "PDF" }).click();
+
+    // pdf-filename.ts: an ASCII-only trip title makes the legacy `filename`
+    // and RFC 5987 `filename*` identical, so there's no ambiguity over which
+    // one the browser's download manager will actually use.
+    const expectedPdfFileName = `ROTEIRO-${itineraryTripTitle}.pdf`;
+    const confirmDialog = page.getByRole("dialog");
+    await expect(confirmDialog.getByText(`Baixar ${expectedPdfFileName}?`)).toBeVisible();
+
+    const [pdfDownload, pdfResponse] = await Promise.all([
+      page.waitForEvent("download"),
+      page.waitForResponse((response) => response.url().includes("/itinerary.pdf")),
+      confirmDialog.locator("a[download]").click(),
+    ]);
+    expect(pdfResponse.status()).toBe(200);
+    expect(pdfResponse.headers()["content-type"]).toBe("application/pdf");
+    expect(pdfDownload.suggestedFilename()).toBe(expectedPdfFileName);
+  });
 });
