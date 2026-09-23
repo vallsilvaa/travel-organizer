@@ -45,8 +45,10 @@ vi.mock("next-intl/server", async () => {
 });
 
 import {
+  addItineraryItemsFromTemplates,
   createItineraryItem,
   deleteItineraryItem,
+  markItineraryItemReviewed,
   saveNewItineraryItem,
   updateItineraryItem,
 } from "./actions";
@@ -54,6 +56,7 @@ import {
 const tripId = "27823996-ec50-4cc2-8506-a29d07b86f94";
 const itemId = "8f3f147b-8684-4ff1-b5c7-6814e4f57f73";
 const existingTemplateId = "c2c6cf9e-0d68-4f5a-8f0c-1c4f4c9b1a11";
+const secondTemplateId = "d3d7df0e-1e79-5f6b-9f1d-2d5f5dac2b22";
 
 function validForm() {
   const formData = new FormData();
@@ -111,10 +114,16 @@ describe("itinerary actions", () => {
     // real-world query shapes used against this table.
     const templatesQueryNode: {
       eq: () => typeof templatesQueryNode;
+      in: () => typeof templatesQueryNode;
       maybeSingle: () => Promise<unknown>;
       then: (resolve: (value: unknown) => void, reject: (reason: unknown) => void) => void;
     } = {
       eq: () => templatesQueryNode,
+      // addItineraryItemsFromTemplates (#233/R06) batches its ownership
+      // lookup with `.in("id", templateIds)` instead of the single-id
+      // `.maybeSingle()` findOwnedItineraryTemplate uses - same
+      // templateCandidates() mock backs both list-shaped queries.
+      in: () => templatesQueryNode,
       maybeSingle: () => mocks.templateLookup(),
       then: (resolve, reject) => mocks.templateCandidates().then(resolve, reject),
     };
@@ -206,6 +215,14 @@ describe("itinerary actions", () => {
     expect(mocks.eq).toHaveBeenNthCalledWith(1, "id", itemId);
     expect(mocks.eq).toHaveBeenNthCalledWith(2, "trip_id", tripId);
     expect(result.success).toBe(true);
+  });
+
+  it("clears needs_review on every successful edit save (D8/R06)", async () => {
+    mocks.eq.mockReturnValueOnce({ eq: mocks.eq }).mockResolvedValueOnce({ error: null });
+
+    await updateItineraryItem({}, validForm());
+
+    expect(mocks.update).toHaveBeenCalledWith(expect.objectContaining({ needs_review: false }));
   });
 
   it("rejects updating an item to a date outside the trip's date range (#171)", async () => {
@@ -370,6 +387,161 @@ describe("itinerary actions", () => {
 
       expect(mocks.insert).not.toHaveBeenCalled();
       expect(result.errors?.date).toBeTruthy();
+    });
+  });
+
+  describe("markItineraryItemReviewed (#233/R06)", () => {
+    it("flips needs_review to false for the requested item within its trip", async () => {
+      const formData = new FormData();
+      formData.set("tripId", tripId);
+      formData.set("itemId", itemId);
+
+      await markItineraryItemReviewed(formData);
+
+      expect(mocks.update).toHaveBeenCalledWith(expect.objectContaining({ needs_review: false }));
+      expect(mocks.eq).toHaveBeenNthCalledWith(1, "id", itemId);
+      expect(mocks.eq).toHaveBeenNthCalledWith(2, "trip_id", tripId);
+      expect(mocks.revalidatePath).toHaveBeenCalledWith(`/trips/${tripId}`);
+    });
+
+    it("does nothing for an unidentifiable trip or item", async () => {
+      const formData = new FormData();
+      formData.set("tripId", "not-a-uuid");
+      formData.set("itemId", itemId);
+
+      await markItineraryItemReviewed(formData);
+
+      expect(mocks.update).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("addItineraryItemsFromTemplates (#233/R06)", () => {
+    function batchForm(entries: { id: string; date?: string }[]) {
+      const formData = new FormData();
+      formData.set("tripId", tripId);
+      for (const entry of entries) {
+        formData.append("templateIds", entry.id);
+        if (entry.date !== undefined) {
+          formData.set(`date-${entry.id}`, entry.date);
+        }
+      }
+      return formData;
+    }
+
+    function ownedTemplates() {
+      return [
+        { id: existingTemplateId, title: "Museum visit", location: "Central Museum", city: "Lisbon" },
+        { id: secondTemplateId, title: "City tour", location: "Old Town", city: "Lisbon" },
+      ];
+    }
+
+    it("creates one item per template with its own date, flagging needs_review and template_id", async () => {
+      mocks.templateCandidates.mockResolvedValue({ data: ownedTemplates() });
+      mocks.insert.mockReturnValue({
+        select: () =>
+          Promise.resolve({
+            data: [
+              { id: "row-1", title: "Museum visit" },
+              { id: "row-2", title: "City tour" },
+            ],
+            error: null,
+          }),
+      });
+
+      const formData = batchForm([
+        { id: existingTemplateId, date: "2026-10-05" },
+        { id: secondTemplateId, date: "2026-10-10" },
+      ]);
+
+      const result = await addItineraryItemsFromTemplates({}, formData);
+
+      expect(mocks.insert).toHaveBeenCalledWith([
+        {
+          trip_id: tripId,
+          item_date: "2026-10-05",
+          title: "Museum visit",
+          location: "Central Museum",
+          city: "Lisbon",
+          template_id: existingTemplateId,
+          needs_review: true,
+          created_by: "user-123",
+        },
+        {
+          trip_id: tripId,
+          item_date: "2026-10-10",
+          title: "City tour",
+          location: "Old Town",
+          city: "Lisbon",
+          template_id: secondTemplateId,
+          needs_review: true,
+          created_by: "user-123",
+        },
+      ]);
+      expect(result.success).toBe(true);
+      expect(result.addedCount).toBe(2);
+    });
+
+    it("rejects an out-of-range date for just that item, still adding the rest of the batch", async () => {
+      mocks.templateCandidates.mockResolvedValue({ data: ownedTemplates() });
+      mocks.insert.mockReturnValue({
+        select: () => Promise.resolve({ data: [{ id: "row-1", title: "Museum visit" }], error: null }),
+      });
+
+      const formData = batchForm([
+        { id: existingTemplateId, date: "2026-10-05" },
+        { id: secondTemplateId, date: "2026-11-01" },
+      ]);
+
+      const result = await addItineraryItemsFromTemplates({}, formData);
+
+      expect(mocks.insert).toHaveBeenCalledWith([expect.objectContaining({ template_id: existingTemplateId })]);
+      expect(result.success).toBe(true);
+      expect(result.addedCount).toBe(1);
+      expect(result.itemErrors?.[secondTemplateId]).toBeTruthy();
+    });
+
+    it("adds nothing and returns a failure message when every date is out of range", async () => {
+      mocks.templateCandidates.mockResolvedValue({ data: ownedTemplates() });
+
+      const formData = batchForm([
+        { id: existingTemplateId, date: "2026-11-01" },
+        { id: secondTemplateId, date: "2026-11-02" },
+      ]);
+
+      const result = await addItineraryItemsFromTemplates({}, formData);
+
+      expect(mocks.insert).not.toHaveBeenCalled();
+      expect(result.success).toBeUndefined();
+      expect(result.message).toBeTruthy();
+      expect(Object.keys(result.itemErrors ?? {})).toHaveLength(2);
+    });
+
+    it("silently skips an item with no date instead of failing the batch (the client already gates this)", async () => {
+      mocks.templateCandidates.mockResolvedValue({ data: ownedTemplates() });
+      mocks.insert.mockReturnValue({
+        select: () => Promise.resolve({ data: [{ id: "row-1", title: "Museum visit" }], error: null }),
+      });
+
+      const formData = batchForm([
+        { id: existingTemplateId, date: "2026-10-05" },
+        { id: secondTemplateId },
+      ]);
+
+      const result = await addItineraryItemsFromTemplates({}, formData);
+
+      expect(result.addedCount).toBe(1);
+      expect(result.itemErrors?.[secondTemplateId]).toBeUndefined();
+    });
+
+    it("rejects a template that doesn't resolve to one this user owns", async () => {
+      mocks.templateCandidates.mockResolvedValue({ data: [] });
+
+      const formData = batchForm([{ id: existingTemplateId, date: "2026-10-05" }]);
+
+      const result = await addItineraryItemsFromTemplates({}, formData);
+
+      expect(mocks.insert).not.toHaveBeenCalled();
+      expect(result.itemErrors?.[existingTemplateId]).toBeTruthy();
     });
   });
 });

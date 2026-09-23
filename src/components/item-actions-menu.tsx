@@ -41,6 +41,15 @@ type ItemActionsMenuProps = {
   // the edit/view panels instead of requiring the manual "Ocultar formulário"
   // click every other caller still needs. undefined = today's behavior.
   collapseOnChangeOf?: string;
+  // Opt-in (R06/D8): a "Marcar como revisado" shortcut, submitted the same
+  // way deleteAction is (a hidden form + its own hidden fields) but without
+  // a confirmation dialog - it only ever flips needs_review, nothing the
+  // visitor needs to confirm. Omitted by every caller except the itinerary
+  // card, and only passed there when the item actually needs review, so
+  // every other tab's menu keeps its exact current shape.
+  markAsReviewedLabel?: string;
+  markAsReviewedAction?: (formData: FormData) => void | Promise<void>;
+  markAsReviewedHiddenFields?: Record<string, string>;
 };
 
 export function ItemActionsMenu({
@@ -54,12 +63,17 @@ export function ItemActionsMenu({
   viewLabel,
   viewContent,
   collapseOnChangeOf,
+  markAsReviewedLabel,
+  markAsReviewedAction,
+  markAsReviewedHiddenFields,
 }: ItemActionsMenuProps) {
   const t = useTranslations("itemActionsMenu");
   const resolvedEditLabel = editLabel ?? t("editDefault");
   const resolvedViewLabel = viewLabel ?? t("viewDefault");
   const resolvedDeleteLabel = deleteLabel ?? t("deleteDefault");
+  const resolvedMarkAsReviewedLabel = markAsReviewedLabel ?? t("markAsReviewedDefault");
   const formId = useId();
+  const markReviewedFormRef = useRef<HTMLFormElement>(null);
   const [editOpen, setEditOpen] = useState(false);
   const [viewOpen, setViewOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -100,6 +114,11 @@ export function ItemActionsMenu({
               {viewOpen ? t("hideView") : resolvedViewLabel}
             </DropdownMenuItem>
           ) : null}
+          {markAsReviewedAction ? (
+            <DropdownMenuItem onClick={() => markReviewedFormRef.current?.requestSubmit()}>
+              {resolvedMarkAsReviewedLabel}
+            </DropdownMenuItem>
+          ) : null}
           <DropdownMenuItem onClick={toggleEdit}>
             {!standalone && editOpen ? t("hideForm") : resolvedEditLabel}
           </DropdownMenuItem>
@@ -129,6 +148,13 @@ export function ItemActionsMenu({
           <input key={name} type="hidden" name={name} value={value} />
         ))}
       </form>
+      {markAsReviewedAction ? (
+        <form ref={markReviewedFormRef} action={markAsReviewedAction} className="hidden">
+          {Object.entries(markAsReviewedHiddenFields ?? {}).map(([name, value]) => (
+            <input key={name} type="hidden" name={name} value={value} />
+          ))}
+        </form>
+      ) : null}
       <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <DialogContent>
           <DialogHeader>

@@ -293,6 +293,157 @@ export async function saveNewItineraryItem(
   return { success: true, createdDate: validation.data.date };
 }
 
+export type BatchItineraryActionState = {
+  message?: string;
+  success?: boolean;
+  addedCount?: number;
+  // Keyed by templateId - R06 (#233) shows each error inline, next to that
+  // item's own date input in the batch step, instead of one message that
+  // can't say which of several items is the problem.
+  itemErrors?: Record<string, string>;
+};
+
+const dateShapePattern = /^\d{4}-\d{2}-\d{2}$/;
+
+// R06 (#233): ItineraryCatalogModal's multi-select step (2+ templates
+// checked) submits here instead of saveNewItineraryItem's single
+// "fromTemplate" path - one row per template + its own per-item date, all
+// flagged needs_review = true (D8) so they surface on the itinerary until
+// reviewed. Mirrors validateDateWithinTrip's range check per item (one trip
+// lookup shared across the whole batch, not one per item) and
+// findOwnedItineraryTemplate's ownership check (batched via `.in()` instead
+// of one query per template). An item missing a date is silently left out -
+// the client already disables "Adicionar" until every item has one (the
+// real gate, D8/R06) - while an item with a date outside the trip's range,
+// or a template that doesn't resolve to one this user owns, is reported
+// per-item in `itemErrors` and left out too, without failing the rest of an
+// otherwise-valid batch. No prep_item_templates row is created or modified
+// here, only read for ownership + title/location/city (same rule as R05's
+// "fromTemplate" path).
+export async function addItineraryItemsFromTemplates(
+  _previousState: BatchItineraryActionState,
+  formData: FormData,
+): Promise<BatchItineraryActionState> {
+  const t = await getTranslations("itineraryForm");
+  const tripId = String(formData.get("tripId") ?? "");
+
+  if (!isValidItineraryId(tripId)) {
+    return { message: t("actionErrors.identifyTrip") };
+  }
+
+  const templateIds = Array.from(
+    new Set(formData.getAll("templateIds").map((value) => String(value))),
+  ).filter(isValidItineraryId);
+
+  if (templateIds.length === 0) {
+    return { message: t("actionErrors.identifyItem") };
+  }
+
+  const { supabase, user } = await authenticatedClient();
+
+  const { data: trip } = await supabase
+    .from("trips")
+    .select("start_date, end_date")
+    .eq("id", tripId)
+    .single();
+
+  if (!trip) {
+    return { message: t("actionErrors.identifyTrip") };
+  }
+
+  const tripEndDate = trip.end_date ?? trip.start_date;
+
+  const { data: ownedTemplates } = await supabase
+    .from("prep_item_templates")
+    .select("id, title, location, city")
+    .eq("owner_id", user.id)
+    .eq("item_type", "itinerary_item")
+    .in("id", templateIds);
+  const ownedById = new Map((ownedTemplates ?? []).map((template) => [template.id, template]));
+
+  const itemErrors: Record<string, string> = {};
+  const rows: {
+    trip_id: string;
+    item_date: string;
+    title: string;
+    location: string | null;
+    city: string | null;
+    template_id: string;
+    needs_review: boolean;
+    created_by: string;
+  }[] = [];
+
+  for (const templateId of templateIds) {
+    const template = ownedById.get(templateId);
+    if (!template) {
+      itemErrors[templateId] = t("actionErrors.templateNotFound");
+      continue;
+    }
+
+    const rawDate = String(formData.get(`date-${templateId}`) ?? "").trim();
+    if (!rawDate) {
+      continue;
+    }
+    if (!dateShapePattern.test(rawDate) || Number.isNaN(Date.parse(`${rawDate}T00:00:00Z`))) {
+      itemErrors[templateId] = t("errors.dateInvalid");
+      continue;
+    }
+    if (rawDate < trip.start_date || rawDate > tripEndDate) {
+      itemErrors[templateId] = t("actionErrors.dateOutsideTripRange");
+      continue;
+    }
+
+    rows.push({
+      trip_id: tripId,
+      item_date: rawDate,
+      title: template.title,
+      location: template.location,
+      city: template.city,
+      template_id: template.id,
+      needs_review: true,
+      created_by: user.id,
+    });
+  }
+
+  if (rows.length === 0) {
+    return { message: t("actionErrors.batchAddFailed"), itemErrors };
+  }
+
+  const { data: created, error } = await supabase
+    .from("itinerary_items")
+    .insert(rows)
+    .select("id, title");
+
+  if (error) {
+    return { message: t("actionErrors.batchAddFailed") };
+  }
+
+  revalidatePath("/organizer");
+  revalidatePath(`/trips/${tripId}`);
+  after(() =>
+    Promise.all(
+      (created ?? []).map((item) =>
+        notifyTripCollaborators({
+          supabase,
+          tripId,
+          actorId: user.id,
+          entityType: "itinerary_item",
+          entityId: item.id,
+          action: "created",
+          itemLabel: item.title,
+          tab: "itinerary",
+        }),
+      ),
+    ),
+  );
+
+  return {
+    success: true,
+    addedCount: rows.length,
+    itemErrors: Object.keys(itemErrors).length ? itemErrors : undefined,
+  };
+}
+
 export async function createItineraryItem(
   _previousState: ItineraryActionState,
   formData: FormData,
@@ -394,6 +545,10 @@ export async function updateItineraryItem(
       period: validation.data.period,
       city: validation.data.city,
       approx_distance: validation.data.approxDistance,
+      // D8 (#229/#233): editing an item IS the review, so every successful
+      // edit clears needs_review - regardless of whether it was set, so
+      // there's no extra branch here for "was it even flagged".
+      needs_review: false,
       updated_at: new Date().toISOString(),
     })
     .eq("id", itemId)
@@ -417,6 +572,29 @@ export async function updateItineraryItem(
     }),
   );
   return { success: true };
+}
+
+// D8 (#229/#233): "Marcar como revisado" in the item's ⋯ menu is the same
+// needs_review = false transition updateItineraryItem already applies on
+// every edit save - this shortcut just skips opening the edit form when the
+// visitor doesn't actually want to change anything else about the item.
+export async function markItineraryItemReviewed(formData: FormData) {
+  const tripId = String(formData.get("tripId") ?? "");
+  const itemId = String(formData.get("itemId") ?? "");
+
+  if (!isValidItineraryId(tripId) || !isValidItineraryId(itemId)) {
+    return;
+  }
+
+  const { supabase } = await authenticatedClient();
+
+  await supabase
+    .from("itinerary_items")
+    .update({ needs_review: false, updated_at: new Date().toISOString() })
+    .eq("id", itemId)
+    .eq("trip_id", tripId);
+
+  revalidatePath(`/trips/${tripId}`);
 }
 
 export async function deleteItineraryItem(formData: FormData) {

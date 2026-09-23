@@ -111,4 +111,33 @@ describe("ItemActionsMenu", () => {
     expect(screen.getByText("Excluir?")).toBeTruthy();
     expect(screen.getByText("Confirma a exclusão?")).toBeTruthy();
   });
+
+  it("does not show Marcar como revisado when markAsReviewedAction is not passed (other tabs, unchanged)", () => {
+    render(<ItemActionsMenu {...baseProps} />);
+
+    openMenu();
+
+    expect(screen.queryByText("Marcar como revisado")).toBeNull();
+  });
+
+  it("submits markAsReviewedAction with its hidden fields directly, without a confirmation dialog (R06)", () => {
+    const markAsReviewedAction = vi.fn();
+    render(
+      <ItemActionsMenu
+        {...baseProps}
+        markAsReviewedLabel="Marcar como revisado"
+        markAsReviewedAction={markAsReviewedAction}
+        markAsReviewedHiddenFields={{ tripId: "trip-1", itemId: "item-1" }}
+      />,
+    );
+
+    openMenu();
+    fireEvent.click(screen.getByText("Marcar como revisado"));
+
+    expect(markAsReviewedAction).toHaveBeenCalledOnce();
+    const submittedFormData = markAsReviewedAction.mock.calls[0][0] as FormData;
+    expect(submittedFormData.get("tripId")).toBe("trip-1");
+    expect(submittedFormData.get("itemId")).toBe("item-1");
+    expect(screen.queryByText("Excluir?")).toBeNull();
+  });
 });

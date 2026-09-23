@@ -301,6 +301,17 @@
       "catalogModalSearchPlaceholder": "Search by title or address",
       "catalogModalNoResults": "No items found for this search.",
       "catalogModalFormTitle": "Add to itinerary",
+      "catalogModalSelectAria": "Select {title}",
+      "catalogModalSelectedCount": "{count, plural, =0 {Nothing selected} =1 {# selected} other {# selected}}",
+      "catalogModalContinue": "Continue",
+      "catalogModalCancel": "Cancel",
+      "catalogModalDateStepTitle": "Set a date for each item",
+      "catalogModalDateStepDescription": "Each item needs a date within the trip's date range.",
+      "catalogModalDateAria": "Date for {title}",
+      "catalogModalAddSelected": "{count, plural, =1 {Add # item} other {Add # items}}",
+      "catalogModalAddPending": "Adding...",
+      "catalogModalToastAdded": "{count, plural, =1 {# item added to the itinerary.} other {# items added to the itinerary.}}",
+      "markAsReviewed": "Mark as reviewed",
       "actionPresetCheckIn": "Check-in",
       "actionPresetCheckOut": "Check-out",
       "loadError": "Could not load the itinerary. Try refreshing the page.",
@@ -745,7 +756,8 @@
       "updateFailed": "Could not update this itinerary item. Please try again.",
       "dateOutsideTripRange": "The date must be within the trip's date range.",
       "templateSaveFailed": "Could not save the reusable template. Please try again.",
-      "templateNotFound": "Could not find this catalog item. It may have been removed."
+      "templateNotFound": "Could not find this catalog item. It may have been removed.",
+      "batchAddFailed": "Could not add the selected items to the itinerary. Check your access to the trip and try again."
     }
   },
   "itineraryCalendar": {
@@ -946,7 +958,8 @@
     "editDefault": "Edit",
     "hideForm": "Hide form",
     "deleteDefault": "Delete",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "markAsReviewedDefault": "Mark as reviewed"
   },
   "notifications": {
     "title": "Notifications",

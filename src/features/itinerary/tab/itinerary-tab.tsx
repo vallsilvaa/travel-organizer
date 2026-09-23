@@ -155,6 +155,8 @@ export function ItineraryTab({
           hasItems={hasItems}
           itineraryTemplates={catalogTemplates.filter((template) => template.item_type === "itinerary_item")}
           activitySuggestions={activitySuggestions}
+          tripStartDate={tripStartDate}
+          tripEndDate={tripLastDay}
           t={t}
         />
         <CardContent>
