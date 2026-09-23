@@ -16,6 +16,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLinkItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { pdfFileName } from "@/features/itinerary/pdf-filename";
@@ -38,9 +39,9 @@ export function ItineraryExportMenu({ tripId, tripTitle }: ItineraryExportMenuPr
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem onClick={() => setConfirmOpen(true)}>{t("pdfOption")}</DropdownMenuItem>
-          <DropdownMenuItem render={<a href={`/api/trips/${tripId}/itinerary.ics`} download />}>
+          <DropdownMenuLinkItem href={`/api/trips/${tripId}/itinerary.ics`} download closeOnClick>
             {t("icsOption")}
-          </DropdownMenuItem>
+          </DropdownMenuLinkItem>
         </DropdownMenuContent>
       </DropdownMenu>
 
