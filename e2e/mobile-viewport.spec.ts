@@ -110,7 +110,12 @@ test("primary trip sections are navigable on a phone-sized viewport without hori
     // installed PWA (display-mode: standalone), which this browser-based test
     // can't emulate - what's actually checked here is the fallback every new
     // modal shares on a narrow viewport: the centered, width-capped Dialog.
-    await page.getByRole("tab", { name: "Roteiro" }).click();
+    // Same horizontally-scrolling tab strip as the step above - plain
+    // .click() leaves the tab clipped by its scroll container's edge.
+    const roteiroTab = page.getByRole("tab", { name: "Roteiro" });
+    await roteiroTab.evaluate((el) => el.scrollIntoView({ block: "nearest", inline: "center" }));
+    await roteiroTab.dispatchEvent("click");
+    await expect(roteiroTab).toHaveAttribute("aria-selected", "true");
 
     await page.getByRole("button", { name: "Novo item de roteiro" }).click();
     const newItemForm = page.getByRole("dialog");

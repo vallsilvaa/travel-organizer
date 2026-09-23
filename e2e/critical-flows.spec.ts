@@ -235,7 +235,11 @@ test("traveler exercises the Roteiro v2 rewrite end to end", async ({ page }) =>
     // Portugal" row instead gives the trip a city-granularity destination,
     // which is what makes it show up in the R09 city filter on its own.
     await page.getByLabel(/Destino 1/).fill("Lisb");
-    await page.getByRole("button", { name: "Lisbon, Portugal", exact: true }).click();
+    // DestinationAutocomplete's suggestion button also renders a "cidade"/
+    // "city" Badge inside it, which becomes part of the accessible name
+    // ("Lisbon, Portugal cidade") - unlike the plain-text CityAutocomplete
+    // used elsewhere, so this one can't use an exact match.
+    await page.getByRole("button", { name: /^Lisbon, Portugal/ }).click();
     await page.getByLabel("Data de início").fill("2027-08-01");
     await page.getByLabel(/Data de término/).fill("2027-08-10");
     await page.getByRole("button", { name: "Criar viagem" }).click();
