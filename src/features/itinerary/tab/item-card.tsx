@@ -3,7 +3,7 @@ import Link from "next/link";
 
 import { Badge } from "@/components/ui/badge";
 import { CommentThread, type ItemComment } from "@/features/comments/comment-thread";
-import { deleteItineraryItem } from "@/features/itinerary/actions";
+import { deleteItineraryItem, markItineraryItemReviewed } from "@/features/itinerary/actions";
 import { ItineraryForm } from "@/features/itinerary/itinerary-form";
 import { ItemActionsMenu } from "@/components/item-actions-menu";
 import { cn } from "@/lib/utils";
@@ -21,8 +21,10 @@ export type ItineraryItem = {
   period: string | null;
   city: string | null;
   approx_distance: string | null;
-  // Reserved for R06 to set (R02's new column) - this card only needs to be
-  // able to render the style + badge for it, not decide when it's true.
+  // R02's new column - set true by R06's batch "add existing" flow and by
+  // updateItineraryItem's own needs_review=false clear on every edit save
+  // (D8); this card only renders the style + badge + "Marcar como
+  // revisado" shortcut for it, not decide when it's true.
   needs_review: boolean;
   // Drives ItemActionsMenu's auto-collapse (R07): only moves once a save
   // actually lands, since updateItineraryItem bumps it and revalidatePath
@@ -134,6 +136,9 @@ export function ItineraryItemCard({
             deleteTitle={t("itinerary.deleteItemTitle")}
             deleteDescription={t("itinerary.deleteItemDescription", { title: item.title })}
             collapseOnChangeOf={item.updated_at}
+            markAsReviewedLabel={item.needs_review ? t("itinerary.markAsReviewed") : undefined}
+            markAsReviewedAction={item.needs_review ? markItineraryItemReviewed : undefined}
+            markAsReviewedHiddenFields={item.needs_review ? { tripId, itemId: item.id } : undefined}
           />
         ) : null}
       </div>

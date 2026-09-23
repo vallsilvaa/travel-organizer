@@ -12,12 +12,14 @@ const mocks = vi.hoisted(() => ({
   createItineraryItem: vi.fn(),
   updateItineraryItem: vi.fn(),
   deleteItineraryItem: vi.fn(),
+  markItineraryItemReviewed: vi.fn(),
 }));
 
 vi.mock("@/features/itinerary/actions", () => ({
   createItineraryItem: mocks.createItineraryItem,
   updateItineraryItem: mocks.updateItineraryItem,
   deleteItineraryItem: mocks.deleteItineraryItem,
+  markItineraryItemReviewed: mocks.markItineraryItemReviewed,
 }));
 
 import { ItineraryItemCard, type ItineraryItem } from "./item-card";
@@ -116,6 +118,27 @@ describe("ItineraryItemCard", () => {
 
     expect(screen.queryByText("Revisar")).toBeNull();
     expect(container.querySelector("li")?.className).not.toContain("border-amber-300");
+  });
+
+  it("does not offer Marcar como revisado when needs_review is false", () => {
+    renderCard();
+
+    openMenu();
+
+    expect(screen.queryByText("Marcar como revisado")).toBeNull();
+  });
+
+  it("offers Marcar como revisado when needs_review is true, and it flips needs_review without opening the edit form (R06)", () => {
+    renderCard({ item: { ...baseItem, needs_review: true } });
+
+    openMenu();
+    fireEvent.click(screen.getByText("Marcar como revisado"));
+
+    expect(mocks.markItineraryItemReviewed).toHaveBeenCalledOnce();
+    const submittedFormData = mocks.markItineraryItemReviewed.mock.calls[0][0] as FormData;
+    expect(submittedFormData.get("tripId")).toBe("27823996-ec50-4cc2-8506-a29d07b86f94");
+    expect(submittedFormData.get("itemId")).toBe(baseItem.id);
+    expect(screen.queryByLabelText("Título")).toBeNull();
   });
 
   it("hides the actions menu (and Ver/Editar/Excluir with it) for archived trips, unchanged", () => {

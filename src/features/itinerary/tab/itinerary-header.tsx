@@ -33,6 +33,11 @@ type ItineraryHeaderProps = {
   hasItems: boolean;
   itineraryTemplates: CatalogTemplate[];
   activitySuggestions: string[];
+  // R06 (#233): the catalog modal's per-item date step constrains each date
+  // input to the trip's own range, the same start_date/end_date bounds R04's
+  // single-item form already validates against server-side.
+  tripStartDate: string;
+  tripEndDate: string;
   t: Translator;
 };
 
@@ -43,6 +48,8 @@ export function ItineraryHeader({
   hasItems,
   itineraryTemplates,
   activitySuggestions,
+  tripStartDate,
+  tripEndDate,
   t,
 }: ItineraryHeaderProps) {
   return (
@@ -78,6 +85,8 @@ export function ItineraryHeader({
               templates={itineraryTemplates}
               activitySuggestions={activitySuggestions}
               triggerLabel={t("itinerary.addFromCatalog")}
+              tripStartDate={tripStartDate}
+              tripEndDate={tripEndDate}
             />
           ) : null}
           {hasItems ? <ItineraryExportMenu tripId={tripId} tripTitle={tripTitle} /> : null}

@@ -301,6 +301,17 @@
       "catalogModalSearchPlaceholder": "Buscar por título ou endereço",
       "catalogModalNoResults": "Nenhum item encontrado para esta busca.",
       "catalogModalFormTitle": "Adicionar ao roteiro",
+      "catalogModalSelectAria": "Selecionar {title}",
+      "catalogModalSelectedCount": "{count, plural, =0 {Nenhum selecionado} =1 {# selecionado} other {# selecionados}}",
+      "catalogModalContinue": "Continuar",
+      "catalogModalCancel": "Cancelar",
+      "catalogModalDateStepTitle": "Defina a data de cada item",
+      "catalogModalDateStepDescription": "Cada item precisa de uma data dentro do período da viagem.",
+      "catalogModalDateAria": "Data de {title}",
+      "catalogModalAddSelected": "{count, plural, =1 {Adicionar # item} other {Adicionar # itens}}",
+      "catalogModalAddPending": "Adicionando...",
+      "catalogModalToastAdded": "{count, plural, =1 {# item adicionado ao roteiro.} other {# itens adicionados ao roteiro.}}",
+      "markAsReviewed": "Marcar como revisado",
       "actionPresetCheckIn": "Check-in",
       "actionPresetCheckOut": "Check-out",
       "loadError": "Não foi possível carregar o roteiro. Tente atualizar a página.",
@@ -745,7 +756,8 @@
       "updateFailed": "Não foi possível atualizar este item do roteiro. Tente novamente.",
       "dateOutsideTripRange": "A data deve estar dentro do período da viagem.",
       "templateSaveFailed": "Não foi possível salvar o modelo reutilizável. Tente novamente.",
-      "templateNotFound": "Não foi possível encontrar este item do catálogo. Ele pode ter sido removido."
+      "templateNotFound": "Não foi possível encontrar este item do catálogo. Ele pode ter sido removido.",
+      "batchAddFailed": "Não foi possível adicionar os itens selecionados ao roteiro. Verifique seu acesso à viagem e tente novamente."
     }
   },
   "itineraryCalendar": {
@@ -946,7 +958,8 @@
     "editDefault": "Editar",
     "hideForm": "Ocultar formulário",
     "deleteDefault": "Excluir",
-    "cancel": "Cancelar"
+    "cancel": "Cancelar",
+    "markAsReviewedDefault": "Marcar como revisado"
   },
   "notifications": {
     "title": "Notificações",
