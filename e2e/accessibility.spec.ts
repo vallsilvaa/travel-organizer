@@ -93,7 +93,41 @@ test.describe("automated accessibility checks (WCAG 2 A/AA)", () => {
     await expect(page).toHaveURL(/\/trips\/[0-9a-f-]+$/);
     await assertNoViolations(page, "trip page (overview tab)");
 
-    for (const tabName of ["Roteiro", "Despesas", "Preparação", "Colaboradores"]) {
+    await page.getByRole("tab", { name: "Roteiro" }).click();
+    await assertNoViolations(page, "trip page (Roteiro tab, empty)");
+
+    // R12 (#239): the rewritten Roteiro flow (R01-R11) needs its own
+    // modals + calendar covered, not just the tab's static empty state.
+    const itineraryItemA = `A11y Roteiro A ${runId}`;
+    const itineraryItemB = `A11y Roteiro B ${runId}`;
+
+    await page.getByRole("button", { name: "Novo item de roteiro" }).click();
+    await assertNoViolations(page, "itinerary new-item modal");
+    let form = page.getByRole("dialog");
+    await form.getByLabel("Título").fill(itineraryItemA);
+    await form.getByLabel("Data").fill("2027-07-02");
+    await form.getByRole("button", { name: "Salvar", exact: true }).click();
+    await expect(page.getByRole("heading", { name: itineraryItemA })).toBeVisible();
+
+    await page.getByRole("button", { name: "Novo item de roteiro" }).click();
+    form = page.getByRole("dialog");
+    await form.getByLabel("Título").fill(itineraryItemB);
+    await form.getByLabel("Data").fill("2027-07-03");
+    await form.getByRole("button", { name: "Salvar", exact: true }).click();
+    await expect(page.getByRole("heading", { name: itineraryItemB })).toBeVisible();
+
+    await assertNoViolations(page, "trip page (Roteiro tab, with items + calendar)");
+
+    await page.getByRole("button", { name: "Adicionar do catálogo" }).click();
+    await assertNoViolations(page, "itinerary catalog modal");
+    const catalogDialog = page.getByRole("dialog");
+    await catalogDialog.getByRole("checkbox", { name: `Selecionar ${itineraryItemA}` }).check();
+    await catalogDialog.getByRole("checkbox", { name: `Selecionar ${itineraryItemB}` }).check();
+    await catalogDialog.getByRole("button", { name: "Continuar" }).click();
+    await assertNoViolations(page, "itinerary multi-select date modal");
+    await page.getByRole("dialog").getByRole("button", { name: "Cancelar" }).click();
+
+    for (const tabName of ["Despesas", "Preparação", "Colaboradores"]) {
       await page.getByRole("tab", { name: tabName }).click();
       await assertNoViolations(page, `trip page (${tabName} tab)`);
     }
