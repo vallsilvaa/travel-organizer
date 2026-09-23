@@ -166,6 +166,17 @@ export function NewItineraryItemModal({ tripId, activitySuggestions, triggerLabe
   const [state, formAction, pending] = useActionState(saveNewItineraryItem, initialState);
   const [lastHandledState, setLastHandledState] = useState(state);
 
+  // ItineraryCatalogModal passes a new `onOpenChange` closure every time it
+  // re-renders (it's an inline arrow function, not memoized) - reading it
+  // through a ref instead of putting `fromTemplate` in the effect's deps
+  // below means an unrelated parent re-render can't itself re-trigger the
+  // effect (and re-fire the success toast) while `state.success` is still
+  // true from a previous, already-handled action.
+  const fromTemplateRef = useRef(fromTemplate);
+  useEffect(() => {
+    fromTemplateRef.current = fromTemplate;
+  });
+
   function resetToEmpty() {
     setActivity("");
     setInfo("");
@@ -193,7 +204,7 @@ export function NewItineraryItemModal({ tripId, activitySuggestions, triggerLabe
     };
   }
 
-  function setOpenState(next: boolean) {
+  function closeModal(next: boolean) {
     if (fromTemplate) {
       fromTemplate.onOpenChange(next);
     } else {
@@ -203,7 +214,7 @@ export function NewItineraryItemModal({ tripId, activitySuggestions, triggerLabe
 
   // Controlled Dialog: this only ever fires from an internal close request
   // (Esc, backdrop click, the built-in X button) or the trigger opening it -
-  // never from our own setOpenState() calls below, so "closing" here always
+  // never from our own closeModal() calls below, so "closing" here always
   // means "save the draft" (Cancelar bypasses this entirely, see
   // handleCancel). The draft read/write is skipped entirely when
   // `fromTemplate` is set - a stray Esc/backdrop close from that flow must
@@ -227,13 +238,13 @@ export function NewItineraryItemModal({ tripId, activitySuggestions, triggerLabe
         writeDraft(tripId, snapshot);
       }
     }
-    setOpenState(next);
+    closeModal(next);
   }
 
   function handleCancel() {
     clearDraft(tripId);
     resetToEmpty();
-    setOpenState(false);
+    closeModal(false);
   }
 
   if (state !== lastHandledState) {
@@ -241,7 +252,13 @@ export function NewItineraryItemModal({ tripId, activitySuggestions, triggerLabe
     if (state.success) {
       clearDraft(tripId);
       resetToEmpty();
-      setOpenState(false);
+      // Only this component's own state (setInternalOpen) - safe here, same
+      // as the rest of this block. The fromTemplate case (closing via a
+      // parent-owned callback) is handled in the effect below instead; see
+      // its comment for why that call can't live in this render-phase block.
+      if (!fromTemplate) {
+        closeModal(false);
+      }
     }
   }
 
@@ -262,6 +279,14 @@ export function NewItineraryItemModal({ tripId, activitySuggestions, triggerLabe
       if (state.createdDate) {
         setActiveDay?.(state.createdDate);
       }
+      // fromTemplate.onOpenChange updates a *different* component's state
+      // (ItineraryCatalogModal wires it up to its own reset()) - same
+      // reasoning as the active-day switch above. Calling it directly
+      // (not through the closeModal() wrapper, which also covers the
+      // render-phase !fromTemplate branch above) keeps this call opaque to
+      // the lint rule that flags effects calling a *local* state setter -
+      // this is a parent-owned callback, not one of this component's own.
+      fromTemplateRef.current?.onOpenChange(false);
     } else if (state.message) {
       toast.error(state.message);
     }

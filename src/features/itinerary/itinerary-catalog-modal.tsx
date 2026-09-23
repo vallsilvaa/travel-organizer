@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useMemo, useState } from "react";
+import { useActionState, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
@@ -63,16 +63,28 @@ function ItineraryBatchDateModal({
 
   const allDated = templates.every((template) => Boolean(dates[template.id]));
 
+  // ItineraryCatalogModal passes a new inline onOpenChange closure every
+  // render - reading it through a ref (rather than depending on it below)
+  // means an unrelated parent re-render can't itself re-trigger the effect
+  // (and re-fire the success toast) while state.success is still true from
+  // a previously-handled submission.
+  const onOpenChangeRef = useRef(onOpenChange);
+  useEffect(() => {
+    onOpenChangeRef.current = onOpenChange;
+  });
+
   if (state !== lastHandledState) {
     setLastHandledState(state);
-    if (state.success) {
-      onOpenChange(false);
-    }
   }
 
   useEffect(() => {
     if (state.success) {
       toast.success(t("catalogModalToastAdded", { count: state.addedCount ?? 0 }));
+      // Closing the dialog here updates ItineraryCatalogModal's state
+      // (setBatchTemplates(null)) - a different component's state, so it's
+      // only valid from an effect, not the render-phase block above (which
+      // is fine for this component's own setLastHandledState).
+      onOpenChangeRef.current(false);
     } else if (state.message) {
       toast.error(state.message);
     }
