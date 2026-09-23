@@ -143,3 +143,72 @@ describe("NewItineraryItemModal (#231/R04)", () => {
     expect((screen.getByLabelText(/Título/) as HTMLInputElement).value).toBe("");
   });
 });
+
+describe("NewItineraryItemModal 'fromTemplate' prop (#232/R05)", () => {
+  const templateId = "c2c6cf9e-0d68-4f5a-8f0c-1c4f4c9b1a11";
+
+  function renderFromTemplate(onOpenChange = vi.fn()) {
+    render(
+      <NewItineraryItemModal
+        tripId={tripId}
+        fromTemplate={{
+          id: templateId,
+          title: "Louvre",
+          location: "Rue de Rivoli",
+          open: true,
+          onOpenChange,
+        }}
+      />,
+    );
+    return onOpenChange;
+  }
+
+  it("mounts already open with no trigger button, pre-filled from the template", () => {
+    renderFromTemplate();
+
+    expect(screen.queryByRole("button", { name: "Novo item de roteiro" })).toBeNull();
+    expect((screen.getByLabelText(/Título/) as HTMLInputElement).value).toBe("Louvre");
+    expect((screen.getByLabelText(/^Endereço/) as HTMLInputElement).value).toBe("Rue de Rivoli");
+  });
+
+  it("only offers 'Salvar' - no 'Salvar só como modelo' escape hatch", () => {
+    renderFromTemplate();
+
+    expect(screen.getByRole("button", { name: "Salvar" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Salvar só como modelo" })).toBeNull();
+  });
+
+  it("submits mode=fromTemplate with the template id, keeping edits to the pre-filled title", async () => {
+    mocks.saveNewItineraryItem.mockResolvedValue({ success: true, createdDate: "2026-10-12" });
+    renderFromTemplate();
+
+    fireEvent.change(screen.getByLabelText("Data *"), { target: { value: "2026-10-12" } });
+    fireEvent.change(screen.getByLabelText(/Título/), { target: { value: "Louvre (manhã)" } });
+    fireEvent.click(screen.getByRole("button", { name: "Salvar" }));
+
+    await waitFor(() => expect(mocks.saveNewItineraryItem).toHaveBeenCalled());
+    const submittedFormData = mocks.saveNewItineraryItem.mock.calls.at(-1)![1] as FormData;
+    expect(submittedFormData.get("mode")).toBe("fromTemplate");
+    expect(submittedFormData.get("templateId")).toBe(templateId);
+    expect(submittedFormData.get("title")).toBe("Louvre (manhã)");
+    expect(submittedFormData.get("date")).toBe("2026-10-12");
+  });
+
+  it("requires a date - the server rejects an empty one the same as a full save", async () => {
+    mocks.saveNewItineraryItem.mockResolvedValue({ errors: { date: "Informe uma data válida." } });
+    renderFromTemplate();
+
+    fireEvent.click(screen.getByRole("button", { name: "Salvar" }));
+
+    await waitFor(() => expect(mocks.saveNewItineraryItem).toHaveBeenCalled());
+    expect(await screen.findByText("Informe uma data válida.")).toBeTruthy();
+  });
+
+  it("calls the caller's onOpenChange(false) instead of an internal close on Cancelar", () => {
+    const onOpenChange = renderFromTemplate();
+
+    fireEvent.click(screen.getByRole("button", { name: "Cancelar" }));
+
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+});

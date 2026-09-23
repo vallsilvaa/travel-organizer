@@ -297,7 +297,10 @@
       "catalogModalTitle": "Adicionar item de roteiro do catálogo",
       "catalogModalDescription": "Escolha um item salvo no seu catálogo pessoal para adicionar ao roteiro desta viagem.",
       "catalogModalNoTemplates": "Você ainda não tem itens de roteiro salvos no catálogo.",
-      "catalogModalToast": "Item de roteiro adicionado a partir do catálogo.",
+      "catalogModalSearchLabel": "Buscar",
+      "catalogModalSearchPlaceholder": "Buscar por título ou endereço",
+      "catalogModalNoResults": "Nenhum item encontrado para esta busca.",
+      "catalogModalFormTitle": "Adicionar ao roteiro",
       "actionPresetCheckIn": "Check-in",
       "actionPresetCheckOut": "Check-out",
       "loadError": "Não foi possível carregar o roteiro. Tente atualizar a página.",
@@ -741,7 +744,8 @@
       "addFailed": "Não foi possível adicionar este item ao roteiro. Verifique seu acesso à viagem e tente novamente.",
       "updateFailed": "Não foi possível atualizar este item do roteiro. Tente novamente.",
       "dateOutsideTripRange": "A data deve estar dentro do período da viagem.",
-      "templateSaveFailed": "Não foi possível salvar o modelo reutilizável. Tente novamente."
+      "templateSaveFailed": "Não foi possível salvar o modelo reutilizável. Tente novamente.",
+      "templateNotFound": "Não foi possível encontrar este item do catálogo. Ele pode ter sido removido."
     }
   },
   "itineraryCalendar": {

@@ -1,7 +1,7 @@
 import type { getTranslations } from "next-intl/server";
 
 import type { Classification, Continent, PrepItemType } from "@/features/prep-catalog/shared";
-import { AddTaskFromCatalogModal } from "@/features/prep-catalog/add-task-from-catalog-modal";
+import { ItineraryCatalogModal } from "@/features/itinerary/itinerary-catalog-modal";
 import { NewItineraryItemModal } from "@/features/itinerary/new-item-modal";
 import type { TaskCategory } from "@/features/tasks/templates";
 import { CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,6 +18,7 @@ export type CatalogTemplate = {
   continent: Continent | null;
   country: string;
   city: string | null;
+  location: string | null;
   classification: Classification;
   due_offset_days: number | null;
   currency: string | null;
@@ -31,12 +32,7 @@ type ItineraryHeaderProps = {
   isArchived: boolean;
   hasItems: boolean;
   itineraryTemplates: CatalogTemplate[];
-  appliedTemplateIds: string[];
   activitySuggestions: string[];
-  taskCategoryLabels: Record<TaskCategory, string>;
-  prepItemTypeLabels: Record<PrepItemType, string>;
-  classificationLabels: Record<Classification, string>;
-  continentLabels: Record<Continent, string>;
   t: Translator;
 };
 
@@ -46,12 +42,7 @@ export function ItineraryHeader({
   isArchived,
   hasItems,
   itineraryTemplates,
-  appliedTemplateIds,
   activitySuggestions,
-  taskCategoryLabels,
-  prepItemTypeLabels,
-  classificationLabels,
-  continentLabels,
   t,
 }: ItineraryHeaderProps) {
   return (
@@ -77,19 +68,16 @@ export function ItineraryHeader({
             />
           ) : null}
           {!isArchived ? (
-            <AddTaskFromCatalogModal
-              templates={itineraryTemplates}
+            // R05 (#232): purpose-built single-select search, replacing
+            // AddTaskFromCatalogModal here - that shared modal still bulk-
+            // applies templates straight onto the trip's start_date without
+            // asking, which is wrong for itinerary items (the date matters).
+            // It's untouched and still used as-is by the Preparação tab.
+            <ItineraryCatalogModal
               tripId={tripId}
-              taskCategoryLabels={taskCategoryLabels}
-              prepItemTypeLabels={prepItemTypeLabels}
-              classificationLabels={classificationLabels}
-              continentLabels={continentLabels}
-              appliedTemplateIds={appliedTemplateIds}
+              templates={itineraryTemplates}
+              activitySuggestions={activitySuggestions}
               triggerLabel={t("itinerary.addFromCatalog")}
-              title={t("itinerary.catalogModalTitle")}
-              description={t("itinerary.catalogModalDescription")}
-              noTemplatesMessage={t("itinerary.catalogModalNoTemplates")}
-              toastMessage={t("itinerary.catalogModalToast")}
             />
           ) : null}
           {hasItems ? <ItineraryExportMenu tripId={tripId} tripTitle={tripTitle} /> : null}

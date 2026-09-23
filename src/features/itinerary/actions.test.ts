@@ -16,6 +16,7 @@ const mocks = vi.hoisted(() => ({
   templateCandidates: vi.fn(),
   templateInsert: vi.fn(),
   templateInsertSingle: vi.fn(),
+  templateLookup: vi.fn(),
 }));
 
 vi.mock("@/lib/supabase/server", () => ({
@@ -52,6 +53,7 @@ import {
 
 const tripId = "27823996-ec50-4cc2-8506-a29d07b86f94";
 const itemId = "8f3f147b-8684-4ff1-b5c7-6814e4f57f73";
+const existingTemplateId = "c2c6cf9e-0d68-4f5a-8f0c-1c4f4c9b1a11";
 
 function validForm() {
   const formData = new FormData();
@@ -98,8 +100,26 @@ describe("itinerary actions", () => {
     // a test overrides mocks.templateCandidates to simulate a dedupe match.
     mocks.templateCandidates.mockResolvedValue({ data: [] });
     mocks.templateInsertSingle.mockResolvedValue({ data: { id: "template-1" }, error: null });
+    // Not found by default - findOwnedItineraryTemplate's lookup (mode
+    // "fromTemplate") falls through to a null template unless a test
+    // overrides mocks.templateLookup to simulate an owned match.
+    mocks.templateLookup.mockResolvedValue({ data: null });
+    // `.eq()` chains and is itself awaitable (findExistingItineraryTemplate
+    // awaits the return of its last `.eq()` directly, with no further call),
+    // while `.maybeSingle()` is also chainable off it (findOwnedItineraryTemplate
+    // calls it explicitly after its own `.eq()` chain) - one node covers both
+    // real-world query shapes used against this table.
+    const templatesQueryNode: {
+      eq: () => typeof templatesQueryNode;
+      maybeSingle: () => Promise<unknown>;
+      then: (resolve: (value: unknown) => void, reject: (reason: unknown) => void) => void;
+    } = {
+      eq: () => templatesQueryNode,
+      maybeSingle: () => mocks.templateLookup(),
+      then: (resolve, reject) => mocks.templateCandidates().then(resolve, reject),
+    };
     const templatesBuilder = {
-      select: () => ({ eq: () => ({ eq: () => mocks.templateCandidates() }) }),
+      select: () => templatesQueryNode,
       insert: (payload: unknown) => {
         mocks.templateInsert(payload);
         return { select: () => ({ single: () => mocks.templateInsertSingle() }) };
@@ -306,6 +326,48 @@ describe("itinerary actions", () => {
       const result = await saveNewItineraryItem({}, formData);
 
       expect(mocks.templateInsert).not.toHaveBeenCalled();
+      expect(mocks.insert).not.toHaveBeenCalled();
+      expect(result.errors?.date).toBeTruthy();
+    });
+  });
+
+  describe("saveNewItineraryItem 'fromTemplate' mode (#232/R05)", () => {
+    function fromTemplateForm(templateId: string = existingTemplateId) {
+      const formData = validForm();
+      formData.set("mode", "fromTemplate");
+      formData.set("templateId", templateId);
+      return formData;
+    }
+
+    it("creates the item with the given template_id, without creating or upserting a template", async () => {
+      mocks.templateLookup.mockResolvedValue({ data: { id: existingTemplateId } });
+
+      const result = await saveNewItineraryItem({}, fromTemplateForm());
+
+      expect(mocks.templateInsert).not.toHaveBeenCalled();
+      expect(mocks.insert).toHaveBeenCalledWith(
+        expect.objectContaining({ trip_id: tripId, template_id: existingTemplateId }),
+      );
+      expect(result.success).toBe(true);
+      expect(result.createdDate).toBe("2026-10-12");
+    });
+
+    it("rejects when the template can't be found for this owner (removed, or never owned it)", async () => {
+      mocks.templateLookup.mockResolvedValue({ data: null });
+
+      const result = await saveNewItineraryItem({}, fromTemplateForm());
+
+      expect(mocks.insert).not.toHaveBeenCalled();
+      expect(result.success).toBeUndefined();
+      expect(result.message).toBeTruthy();
+    });
+
+    it("still requires a date, unlike 'Salvar só como modelo' (D3/R05 - applying an existing template always needs one)", async () => {
+      const formData = fromTemplateForm();
+      formData.set("date", "");
+
+      const result = await saveNewItineraryItem({}, formData);
+
       expect(mocks.insert).not.toHaveBeenCalled();
       expect(result.errors?.date).toBeTruthy();
     });
