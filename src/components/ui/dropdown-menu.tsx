@@ -96,6 +96,32 @@ function DropdownMenuItem({
   )
 }
 
+// For a menu item that must behave like a real link - e.g. an `<a href
+// download>` triggering a native browser download - not `DropdownMenuItem`
+// with a `render` prop: `Menu.Item`'s own click handling calls
+// preventDefault() to manage selection state, which silently swallows the
+// native anchor action for anything that isn't itself JS-driven (a Next.js
+// `<Link>` still navigates fine through `Menu.Item` since its own onClick
+// does the routing regardless of the native default being prevented, but a
+// plain `download` anchor has no such fallback). `Menu.LinkItem` is base-ui's
+// purpose-built component for this - see its own docs: "A link in the menu
+// that can be used to navigate to a different page or section."
+function DropdownMenuLinkItem({
+  className,
+  ...props
+}: MenuPrimitive.LinkItem.Props) {
+  return (
+    <MenuPrimitive.LinkItem
+      data-slot="dropdown-menu-link-item"
+      className={cn(
+        "group/dropdown-menu-item relative flex cursor-default items-center gap-1.5 rounded-md px-1.5 py-1 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
 function DropdownMenuSub({ ...props }: MenuPrimitive.SubmenuRoot.Props) {
   return <MenuPrimitive.SubmenuRoot data-slot="dropdown-menu-sub" {...props} />
 }
@@ -257,6 +283,7 @@ export {
   DropdownMenuGroup,
   DropdownMenuLabel,
   DropdownMenuItem,
+  DropdownMenuLinkItem,
   DropdownMenuCheckboxItem,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
