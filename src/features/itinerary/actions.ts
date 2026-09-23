@@ -154,6 +154,34 @@ async function upsertItineraryTemplate(
   return created ? { id: created.id } : null;
 }
 
+// R05 (#232): the "fromTemplate" save mode reuses a template the visitor
+// picked in ItineraryCatalogModal by id, instead of upsertItineraryTemplate's
+// title/location match - the visitor may have edited the pre-filled
+// title/address before saving, and this path must still point at the exact
+// template they picked rather than creating a new one or silently reusing an
+// unrelated match. owner_id + item_type are re-checked server-side (not just
+// trusted from the client) the same way findExistingItineraryTemplate scopes
+// its own lookup.
+async function findOwnedItineraryTemplate(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  ownerId: string,
+  templateId: string,
+): Promise<{ id: string } | null> {
+  if (!isValidItineraryId(templateId)) {
+    return null;
+  }
+
+  const { data } = await supabase
+    .from("prep_item_templates")
+    .select("id")
+    .eq("id", templateId)
+    .eq("owner_id", ownerId)
+    .eq("item_type", "itinerary_item")
+    .maybeSingle();
+
+  return data ? { id: data.id } : null;
+}
+
 export async function saveNewItineraryItem(
   _previousState: NewItineraryItemActionState,
   formData: FormData,
@@ -162,6 +190,7 @@ export async function saveNewItineraryItem(
   const tripId = String(formData.get("tripId") ?? "");
   const mode = String(formData.get("mode") ?? "full");
   const templateOnly = mode === "templateOnly";
+  const fromExistingTemplate = mode === "fromTemplate";
 
   if (!isValidItineraryId(tripId)) {
     return { message: t("actionErrors.identifyTrip") };
@@ -210,16 +239,18 @@ export async function saveNewItineraryItem(
     return { errors: { date: t("actionErrors.dateOutsideTripRange") } };
   }
 
-  const template = await upsertItineraryTemplate(supabase, user.id, {
-    title: validation.data.title,
-    location: validation.data.location,
-    city: validation.data.city,
-    country: templateCountry,
-    continent: templateContinent,
-  });
+  const template = fromExistingTemplate
+    ? await findOwnedItineraryTemplate(supabase, user.id, String(formData.get("templateId") ?? ""))
+    : await upsertItineraryTemplate(supabase, user.id, {
+        title: validation.data.title,
+        location: validation.data.location,
+        city: validation.data.city,
+        country: templateCountry,
+        continent: templateContinent,
+      });
 
   if (!template) {
-    return { message: t("actionErrors.templateSaveFailed") };
+    return { message: t(fromExistingTemplate ? "actionErrors.templateNotFound" : "actionErrors.templateSaveFailed") };
   }
 
   const { data: created, error } = await supabase

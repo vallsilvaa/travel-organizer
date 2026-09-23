@@ -116,6 +116,7 @@ type CatalogTemplate = {
   continent: Continent | null;
   country: string;
   city: string | null;
+  location: string | null;
   classification: Classification;
   due_offset_days: number | null;
   currency: string | null;
@@ -465,7 +466,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
       supabase
         .from("prep_item_templates")
         .select(
-          "id, title, action, item_type, category, continent, country, city, classification, due_offset_days, currency, estimated_amount, document_instructions",
+          "id, title, action, item_type, category, continent, country, city, location, classification, due_offset_days, currency, estimated_amount, document_instructions",
         )
         .order("created_at", { ascending: false }),
       isCreator
@@ -524,9 +525,6 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
   const allTasks = (tasks ?? []) as TripTask[];
   const appliedTemplateIds = allTasks
     .map((task) => task.template_id)
-    .filter((templateId): templateId is string => Boolean(templateId));
-  const appliedItineraryTemplateIds = (itineraryItems ?? [])
-    .map((item) => item.template_id)
     .filter((templateId): templateId is string => Boolean(templateId));
   // Check-in/Check-out are always offered as suggestions even before the
   // trip has any itinerary action set, plus anything already typed on this
@@ -1274,11 +1272,6 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
             commentsFor={commentsFor}
             participantNames={participantNames}
             catalogTemplates={catalogTemplates}
-            appliedItineraryTemplateIds={appliedItineraryTemplateIds}
-            taskCategoryLabels={taskCategoryLabels}
-            prepItemTypeLabels={prepItemTypeLabels}
-            classificationLabels={classificationLabels}
-            continentLabels={continentLabels}
             itineraryPeriodLabels={itineraryPeriodLabels}
             tripDestinations={tripDestinations}
             cityFilter={cityFilter}

@@ -4,8 +4,6 @@ import type { ItemComment } from "@/features/comments/comment-thread";
 import { deleteItineraryItem } from "@/features/itinerary/actions";
 import { ItineraryForm } from "@/features/itinerary/itinerary-form";
 import { itineraryPeriods } from "@/features/itinerary/validation";
-import type { Classification, Continent, PrepItemType } from "@/features/prep-catalog/shared";
-import type { TaskCategory } from "@/features/tasks/templates";
 import { ItemActionsMenu } from "@/components/item-actions-menu";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -51,11 +49,6 @@ type ItineraryTabProps = {
   commentsFor: (itemType: "itinerary" | "task", itemId: string) => ItemComment[];
   participantNames: Map<string, string>;
   catalogTemplates: CatalogTemplate[];
-  appliedItineraryTemplateIds: string[];
-  taskCategoryLabels: Record<TaskCategory, string>;
-  prepItemTypeLabels: Record<PrepItemType, string>;
-  classificationLabels: Record<Classification, string>;
-  continentLabels: Record<Continent, string>;
   itineraryPeriodLabels: Record<ItineraryPeriod, string>;
   tripDestinations: TripDestinationForFilter[];
   cityFilter: string;
@@ -87,11 +80,6 @@ export function ItineraryTab({
   commentsFor,
   participantNames,
   catalogTemplates,
-  appliedItineraryTemplateIds,
-  taskCategoryLabels,
-  prepItemTypeLabels,
-  classificationLabels,
-  continentLabels,
   itineraryPeriodLabels,
   tripDestinations,
   cityFilter,
@@ -166,12 +154,7 @@ export function ItineraryTab({
           isArchived={isArchived}
           hasItems={hasItems}
           itineraryTemplates={catalogTemplates.filter((template) => template.item_type === "itinerary_item")}
-          appliedTemplateIds={appliedItineraryTemplateIds}
           activitySuggestions={activitySuggestions}
-          taskCategoryLabels={taskCategoryLabels}
-          prepItemTypeLabels={prepItemTypeLabels}
-          classificationLabels={classificationLabels}
-          continentLabels={continentLabels}
           t={t}
         />
         <CardContent>

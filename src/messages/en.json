@@ -297,7 +297,10 @@
       "catalogModalTitle": "Add an itinerary item from your catalog",
       "catalogModalDescription": "Pick a saved item from your personal catalog to add to this trip's itinerary.",
       "catalogModalNoTemplates": "You don't have any saved itinerary items in your catalog yet.",
-      "catalogModalToast": "Itinerary item added from the catalog.",
+      "catalogModalSearchLabel": "Search",
+      "catalogModalSearchPlaceholder": "Search by title or address",
+      "catalogModalNoResults": "No items found for this search.",
+      "catalogModalFormTitle": "Add to itinerary",
       "actionPresetCheckIn": "Check-in",
       "actionPresetCheckOut": "Check-out",
       "loadError": "Could not load the itinerary. Try refreshing the page.",
@@ -741,7 +744,8 @@
       "addFailed": "Could not add this itinerary item. Check your access to the trip and try again.",
       "updateFailed": "Could not update this itinerary item. Please try again.",
       "dateOutsideTripRange": "The date must be within the trip's date range.",
-      "templateSaveFailed": "Could not save the reusable template. Please try again."
+      "templateSaveFailed": "Could not save the reusable template. Please try again.",
+      "templateNotFound": "Could not find this catalog item. It may have been removed."
     }
   },
   "itineraryCalendar": {

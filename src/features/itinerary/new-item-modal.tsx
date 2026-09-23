@@ -101,12 +101,30 @@ function isDraftEmpty(draft: ItineraryDraft) {
 
 const initialState: NewItineraryItemActionState = {};
 
+// R05 (#232): ItineraryCatalogModal mounts a fresh instance of this
+// component, already open, once a single existing template is picked -
+// `open`/`onOpenChange` are then driven by that caller instead of an
+// internal trigger, and `title`/`location` pre-fill the form. Saving
+// submits mode="fromTemplate" so the server reuses that exact template_id
+// (see saveNewItineraryItem) instead of upserting a title/location match -
+// the template itself is never created or modified from this path, so
+// "Salvar só como modelo" (which only makes sense when there's no template
+// yet) doesn't apply here either.
+type NewItineraryItemModalFromTemplate = {
+  id: string;
+  title: string;
+  location: string | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+};
+
 type NewItineraryItemModalProps = {
   tripId: string;
   activitySuggestions?: string[];
   // Overridable so the trigger reads naturally with the itinerary tab's own
   // "trip" namespace copy (mirrors AddTaskFromCatalogModal's triggerLabel).
   triggerLabel?: string;
+  fromTemplate?: NewItineraryItemModalFromTemplate;
 };
 
 // The always-a-modal "Novo item de roteiro" flow (#231/R04): unlike the
@@ -114,7 +132,7 @@ type NewItineraryItemModalProps = {
 // edit form use, this one is a Dialog in both browser and PWA-standalone
 // mode - DialogContent already renders as a bottom sheet under
 // `standalone:` classes, so no useStandalone() branching is needed here.
-export function NewItineraryItemModal({ tripId, activitySuggestions, triggerLabel }: NewItineraryItemModalProps) {
+export function NewItineraryItemModal({ tripId, activitySuggestions, triggerLabel, fromTemplate }: NewItineraryItemModalProps) {
   const t = useTranslations("itineraryForm");
   const tPeriods = useTranslations("categories.itineraryPeriod");
   const locale = useLocale();
@@ -126,11 +144,20 @@ export function NewItineraryItemModal({ tripId, activitySuggestions, triggerLabe
     [locale, activitySuggestions],
   );
 
-  const [open, setOpen] = useState(false);
-  const [draft, setDraft] = useState<ItineraryDraft>(emptyDraft);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = fromTemplate ? fromTemplate.open : internalOpen;
+  // Lazy initializers: ItineraryCatalogModal mounts a brand new instance of
+  // this component per selection (see its own comment), so seeding these
+  // from `fromTemplate` here - rather than in handleOpenChange's "next"
+  // branch below, which never runs for a component that mounts already
+  // open - is enough; there's no "reopen with a different template" case to
+  // handle for the same mounted instance.
+  const [draft, setDraft] = useState<ItineraryDraft>(() =>
+    fromTemplate ? { ...emptyDraft, location: fromTemplate.location ?? "" } : emptyDraft,
+  );
   const [draftRestored, setDraftRestored] = useState(false);
   const [activity, setActivity] = useState("");
-  const [info, setInfo] = useState("");
+  const [info, setInfo] = useState(() => fromTemplate?.title ?? "");
   const [hasStartTime, setHasStartTime] = useState(false);
   const [formKey, setFormKey] = useState(0);
   const formRef = useRef<HTMLFormElement>(null);
@@ -166,12 +193,25 @@ export function NewItineraryItemModal({ tripId, activitySuggestions, triggerLabe
     };
   }
 
+  function setOpenState(next: boolean) {
+    if (fromTemplate) {
+      fromTemplate.onOpenChange(next);
+    } else {
+      setInternalOpen(next);
+    }
+  }
+
   // Controlled Dialog: this only ever fires from an internal close request
   // (Esc, backdrop click, the built-in X button) or the trigger opening it -
-  // never from our own setOpen() calls below, so "closing" here always means
-  // "save the draft" (Cancelar bypasses this entirely, see handleCancel).
+  // never from our own setOpenState() calls below, so "closing" here always
+  // means "save the draft" (Cancelar bypasses this entirely, see
+  // handleCancel). The draft read/write is skipped entirely when
+  // `fromTemplate` is set - a stray Esc/backdrop close from that flow must
+  // not overwrite the regular "Novo item" draft with template-prefilled
+  // content, and there's no "reopen" to restore into anyway (see the
+  // lazy-initializer comment above).
   function handleOpenChange(next: boolean) {
-    if (next) {
+    if (next && !fromTemplate) {
       const existingDraft = readDraft(tripId);
       setActivity(existingDraft?.activity ?? "");
       setInfo(existingDraft?.info ?? "");
@@ -179,7 +219,7 @@ export function NewItineraryItemModal({ tripId, activitySuggestions, triggerLabe
       setDraft(existingDraft ?? emptyDraft);
       setDraftRestored(Boolean(existingDraft));
       setFormKey((key) => key + 1);
-    } else {
+    } else if (!next && !fromTemplate) {
       const snapshot = snapshotDraft();
       if (isDraftEmpty(snapshot)) {
         clearDraft(tripId);
@@ -187,13 +227,13 @@ export function NewItineraryItemModal({ tripId, activitySuggestions, triggerLabe
         writeDraft(tripId, snapshot);
       }
     }
-    setOpen(next);
+    setOpenState(next);
   }
 
   function handleCancel() {
     clearDraft(tripId);
     resetToEmpty();
-    setOpen(false);
+    setOpenState(false);
   }
 
   if (state !== lastHandledState) {
@@ -201,7 +241,7 @@ export function NewItineraryItemModal({ tripId, activitySuggestions, triggerLabe
     if (state.success) {
       clearDraft(tripId);
       resetToEmpty();
-      setOpen(false);
+      setOpenState(false);
       if (state.createdDate) {
         activeDayContext?.setActiveDay(state.createdDate);
       }
@@ -220,9 +260,11 @@ export function NewItineraryItemModal({ tripId, activitySuggestions, triggerLabe
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger render={<Button type="button" size="lg" />}>
-        {triggerLabel ?? t("newItemTrigger")}
-      </DialogTrigger>
+      {fromTemplate ? null : (
+        <DialogTrigger render={<Button type="button" size="lg" />}>
+          {triggerLabel ?? t("newItemTrigger")}
+        </DialogTrigger>
+      )}
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>{triggerLabel ?? t("newItemTrigger")}</DialogTitle>
@@ -236,6 +278,7 @@ export function NewItineraryItemModal({ tripId, activitySuggestions, triggerLabe
 
         <form key={formKey} ref={formRef} action={formAction} className="grid gap-4 sm:grid-cols-2">
           <input type="hidden" name="tripId" value={tripId} />
+          {fromTemplate ? <input type="hidden" name="templateId" value={fromTemplate.id} /> : null}
 
           <div className="space-y-2">
             <Label htmlFor="new-item-activity">{t("activityLabel")}</Label>
@@ -359,12 +402,14 @@ export function NewItineraryItemModal({ tripId, activitySuggestions, triggerLabe
           </div>
 
           <div className="flex flex-wrap items-center gap-3 sm:col-span-2">
-            <Button type="submit" name="mode" value="full" size="lg" disabled={pending}>
+            <Button type="submit" name="mode" value={fromTemplate ? "fromTemplate" : "full"} size="lg" disabled={pending}>
               {pending ? t("savePending") : t("saveNew")}
             </Button>
-            <Button type="submit" name="mode" value="templateOnly" variant="outline" size="lg" disabled={pending}>
-              {t("saveAsTemplateOnly")}
-            </Button>
+            {fromTemplate ? null : (
+              <Button type="submit" name="mode" value="templateOnly" variant="outline" size="lg" disabled={pending}>
+                {t("saveAsTemplateOnly")}
+              </Button>
+            )}
             <Button type="button" variant="ghost" onClick={handleCancel} disabled={pending}>
               {t("cancel")}
             </Button>
