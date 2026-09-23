@@ -90,8 +90,16 @@ describe("ActivityCombobox", () => {
     const input = screen.getByPlaceholderText("Check-in, Visitar...");
 
     fireEvent.focus(input);
+    // First ArrowDown only opens the popup - base-ui's `Autocomplete`
+    // (selectionMode: "none", unlike `Combobox`) doesn't auto-highlight the
+    // first item on open (`focusItemOnOpen` is false whenever
+    // `autoHighlight` isn't set), on purpose: auto-highlighting on open
+    // would make a stray Enter commit a suggestion the visitor never
+    // actually navigated to while free-typing. A second ArrowDown moves the
+    // highlight onto the first item.
     fireEvent.keyDown(input, { key: "ArrowDown" });
     await waitFor(() => screen.getByRole("option", { name: "Check-in" }));
+    fireEvent.keyDown(input, { key: "ArrowDown" });
     fireEvent.keyDown(input, { key: "Enter" });
 
     expect(screen.getByTestId("value").textContent).toBe("Check-in");
@@ -101,5 +109,22 @@ describe("ActivityCombobox", () => {
     render(<Harness initialValue="Check-in" />);
 
     expect((screen.getByPlaceholderText("Check-in, Visitar...") as HTMLInputElement).value).toBe("Check-in");
+  });
+
+  it("keeps typed text on blur even without an explicit selection (regression, #239/R12)", () => {
+    // Base-ui's `Combobox` primitive (selectionMode: "single") reverts the
+    // input back to the last *selected* item when it loses focus without an
+    // explicit selection - wiping free-typed text like "Visitar" right back
+    // to "". This component is built on `Autocomplete` (selectionMode:
+    // "none") specifically so blurring after typing, without clicking a
+    // suggestion or pressing Enter, preserves what was typed.
+    render(<Harness />);
+    const input = screen.getByPlaceholderText("Check-in, Visitar...");
+
+    fireEvent.change(input, { target: { value: "Visitar" } });
+    fireEvent.blur(input);
+
+    expect(screen.getByTestId("value").textContent).toBe("Visitar");
+    expect((input as HTMLInputElement).value).toBe("Visitar");
   });
 });

@@ -242,19 +242,30 @@ export function NewItineraryItemModal({ tripId, activitySuggestions, triggerLabe
       clearDraft(tripId);
       resetToEmpty();
       setOpenState(false);
-      if (state.createdDate) {
-        activeDayContext?.setActiveDay(state.createdDate);
-      }
     }
   }
+
+  // Extracted so the effect below can depend on the setter itself (stable
+  // across renders, like every useState setter) instead of the
+  // ActiveDayProvider context value object, which is a new object on every
+  // render and would otherwise re-fire the effect - and the success toast
+  // with it - every time the active day actually changes.
+  const setActiveDay = activeDayContext?.setActiveDay;
 
   useEffect(() => {
     if (state.success) {
       toast.success(state.createdDate ? t("toastAdded") : t("toastTemplateSaved"));
+      // Switching the active day-tab updates ActiveDayProvider, a different
+      // component's state - doing that mid-render (as the block above does
+      // for this component's own state) is invalid React and only warns/
+      // silently drops the update instead of applying it.
+      if (state.createdDate) {
+        setActiveDay?.(state.createdDate);
+      }
     } else if (state.message) {
       toast.error(state.message);
     }
-  }, [state, t]);
+  }, [state, t, setActiveDay]);
 
   const draftContinent = draft.continent && isContinent(draft.continent) ? draft.continent : null;
 
