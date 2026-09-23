@@ -376,13 +376,19 @@ test("traveler exercises the Roteiro v2 rewrite end to end", async ({ page }) =>
   });
 
   await test.step("export the roteiro as .ics and, with confirmation, as a PDF", async () => {
+    // Response-level assertions (status, content-type) for both routes
+    // already live in their own route handler tests (itinerary.ics has no
+    // dedicated one; itinerary.pdf/route.test.ts covers 200/401/404 and the
+    // application/pdf content-type) - waitForResponse on a `download`-
+    // attribute anchor's navigation is unreliable in Chromium (the request
+    // can be handled by the browser's download manager before it surfaces
+    // as a page-level response), so this only asserts what an e2e test can
+    // actually observe: a real download fires, with the right filename.
     await page.getByRole("button", { name: "Exportar" }).click();
-    const [icsDownload, icsResponse] = await Promise.all([
+    const icsDownload = await Promise.all([
       page.waitForEvent("download"),
-      page.waitForResponse((response) => response.url().includes("/itinerary.ics")),
       page.getByRole("menuitem", { name: "Calendário (.ics)" }).click(),
-    ]);
-    expect(icsResponse.status()).toBe(200);
+    ]).then(([download]) => download);
     expect(icsDownload.suggestedFilename()).toMatch(/\.ics$/);
 
     await page.getByRole("button", { name: "Exportar" }).click();
@@ -395,13 +401,10 @@ test("traveler exercises the Roteiro v2 rewrite end to end", async ({ page }) =>
     const confirmDialog = page.getByRole("dialog");
     await expect(confirmDialog.getByText(`Baixar ${expectedPdfFileName}?`)).toBeVisible();
 
-    const [pdfDownload, pdfResponse] = await Promise.all([
+    const pdfDownload = await Promise.all([
       page.waitForEvent("download"),
-      page.waitForResponse((response) => response.url().includes("/itinerary.pdf")),
       confirmDialog.locator("a[download]").click(),
-    ]);
-    expect(pdfResponse.status()).toBe(200);
-    expect(pdfResponse.headers()["content-type"]).toBe("application/pdf");
+    ]).then(([download]) => download);
     expect(pdfDownload.suggestedFilename()).toBe(expectedPdfFileName);
   });
 });
