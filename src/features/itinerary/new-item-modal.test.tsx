@@ -106,14 +106,36 @@ describe("NewItineraryItemModal (#231/R04)", () => {
     openModal();
 
     fireEvent.change(screen.getByLabelText("Data *"), { target: { value: "2026-10-12" } });
+    fireEvent.change(screen.getByLabelText("Atividade"), { target: { value: "Visitar" } });
     fireEvent.change(screen.getByPlaceholderText("Hostel X"), { target: { value: "Louvre" } });
     fireEvent.click(screen.getByRole("button", { name: "Salvar" }));
 
     await waitFor(() => expect(mocks.saveNewItineraryItem).toHaveBeenCalled());
     const submittedFormData = mocks.saveNewItineraryItem.mock.calls.at(-1)![1] as FormData;
     expect(submittedFormData.get("mode")).toBe("full");
-    expect(submittedFormData.get("title")).toBe("Louvre");
+    expect(submittedFormData.get("title")).toBe("Visitar Louvre");
     expect(submittedFormData.get("date")).toBe("2026-10-12");
+  });
+
+  it("keeps a typed 'Atividade' that was never explicitly selected when focus moves to the next field (regression, #239/R12)", async () => {
+    // Reproduces the real e2e failure: typing into the free-text activity
+    // combobox and tabbing away (no click on a suggestion, no Enter) must
+    // not revert the typed text - see ActivityCombobox/Autocomplete's doc
+    // comments for why base-ui's `Combobox` primitive used to do exactly
+    // that on blur.
+    mocks.saveNewItineraryItem.mockResolvedValue({ success: true, createdDate: "2026-10-12" });
+    openModal();
+
+    const activityInput = screen.getByLabelText("Atividade");
+    fireEvent.change(activityInput, { target: { value: "Visitar" } });
+    fireEvent.blur(activityInput);
+    fireEvent.change(screen.getByLabelText("Data *"), { target: { value: "2026-10-12" } });
+    fireEvent.change(screen.getByPlaceholderText("Hostel X"), { target: { value: "Louvre" } });
+    fireEvent.click(screen.getByRole("button", { name: "Salvar" }));
+
+    await waitFor(() => expect(mocks.saveNewItineraryItem).toHaveBeenCalled());
+    const submittedFormData = mocks.saveNewItineraryItem.mock.calls.at(-1)![1] as FormData;
+    expect(submittedFormData.get("title")).toBe("Visitar Louvre");
   });
 
   it("submits 'Salvar só como modelo' with mode=templateOnly", async () => {

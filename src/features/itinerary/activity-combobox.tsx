@@ -3,15 +3,15 @@
 import { useTranslations } from "next-intl";
 
 import {
-  Combobox,
-  ComboboxEmpty,
-  ComboboxIcon,
-  ComboboxInput,
-  ComboboxInputGroup,
-  ComboboxItem,
-  ComboboxList,
-  ComboboxPopup,
-} from "@/components/ui/combobox";
+  Autocomplete,
+  AutocompleteEmpty,
+  AutocompleteIcon,
+  AutocompleteInput,
+  AutocompleteInputGroup,
+  AutocompleteItem,
+  AutocompleteList,
+  AutocompletePopup,
+} from "@/components/ui/autocomplete";
 
 type ActivityComboboxProps = {
   id: string;
@@ -28,6 +28,15 @@ type ActivityComboboxProps = {
 // like the `<input list>` datalist it replaces (#230/R03). It never submits
 // itself - callers combine `value` with the rest of the form and send it
 // through their own hidden field (see ItineraryForm/TemplateForm).
+//
+// This is built on base-ui's `Autocomplete` (`selectionMode: "none"`), not
+// `Combobox` (`selectionMode: "single"`). `Combobox`'s `Input`, when it
+// lives outside `Popup` (as here), reverts the input's text back to the
+// last *selected* item on blur/close if the user typed without explicitly
+// selecting anything - see `AriaCombobox`'s `handleUnmount`. That silently
+// wiped free-typed activity text (e.g. typing "Visitar" and tabbing to the
+// next field cleared it back to "") - `Autocomplete` has no such "selected
+// value" to revert to, so what's typed is always what's kept.
 export function ActivityCombobox({ id, value, onValueChange, suggestions, placeholder }: ActivityComboboxProps) {
   const t = useTranslations("activityCombobox");
   const trimmed = value.trim();
@@ -35,28 +44,21 @@ export function ActivityCombobox({ id, value, onValueChange, suggestions, placeh
   const items = trimmed && !hasExactMatch ? [...suggestions, trimmed] : suggestions;
 
   return (
-    <Combobox<string>
-      items={items}
-      inputValue={value}
-      onInputValueChange={(next) => onValueChange(next)}
-      onValueChange={(next) => {
-        if (next) onValueChange(next);
-      }}
-    >
-      <ComboboxInputGroup>
-        <ComboboxInput id={id} placeholder={placeholder} autoComplete="off" />
-        <ComboboxIcon />
-      </ComboboxInputGroup>
-      <ComboboxPopup>
-        <ComboboxEmpty>{t("empty")}</ComboboxEmpty>
-        <ComboboxList>
+    <Autocomplete<string> items={items} value={value} onValueChange={(next) => onValueChange(next)}>
+      <AutocompleteInputGroup>
+        <AutocompleteInput id={id} placeholder={placeholder} autoComplete="off" />
+        <AutocompleteIcon />
+      </AutocompleteInputGroup>
+      <AutocompletePopup>
+        <AutocompleteEmpty>{t("empty")}</AutocompleteEmpty>
+        <AutocompleteList>
           {(item: string) => (
-            <ComboboxItem key={item} value={item}>
+            <AutocompleteItem key={item} value={item}>
               {item === trimmed && !hasExactMatch ? t("addOption", { value: item }) : item}
-            </ComboboxItem>
+            </AutocompleteItem>
           )}
-        </ComboboxList>
-      </ComboboxPopup>
-    </Combobox>
+        </AutocompleteList>
+      </AutocompletePopup>
+    </Autocomplete>
   );
 }
