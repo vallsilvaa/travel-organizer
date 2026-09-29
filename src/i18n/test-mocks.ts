@@ -16,6 +16,7 @@ const dateTimeFormats = {
   medium: { dateStyle: "medium" },
   long: { dateStyle: "long" },
   weekday: { weekday: "long" },
+  dayMonth: { day: "2-digit", month: "2-digit" },
 } as const;
 
 export function createTranslator(namespace?: string) {

@@ -215,6 +215,17 @@ test("traveler completes the critical collaborative planning journey", async ({
   expect(organizer?.email).toBe(organizerEmail);
 });
 
+// Mirrors the day-tab strip's own short dd/MM label (formatDayMonth in
+// page.tsx), pt-BR/UTC to match this suite's locale.
+const dayTabFormatter = new Intl.DateTimeFormat("pt-BR", {
+  day: "2-digit",
+  month: "2-digit",
+  timeZone: "UTC",
+});
+function dayTabLabel(isoDate: string): string {
+  return dayTabFormatter.format(new Date(`${isoDate}T00:00:00Z`));
+}
+
 test("traveler exercises the Roteiro v2 rewrite end to end", async ({ page }) => {
   await test.step("sign up and create a trip with a real city destination", async () => {
     await page.goto("/auth/sign-up");
@@ -316,11 +327,11 @@ test("traveler exercises the Roteiro v2 rewrite end to end", async ({ page }) =>
       timeZone: "UTC",
     }).format(new Date(`${targetDate}T00:00:00Z`));
 
-    await page.getByRole("tab", { name: "Dia 2" }).click();
-    await expect(page.getByRole("tab", { name: "Dia 2" })).toHaveAttribute("aria-selected", "true");
+    await page.getByRole("tab", { name: dayTabLabel("2027-08-02") }).click();
+    await expect(page.getByRole("tab", { name: dayTabLabel("2027-08-02") })).toHaveAttribute("aria-selected", "true");
 
     await page.getByRole("button", { name: label }).click();
-    await expect(page.getByRole("tab", { name: "Dia 4" })).toHaveAttribute("aria-selected", "true");
+    await expect(page.getByRole("tab", { name: dayTabLabel("2027-08-04") })).toHaveAttribute("aria-selected", "true");
     await expect(page.getByRole("heading", { name: itemTwoTitle })).toBeVisible();
   });
 
@@ -334,7 +345,7 @@ test("traveler exercises the Roteiro v2 rewrite end to end", async ({ page }) =>
     await form.getByLabel("Data").fill("2027-08-05");
     await form.getByRole("button", { name: "Salvar", exact: true }).click();
 
-    await expect(page.getByRole("tab", { name: "Dia 5" })).toHaveAttribute("aria-selected", "true");
+    await expect(page.getByRole("tab", { name: dayTabLabel("2027-08-05") })).toHaveAttribute("aria-selected", "true");
     await expect(page.getByRole("heading", { name: itemTwoTitle })).toBeVisible();
   });
 
@@ -355,7 +366,7 @@ test("traveler exercises the Roteiro v2 rewrite end to end", async ({ page }) =>
     // D8 (#229/#233): a batch-added item is flagged needs_review until its
     // next edit - the "Revisar" badge/style is item-card.tsx's own rendering
     // of that flag, not something this test sets directly.
-    await page.getByRole("tab", { name: "Dia 6" }).click();
+    await page.getByRole("tab", { name: dayTabLabel("2027-08-06") }).click();
     const reviewItem = page.locator("li").filter({
       has: page.getByRole("heading", { name: `Visitar ${itemOneTitle}` }),
     });

@@ -24,6 +24,11 @@ export default getRequestConfig(async () => {
         // ECMA-402 throws if `weekday` is combined with `dateStyle` in the
         // same Intl.DateTimeFormat options.
         weekday: { weekday: "long" },
+        // Day/month only, no year - `dateStyle: "short"` above always
+        // includes the year, which the itinerary day-tabs' label doesn't
+        // want (the trip never spans multiple years in practice, and the
+        // full date is already in the day heading right below the tabs).
+        dayMonth: { day: "2-digit", month: "2-digit" },
       },
     },
     onError: (error) => {

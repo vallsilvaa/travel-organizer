@@ -333,7 +333,6 @@
       "applyFilters": "Apply filters",
       "clearFilters": "Clear filters",
       "dayHeading": "{weekday}, {date} (Day {day})",
-      "dayTabLabel": "Day {day}",
       "emptyDay": "No activities planned for this day.",
       "outOfRangeTitle": "Items outside the trip's dates",
       "outOfRangeDescription": "The trip's dates changed and these items now fall outside the new range. Fix each one's date.",

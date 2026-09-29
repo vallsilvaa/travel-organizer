@@ -59,6 +59,7 @@ type ItineraryTabProps = {
   t: Translator;
   formatDate: (value: string) => string;
   formatWeekday: (value: string) => string;
+  formatDayMonth: (value: string) => string;
   formatItineraryWhen: (item: {
     item_date: string;
     start_time: string | null;
@@ -90,6 +91,7 @@ export function ItineraryTab({
   t,
   formatDate,
   formatWeekday,
+  formatDayMonth,
   formatItineraryWhen,
 }: ItineraryTabProps) {
   const hasItems = itineraryItems.length > 0;
@@ -211,7 +213,7 @@ export function ItineraryTab({
                   datesWithItems={itineraryDayGroups.filter((group) => group.items.length > 0).map((group) => group.date)}
                   days={itineraryDayGroups.map((group) => ({
                     date: group.date,
-                    label: t("itinerary.dayTabLabel", { day: group.dayNumber }),
+                    label: formatDayMonth(group.date),
                     content: renderDaySection(group),
                   }))}
                 />
