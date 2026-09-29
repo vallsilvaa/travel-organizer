@@ -296,6 +296,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
   const format = await getFormatter();
   const formatDate = (value: string) => format.dateTime(new Date(`${value}T00:00:00Z`), "long");
   const formatWeekday = (value: string) => format.dateTime(new Date(`${value}T00:00:00Z`), "weekday");
+  const formatDayMonth = (value: string) => format.dateTime(new Date(`${value}T00:00:00Z`), "dayMonth");
   const formatTime = (value: string | null) => (value ? value.slice(0, 5) : t("itinerary.noTimeSet"));
   // R07: the card's date/time line is "date · time (start–end) · period" -
   // start_time and end_time are already known-valid HH:mm:ss (DB check
@@ -1282,6 +1283,7 @@ export default async function TripPage({ params, searchParams }: TripPageProps) 
             t={t}
             formatDate={formatDate}
             formatWeekday={formatWeekday}
+            formatDayMonth={formatDayMonth}
             formatItineraryWhen={formatItineraryWhen}
           />
           </TabsContent>

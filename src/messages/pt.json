@@ -333,7 +333,6 @@
       "applyFilters": "Aplicar filtros",
       "clearFilters": "Limpar filtros",
       "dayHeading": "{weekday}, {date} (Dia {day})",
-      "dayTabLabel": "Dia {day}",
       "emptyDay": "Nenhuma atividade planejada para este dia.",
       "outOfRangeTitle": "Itens fora do período da viagem",
       "outOfRangeDescription": "As datas da viagem mudaram e estes itens ficaram fora do novo período. Corrija a data de cada um.",
